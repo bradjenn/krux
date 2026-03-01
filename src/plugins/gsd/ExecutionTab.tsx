@@ -20,7 +20,7 @@ interface ExecutionTabProps {
 
 export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
   const [phases, setPhases] = useState<Phase[]>([])
-  const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
+  const [selectedPhase, setSelectedPhase] = useState('')
   const [status, setStatus] = useState<ExecStatus>('idle')
   const [lines, setLines] = useState<string[]>([])
   const [autoScroll, setAutoScroll] = useState(true)
@@ -122,7 +122,7 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
         <div className="flex items-center gap-3">
           {/* Phase selector */}
           <Select
-            value={selectedPhase ?? undefined}
+            value={selectedPhase}
             onValueChange={setSelectedPhase}
             disabled={isRunning}
           >
