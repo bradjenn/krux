@@ -1,14 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import { useAppStore } from '../../stores/appStore'
-import { applyTheme } from '../../lib/themes'
-import { createTerminal } from '../../hooks/useTauri'
+import { useAppStore } from '@/stores/appStore'
+import { applyTheme } from '@/lib/themes'
+import { createTerminal, closeTerminal } from '@/hooks/useTauri'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import TabBar from './TabBar'
 import SettingsDialog from './SettingsDialog'
 import DiscoverDialog from './DiscoverDialog'
-import XTerminal from '../terminal/XTerminal'
+import XTerminal from '@/components/terminal/XTerminal'
 
 export default function Shell() {
   const {
@@ -26,8 +26,19 @@ export default function Shell() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [discoverOpen, setDiscoverOpen] = useState(false)
 
-  const activeTab = tabs.find((t) => t.id === activeTabId)
   const activeProject = projects.find((p) => p.id === activeProjectId)
+
+  // Close tab and its PTY process
+  const handleCloseTab = useCallback(
+    (tabId: string) => {
+      const tab = tabs.find((t) => t.id === tabId)
+      if (tab?.terminalId) {
+        closeTerminal(tab.terminalId).catch(() => {})
+      }
+      closeTab(tabId)
+    },
+    [tabs, closeTab],
+  )
 
   // Load saved theme on startup
   useEffect(() => {
@@ -82,7 +93,7 @@ export default function Shell() {
       // Cmd+W: close tab
       if (meta && e.key === 'w') {
         e.preventDefault()
-        if (activeTabId) closeTab(activeTabId)
+        if (activeTabId) handleCloseTab(activeTabId)
       }
 
       // Escape: close modals
@@ -93,7 +104,7 @@ export default function Shell() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [activeProject, activeTabId])
+  }, [activeProject, activeTabId, handleCloseTab])
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -111,7 +122,7 @@ export default function Shell() {
         />
 
         <div className="flex flex-col flex-1 min-w-0">
-          <TabBar />
+          <TabBar onCloseTab={handleCloseTab} />
 
           {/* Terminal / Empty state */}
           <div className="flex-1 min-h-0 relative">
@@ -131,35 +142,36 @@ export default function Shell() {
                   <XTerminal
                     projectPath={activeProject?.path ?? '~'}
                     existingTerminalId={tab.terminalId!}
-                    onExit={() => closeTab(tab.id)}
+                    onExit={() => handleCloseTab(tab.id)}
                   />
                 </div>
               ))}
 
             {/* Empty state */}
             {!activeProjectId && (
-              <div className="flex flex-col items-center justify-center h-full gap-4">
+              <div
+                className="flex flex-col items-center justify-center h-full"
+                style={{ gap: 16, color: 'var(--text-dim)' }}
+              >
                 <svg
                   width="48"
                   height="48"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="var(--text-dim)"
+                  stroke="currentColor"
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  style={{ opacity: 0.4 }}
+                  style={{ opacity: 0.3 }}
                 >
-                  <polyline points="16 18 22 12 16 6" />
-                  <polyline points="8 6 2 12 8 18" />
+                  <polyline points="4 17 10 11 4 5" />
+                  <line x1="12" y1="19" x2="20" y2="19" />
                 </svg>
-                <div className="text-center">
-                  <p style={{ fontSize: 16, color: 'var(--text-muted)' }}>
-                    No project selected
-                  </p>
-                  <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
-                    Select a project from the sidebar or add a new one
-                  </p>
+                <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>
+                  No project selected
+                </div>
+                <div style={{ fontSize: 12 }}>
+                  Select a project from the sidebar or add a new one
                 </div>
               </div>
             )}

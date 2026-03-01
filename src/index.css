@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
 :root {
   /* Ghostty theme (default) */
@@ -42,7 +43,7 @@ html, body, #root {
   user-select: none;
 }
 
-/* Custom scrollbar - thin, themed */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -58,19 +59,23 @@ html, body, #root {
   background: var(--text-dim);
 }
 
+/* Project item hover → show remove button */
+.project-item:hover .project-remove {
+  opacity: 1 !important;
+}
+
+/* Tab close visibility */
+.tab:hover .tab-close {
+  opacity: 1;
+}
+
 /* Pulsing terminal indicator */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
 
-/* Toast slide-in */
-@keyframes toast-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Modal fade */
+/* Modal animations */
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -94,6 +99,11 @@ button {
 input, select {
   font-family: inherit;
   outline: none;
+}
+
+/* Placeholder color */
+::placeholder {
+  color: var(--text-dim);
 }
 
 /* Focus ring for keyboard navigation */

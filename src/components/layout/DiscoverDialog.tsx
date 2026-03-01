@@ -1,7 +1,18 @@
 import { useState } from 'react'
-import { X, FolderSearch, Plus, Check } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { FolderSearchIcon, PlusSignIcon, CheckmarkCircle01Icon } from '@hugeicons/core-free-icons'
 import { invoke } from '@tauri-apps/api/core'
-import { useAppStore, type Project } from '../../stores/appStore'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { useAppStore, type Project } from '@/stores/appStore'
 
 interface DiscoverDialogProps {
   isOpen: boolean
@@ -14,8 +25,6 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
   const [discovered, setDiscovered] = useState<{ name: string; path: string }[]>([])
   const [scanning, setScanning] = useState(false)
   const [added, setAdded] = useState<Set<string>>(new Set())
-
-  if (!isOpen) return null
 
   const handleScan = async () => {
     setScanning(true)
@@ -48,111 +57,58 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ animation: 'fade-in 0.15s ease' }}
-    >
-      <div
-        className="absolute inset-0"
-        style={{ background: 'rgba(0,0,0,0.85)' }}
-        onClick={onClose}
-      />
-
-      <div
-        className="relative rounded-lg overflow-hidden"
-        style={{
-          width: 460,
-          maxHeight: '85vh',
-          background: 'var(--bg2)',
-          border: '1px solid var(--border)',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
-          animation: 'scale-in 0.15s ease',
-        }}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-5 py-3"
-          style={{ borderBottom: '1px solid var(--border)' }}
-        >
-          <div className="flex items-center gap-2">
-            <FolderSearch size={15} style={{ color: 'var(--accent2)' }} />
-            <h2 className="font-semibold" style={{ fontSize: 15, color: 'var(--text)' }}>
-              Discover Projects
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded transition-colors"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <X size={16} />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <HugeiconsIcon icon={FolderSearchIcon} size={16} strokeWidth={1.5} color="var(--accent2)" />
+          <DialogTitle>Discover Projects</DialogTitle>
+          <DialogDescription>Scan a directory for project folders</DialogDescription>
+        </DialogHeader>
 
         {/* Scan input */}
         <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-          <label
-            className="block mb-2 uppercase tracking-wider font-medium"
-            style={{ fontSize: 11, color: 'var(--text-muted)' }}
-          >
+          <label className="block mb-2 uppercase tracking-wide font-medium text-[11px] text-[var(--text-muted)]">
             Scan Directory
           </label>
           <div className="flex gap-2">
-            <input
-              type="text"
+            <Input
               value={scanPath}
               onChange={(e) => setScanPath(e.target.value)}
-              className="flex-1 px-3 py-2 rounded transition-colors"
-              style={{
-                fontSize: 13,
-                background: 'var(--bg)',
-                border: '1px solid var(--border)',
-                color: 'var(--text)',
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent2)' }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
               onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+              className="flex-1"
             />
-            <button
-              onClick={handleScan}
-              className="px-4 py-2 rounded font-medium transition-all duration-150"
-              style={{
-                fontSize: 12,
-                background: 'var(--accent)',
-                color: 'var(--bg)',
-                opacity: scanning ? 0.5 : 1,
-              }}
-              disabled={scanning}
-            >
+            <Button size="sm" onClick={handleScan} disabled={scanning}>
               {scanning ? 'Scanning...' : 'Scan'}
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Results */}
-        <div className="overflow-y-auto" style={{ maxHeight: 'calc(85vh - 220px)' }}>
+        <div className="overflow-y-auto" style={{ maxHeight: 'calc(85vh - 260px)' }}>
           {discovered.length > 0 && (
-            <div className="px-5 py-2 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            <div
+              className="px-5 py-2 flex items-center justify-between"
+              style={{ borderBottom: '1px solid var(--border)' }}
+            >
+              <span className="text-[11px] text-[var(--text-muted)]">
                 {discovered.length} project{discovered.length !== 1 ? 's' : ''} found
               </span>
-              <button
-                onClick={handleAddAll}
-                className="flex items-center gap-1 px-2 py-1 rounded transition-colors"
-                style={{ fontSize: 11, color: 'var(--accent)' }}
-              >
-                <Plus size={11} />
+              <Button variant="ghost" size="sm" onClick={handleAddAll} className="text-[var(--accent)]">
+                <HugeiconsIcon icon={PlusSignIcon} size={11} strokeWidth={2} />
                 Add all
-              </button>
+              </Button>
             </div>
           )}
 
           {discovered.map((d) => {
             const isAdded = added.has(d.path)
             return (
-              <button
+              <div
                 key={d.path}
+                role="button"
+                tabIndex={0}
                 onClick={() => !isAdded && handleAdd(d)}
+                onKeyDown={(e) => e.key === 'Enter' && !isAdded && handleAdd(d)}
                 className="flex items-center gap-3 w-full text-left transition-all duration-100"
                 style={{
                   padding: '10px 20px',
@@ -168,40 +124,33 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
                 }}
               >
                 {isAdded ? (
-                  <Check size={14} style={{ color: 'var(--green)', shrink: 0 }} />
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} strokeWidth={1.5} color="var(--green)" className="shrink-0" />
                 ) : (
-                  <Plus size={14} style={{ color: 'var(--text-dim)', shrink: 0 }} />
+                  <HugeiconsIcon icon={PlusSignIcon} size={14} strokeWidth={1.5} color="var(--text-dim)" className="shrink-0" />
                 )}
                 <div className="min-w-0">
-                  <div className="truncate" style={{ fontSize: 13, color: 'var(--text)' }}>
-                    {d.name}
-                  </div>
-                  <div className="truncate" style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                  <div className="truncate text-[13px] text-[var(--text)]">{d.name}</div>
+                  <div className="truncate text-[11px] text-[var(--text-dim)]">
                     {d.path.replace(/^\/Users\/[^/]+/, '~')}
                   </div>
                 </div>
-              </button>
+              </div>
             )
           })}
 
           {discovered.length === 0 && !scanning && (
-            <div className="px-5 py-8 text-center" style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+            <div className="px-5 py-8 text-center text-xs" style={{ color: 'var(--text-dim)' }}>
               Enter a directory path and click Scan
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-5 py-3 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 rounded transition-all duration-150"
-            style={{ fontSize: 12, color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-          >
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={onClose}>
             Done
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

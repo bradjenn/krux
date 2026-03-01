@@ -1,9 +1,14 @@
-import { Plus, X } from 'lucide-react'
-import { useAppStore } from '../../stores/appStore'
-import { createTerminal } from '../../hooks/useTauri'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { PlusSignIcon, Cancel01Icon } from '@hugeicons/core-free-icons'
+import { useAppStore } from '@/stores/appStore'
+import { createTerminal } from '@/hooks/useTauri'
 
-export default function TabBar() {
-  const { tabs, activeTabId, activeProjectId, projects, addTab, closeTab, setActiveTab } =
+interface TabBarProps {
+  onCloseTab: (id: string) => void
+}
+
+export default function TabBar({ onCloseTab }: TabBarProps) {
+  const { tabs, activeTabId, activeProjectId, projects, addTab, setActiveTab } =
     useAppStore()
 
   const projectTabs = tabs.filter((t) => t.projectId === activeProjectId)
@@ -12,43 +17,38 @@ export default function TabBar() {
   const handleNewShellTab = async () => {
     if (!activeProject) return
     const shellCount = projectTabs.filter((t) => t.type === 'shell').length
-    const label = `Terminal ${shellCount + 1}`
-
     const terminalId = await createTerminal(activeProject.path, 80, 24)
     addTab({
       id: crypto.randomUUID(),
       type: 'shell',
-      label,
+      label: `Terminal ${shellCount + 1}`,
       projectId: activeProject.id,
       terminalId,
     })
   }
 
-  // Cmd+T for new tab, Cmd+W to close
-  // (registered in Shell.tsx for proper scope)
-
   if (!activeProjectId || projectTabs.length === 0) return null
 
   return (
     <div
-      className="flex items-center shrink-0 select-none overflow-x-auto"
+      className="flex items-stretch shrink-0 select-none overflow-x-auto"
       style={{
         height: 36,
         background: 'var(--bg2)',
         borderBottom: '1px solid var(--border)',
+        scrollbarWidth: 'none',
       }}
     >
-      {projectTabs.map((tab, i) => {
+      {projectTabs.map((tab) => {
         const isActive = activeTabId === tab.id
         return (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="group flex items-center gap-1.5 shrink-0 transition-colors duration-100"
+            className="tab group flex items-center gap-1.5 shrink-0 transition-colors duration-100 cursor-pointer text-xs"
             style={{
               padding: '0 14px',
               height: '100%',
-              fontSize: 12,
               color: isActive ? 'var(--text)' : 'var(--text-muted)',
               borderBottom: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
               background: isActive ? 'rgba(255,255,255,0.02)' : 'transparent',
@@ -70,43 +70,27 @@ export default function TabBar() {
             <span
               onClick={(e) => {
                 e.stopPropagation()
-                closeTab(tab.id)
+                onCloseTab(tab.id)
               }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity duration-100 p-0.5 rounded"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--danger)'
-                e.currentTarget.style.background = 'rgba(229,46,46,0.15)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = ''
-                e.currentTarget.style.background = ''
-              }}
+              className="tab-close opacity-0 group-hover:opacity-100 transition-opacity duration-100 p-0.5 rounded hover:text-[var(--danger)] hover:bg-[rgba(229,46,46,0.15)]"
             >
-              <X size={11} />
+              <HugeiconsIcon icon={Cancel01Icon} size={11} strokeWidth={2} />
             </span>
           </button>
         )
       })}
 
-      {/* New tab */}
       <button
         onClick={handleNewShellTab}
-        className="flex items-center justify-center shrink-0 transition-colors duration-150"
+        className="flex items-center justify-center shrink-0 transition-colors duration-150 cursor-pointer hover:text-[var(--accent)]"
         style={{
           width: 36,
           height: '100%',
-          fontSize: 16,
           color: 'var(--text-dim)',
         }}
         title="New terminal (⌘T)"
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = 'var(--accent)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = 'var(--text-dim)'
-        }}
       >
-        <Plus size={16} />
+        <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
       </button>
     </div>
   )

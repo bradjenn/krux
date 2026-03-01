@@ -6,7 +6,6 @@ import '@xterm/xterm/css/xterm.css'
 import {
   writeTerminal,
   resizeTerminal,
-  closeTerminal,
   useTerminalOutput,
   useTerminalExit,
 } from '../../hooks/useTauri'
@@ -113,7 +112,8 @@ export default function XTerminal({ existingTerminalId, onExit }: XTerminalProps
       dataDisposable.dispose()
       resizeDisposable.dispose()
       term.dispose()
-      closeTerminal(terminalId)
+      // Don't close the PTY here — the tab system manages PTY lifecycle.
+      // closeTerminal is called from the store's closeTab action via Shell.
     }
   }, [terminalId])
 
@@ -122,7 +122,7 @@ export default function XTerminal({ existingTerminalId, onExit }: XTerminalProps
       ref={containerRef}
       className="h-full w-full"
       style={{
-        padding: 1,
+        padding: '8px 8px 4px 8px',
         background: termTheme.background,
       }}
     />

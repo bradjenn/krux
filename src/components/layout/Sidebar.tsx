@@ -1,7 +1,10 @@
 import { useEffect, useState, useRef } from 'react'
-import { Search, Trash2 } from 'lucide-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Delete01Icon } from '@hugeicons/core-free-icons'
 import { invoke } from '@tauri-apps/api/core'
-import { useAppStore, type Project } from '../../stores/appStore'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { useAppStore, type Project } from '@/stores/appStore'
 
 interface SidebarProps {
   visible: boolean
@@ -17,7 +20,6 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
     invoke<Project[]>('list_projects').then(setProjects)
   }, [setProjects])
 
-  // Cmd+K to focus search
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -49,123 +51,80 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
 
   return (
     <div
-      className="flex flex-col h-full shrink-0 border-r select-none overflow-hidden transition-all duration-200 ease-in-out"
+      className="flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out"
       style={{
         width: visible ? 280 : 0,
         minWidth: visible ? 280 : 0,
-        borderColor: 'var(--border)',
+        borderRight: visible ? '1px solid var(--border)' : 'none',
         background: 'var(--bg2)',
       }}
     >
       {/* Search */}
-      <div className="px-3 pt-3 pb-2">
-        <div className="relative">
-          <Search
-            size={13}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-            style={{ color: 'var(--text-dim)' }}
-          />
-          <input
-            ref={searchRef}
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects... (⌘K)"
-            className="w-full py-1.5 pl-8 pr-3 rounded transition-colors duration-150"
-            style={{
-              fontSize: 13,
-              background: 'var(--bg)',
-              border: '1px solid var(--border)',
-              color: 'var(--text)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent2)'
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border)'
-            }}
-          />
-        </div>
+      <div className="p-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
+        <Input
+          ref={searchRef}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search projects... (Cmd+K)"
+          className="text-xs py-[7px]"
+        />
       </div>
 
-      {/* Scan button */}
-      <div className="px-3 pb-2">
-        <button
-          onClick={onOpenDiscover}
-          className="w-full py-1.5 rounded transition-all duration-150"
-          style={{
-            fontSize: 12,
-            color: 'var(--text-dim)',
-            border: '1px dashed var(--border)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--accent)'
-            e.currentTarget.style.color = 'var(--accent)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border)'
-            e.currentTarget.style.color = 'var(--text-dim)'
-          }}
-        >
-          Scan for projects
-        </button>
+      {/* Scan */}
+      <div className="px-2 pb-1.5 pt-1">
+        <Button variant="dashed" size="sm" className="w-full text-[11px]" onClick={onOpenDiscover}>
+          Scan
+        </Button>
       </div>
 
       {/* Project list */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto py-1">
         {filtered.map((project) => {
           const isActive = activeProjectId === project.id
           const termCount = getTerminalCount(project.id)
 
           return (
-            <button
+            <div
               key={project.id}
+              role="button"
+              tabIndex={0}
               onClick={() => setActiveProject(project.id)}
-              className="group flex items-center gap-2.5 w-full text-left transition-all duration-100"
+              onKeyDown={(e) => e.key === 'Enter' && setActiveProject(project.id)}
+              className="project-item group flex items-center gap-2.5 w-full text-left transition-all duration-100 cursor-pointer"
               style={{
-                padding: '10px 12px',
+                padding: '7px 10px 7px 9px',
                 borderLeft: `3px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
                 background: isActive ? 'rgba(71,255,156,0.06)' : 'transparent',
                 color: isActive ? 'var(--text)' : 'var(--text-muted)',
               }}
               onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = 'rgba(15,197,237,0.05)'
-                }
+                if (!isActive) e.currentTarget.style.background = 'rgba(15,197,237,0.05)'
               }}
               onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = 'transparent'
-                }
+                if (!isActive) e.currentTarget.style.background = 'transparent'
               }}
             >
-              {/* Color dot */}
               <span
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ background: project.color }}
               />
 
-              {/* Name + path */}
               <div className="flex-1 min-w-0">
-                <div
-                  className="truncate font-medium"
-                  style={{ fontSize: 13 }}
-                >
+                <div className="truncate font-medium text-[13px]">
                   {project.name}
                 </div>
                 <div
-                  className="truncate"
-                  style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 1 }}
+                  className="truncate text-[11px]"
+                  style={{ color: 'var(--text-dim)', marginTop: 1 }}
                 >
                   {project.path.replace(/^\/Users\/[^/]+/, '~')}
                 </div>
               </div>
 
-              {/* Terminal count badge */}
               {termCount > 0 && (
                 <div
-                  className="flex items-center gap-1 shrink-0"
-                  style={{ fontSize: 10, color: 'var(--accent)' }}
+                  className="flex items-center gap-1 shrink-0 text-[10px]"
+                  style={{ color: 'var(--accent)' }}
                 >
                   <span
                     className="w-1.5 h-1.5 rounded-full"
@@ -178,36 +137,29 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
                 </div>
               )}
 
-              {/* Remove button */}
               <button
                 onClick={(e) => handleRemove(e, project.id)}
-                className="shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-100"
+                className="project-remove shrink-0 p-1 rounded opacity-0 transition-opacity duration-100 cursor-pointer hover:text-[var(--danger)]"
                 style={{ color: 'var(--text-dim)' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = 'var(--danger)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'var(--text-dim)'
-                }}
                 title="Remove project"
               >
-                <Trash2 size={12} />
+                <HugeiconsIcon icon={Delete01Icon} size={13} strokeWidth={1.5} />
               </button>
-            </button>
+            </div>
           )
         })}
 
         {filtered.length === 0 && projects.length > 0 && (
-          <div className="px-4 py-6 text-center" style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+          <div className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-dim)' }}>
             No matching projects
           </div>
         )}
 
         {projects.length === 0 && (
-          <div className="px-4 py-8 text-center" style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+          <div className="px-4 py-8 text-center text-xs" style={{ color: 'var(--text-dim)' }}>
             No projects yet.
             <br />
-            Click "Scan for projects" or use the + button.
+            Click &quot;Scan&quot; to discover projects.
           </div>
         )}
       </div>

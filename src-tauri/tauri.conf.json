@@ -13,8 +13,10 @@
     "windows": [
       {
         "title": "cc-manager",
-        "width": 1200,
-        "height": 800,
+        "width": 1280,
+        "height": 820,
+        "minWidth": 800,
+        "minHeight": 500,
         "resizable": true,
         "fullscreen": false,
         "decorations": true
