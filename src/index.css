@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  /* Ghostty theme (default) */
+  --bg: #011423;
+  --bg2: #01192b;
+  --border: #0a2a4a;
+  --accent: #47ff9c;
+  --accent2: #0fc5ed;
+  --text: #cbe0f0;
+  --text-muted: #4a6a8a;
+  --text-dim: #214969;
+  --danger: #e52e2e;
+  --green: #44ffb1;
+  --yellow: #ffe073;
+  --magenta: #a277ff;
+
+  font-family:
+    "Berkeley Mono", "SF Mono", "Fira Code", "JetBrains Mono", ui-monospace,
+    monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Prevent text selection during drag operations */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
