@@ -4,7 +4,6 @@ import { FitAddon } from '@xterm/addon-fit'
 import { WebglAddon } from '@xterm/addon-webgl'
 import '@xterm/xterm/css/xterm.css'
 import {
-  createTerminal,
   writeTerminal,
   resizeTerminal,
   closeTerminal,
@@ -14,6 +13,7 @@ import {
 
 interface XTerminalProps {
   projectPath: string
+  existingTerminalId: string
   onExit?: () => void
 }
 
@@ -42,11 +42,10 @@ const GHOSTTY_THEME = {
   brightWhite: '#24eaf7',
 }
 
-export default function XTerminal({ projectPath, onExit }: XTerminalProps) {
+export default function XTerminal({ projectPath, existingTerminalId, onExit }: XTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
-  const fitAddonRef = useRef<FitAddon | null>(null)
-  const [terminalId, setTerminalId] = useState<string | null>(null)
+  const [terminalId] = useState<string>(existingTerminalId)
 
   // Subscribe to PTY output → write to xterm
   useTerminalOutput(terminalId, (data) => {
@@ -88,34 +87,20 @@ export default function XTerminal({ projectPath, onExit }: XTerminalProps) {
     }
 
     fitAddon.fit()
-
     terminalRef.current = term
-    fitAddonRef.current = fitAddon
 
-    // Spawn PTY
-    const cols = term.cols
-    const rows = term.rows
+    // Hook xterm input → PTY stdin
+    term.onData((data) => {
+      writeTerminal(terminalId, data)
+    })
 
-    let termId: string | null = null
+    // Hook xterm resize → PTY resize
+    term.onResize(({ cols, rows }) => {
+      resizeTerminal(terminalId, cols, rows)
+    })
 
-    createTerminal(projectPath, cols, rows)
-      .then((id) => {
-        termId = id
-        setTerminalId(id)
-
-        // Hook xterm input → PTY stdin
-        term.onData((data) => {
-          writeTerminal(id, data)
-        })
-
-        // Hook xterm resize → PTY resize
-        term.onResize(({ cols, rows }) => {
-          resizeTerminal(id, cols, rows)
-        })
-      })
-      .catch((err) => {
-        term.writeln(`\x1b[31mFailed to create terminal: ${err}\x1b[0m`)
-      })
+    // Send initial resize to sync PTY with actual rendered dimensions
+    resizeTerminal(terminalId, term.cols, term.rows)
 
     // Handle container resize
     const resizeObserver = new ResizeObserver(() => {
@@ -126,11 +111,9 @@ export default function XTerminal({ projectPath, onExit }: XTerminalProps) {
     return () => {
       resizeObserver.disconnect()
       term.dispose()
-      if (termId) {
-        closeTerminal(termId)
-      }
+      closeTerminal(terminalId)
     }
-  }, [projectPath])
+  }, [terminalId])
 
   return (
     <div
