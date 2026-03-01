@@ -1,3 +1,4 @@
+mod fs;
 mod projects;
 mod pty;
 mod settings;
@@ -21,6 +22,10 @@ pub fn run() {
             projects::discover_projects,
             settings::load_settings,
             settings::save_settings,
+            fs::read_file,
+            fs::read_dir_tree,
+            fs::path_exists,
+            fs::list_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

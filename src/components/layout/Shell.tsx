@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { useAppStore } from '@/stores/appStore'
 import { applyTheme } from '@/lib/themes'
 import { createTerminal, closeTerminal } from '@/hooks/useTauri'
+import { getAllPluginTabTypes } from '@/plugins'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import TabBar from './TabBar'
@@ -124,7 +125,7 @@ export default function Shell() {
         <div className="flex flex-col flex-1 min-w-0">
           <TabBar onCloseTab={handleCloseTab} />
 
-          {/* Terminal / Empty state */}
+          {/* Tab content area */}
           <div className="flex-1 min-h-0 relative">
             {/* Render all shell tabs but only show active */}
             {tabs
@@ -146,6 +147,32 @@ export default function Shell() {
                   />
                 </div>
               ))}
+
+            {/* Render plugin tabs */}
+            {tabs
+              .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
+              .map((tab) => {
+                const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
+                if (!tabType) return null
+                const TabComponent = tabType.component
+                return (
+                  <div
+                    key={tab.id}
+                    className="absolute inset-0 overflow-auto"
+                    style={{
+                      opacity: activeTabId === tab.id ? 1 : 0,
+                      pointerEvents: activeTabId === tab.id ? 'auto' : 'none',
+                      transition: 'opacity 0.1s',
+                      background: 'var(--bg)',
+                    }}
+                  >
+                    <TabComponent
+                      projectId={tab.projectId}
+                      projectPath={activeProject?.path ?? ''}
+                    />
+                  </div>
+                )
+              })}
 
             {/* Empty state */}
             {!activeProjectId && (

@@ -1,7 +1,10 @@
+import { useState, useEffect, useRef } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { PlusSignIcon, Cancel01Icon } from '@hugeicons/core-free-icons'
+import { PlusSignIcon, Cancel01Icon, CommandLineIcon } from '@hugeicons/core-free-icons'
 import { useAppStore } from '@/stores/appStore'
 import { createTerminal } from '@/hooks/useTauri'
+import { PLUGINS } from '@/plugins'
+import type { TabType } from '@/plugins/types'
 
 interface TabBarProps {
   onCloseTab: (id: string) => void
@@ -11,8 +14,44 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
   const { tabs, activeTabId, activeProjectId, projects, addTab, setActiveTab } =
     useAppStore()
 
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [availablePluginTabs, setAvailablePluginTabs] = useState<TabType[]>([])
+  const menuRef = useRef<HTMLDivElement>(null)
+
   const projectTabs = tabs.filter((t) => t.projectId === activeProjectId)
   const activeProject = projects.find((p) => p.id === activeProjectId)
+
+  // Check plugin availability when project changes or menu opens
+  useEffect(() => {
+    if (!menuOpen || !activeProject) return
+
+    async function checkPlugins() {
+      const available: TabType[] = []
+      for (const plugin of PLUGINS) {
+        let isAvail = true
+        if (plugin.isAvailable) {
+          isAvail = await plugin.isAvailable(activeProject!.path)
+        }
+        if (isAvail) {
+          available.push(...plugin.tabTypes)
+        }
+      }
+      setAvailablePluginTabs(available)
+    }
+    checkPlugins()
+  }, [menuOpen, activeProject])
+
+  // Close menu on click outside
+  useEffect(() => {
+    if (!menuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuOpen])
 
   const handleNewShellTab = async () => {
     if (!activeProject) return
@@ -25,6 +64,18 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
       projectId: activeProject.id,
       terminalId,
     })
+    setMenuOpen(false)
+  }
+
+  const handleNewPluginTab = (tabType: TabType) => {
+    if (!activeProject) return
+    addTab({
+      id: crypto.randomUUID(),
+      type: tabType.id,
+      label: tabType.label,
+      projectId: activeProject.id,
+    })
+    setMenuOpen(false)
   }
 
   if (!activeProjectId || projectTabs.length === 0) return null
@@ -80,18 +131,75 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
         )
       })}
 
-      <button
-        onClick={handleNewShellTab}
-        className="flex items-center justify-center shrink-0 transition-colors duration-150 cursor-pointer hover:text-[var(--accent)]"
-        style={{
-          width: 36,
-          height: '100%',
-          color: 'var(--text-dim)',
-        }}
-        title="New terminal (⌘T)"
-      >
-        <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
-      </button>
+      {/* New tab button with dropdown */}
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => {
+            if (availablePluginTabs.length === 0 && PLUGINS.length === 0) {
+              // No plugins — just create a shell tab directly
+              handleNewShellTab()
+            } else {
+              setMenuOpen(!menuOpen)
+            }
+          }}
+          className="flex items-center justify-center shrink-0 transition-colors duration-150 cursor-pointer hover:text-[var(--accent)]"
+          style={{
+            width: 36,
+            height: '100%',
+            color: 'var(--text-dim)',
+          }}
+          title="New tab (⌘T)"
+        >
+          <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
+        </button>
+
+        {menuOpen && (
+          <div
+            className="absolute top-full left-0 z-50 py-1 min-w-[160px]"
+            style={{
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              borderRadius: 6,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            }}
+          >
+            {/* Shell option */}
+            <button
+              onClick={handleNewShellTab}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100"
+              style={{ color: 'var(--text)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
+              Terminal
+            </button>
+
+            {/* Plugin tab types */}
+            {availablePluginTabs.length > 0 && (
+              <>
+                <div
+                  className="mx-2 my-1"
+                  style={{ height: 1, background: 'var(--border)' }}
+                />
+                {availablePluginTabs.map((tabType) => (
+                  <button
+                    key={tabType.id}
+                    onClick={() => handleNewPluginTab(tabType)}
+                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100"
+                    style={{ color: 'var(--text)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <tabType.icon size={14} />
+                    {tabType.label}
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
