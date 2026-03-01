@@ -253,7 +253,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cc-manager-v2"
+name = "cc-manager"
 version = "0.1.0"
 dependencies = [
  "dirs",

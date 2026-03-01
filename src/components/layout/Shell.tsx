@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
 import { applyTheme } from '@/lib/themes'
@@ -29,6 +30,10 @@ export default function Shell() {
   const [discoverOpen, setDiscoverOpen] = useState(false)
 
   const activeProject = projects.find((p) => p.id === activeProjectId)
+
+  // Refs for menu event handler (avoids stale closures in the once-registered listener)
+  const stateRef = useRef({ activeProject, activeTabId, activeProjectId })
+  stateRef.current = { activeProject, activeTabId, activeProjectId }
 
   // Close tab and its PTY process
   const handleCloseTab = useCallback(
@@ -70,48 +75,79 @@ export default function Shell() {
     })
   }, [activeProjectId, projects, projectTabs.length])
 
-  // Keyboard shortcuts
+  // Native menu event listener
+  useEffect(() => {
+    const unlisten = listen<string>('menu-action', (event) => {
+      const { activeProject, activeTabId, activeProjectId } = stateRef.current
+      const { setActiveView, addTab, setActiveTab, tabs, getProjectTabs } = useAppStore.getState()
+
+      switch (event.payload) {
+        case 'settings':
+          setActiveView('settings')
+          break
+
+        case 'new-terminal':
+          if (activeProject) {
+            const count = getProjectTabs(activeProject.id).filter((t) => t.type === 'shell').length
+            createTerminal(activeProject.path, 80, 24).then((terminalId) => {
+              addTab({
+                id: crypto.randomUUID(),
+                type: 'shell',
+                label: `Terminal ${count + 1}`,
+                projectId: activeProject.id,
+                terminalId,
+              })
+            })
+          }
+          break
+
+        case 'close-tab':
+          if (activeTabId) handleCloseTab(activeTabId)
+          break
+
+        case 'add-project':
+          setDiscoverOpen(true)
+          break
+
+        case 'toggle-sidebar':
+          setSidebarVisible((v) => !v)
+          break
+
+        case 'open-gsd':
+          if (activeProjectId) {
+            const existing = tabs.find(
+              (t) => t.type === 'gsd:main' && t.projectId === activeProjectId,
+            )
+            if (existing) {
+              setActiveTab(existing.id)
+            } else {
+              addTab({
+                id: crypto.randomUUID(),
+                type: 'gsd:main',
+                label: 'GSD',
+                projectId: activeProjectId,
+              })
+            }
+          }
+          break
+      }
+    })
+
+    return () => {
+      unlisten.then((fn) => fn())
+    }
+  }, [handleCloseTab])
+
+  // Keyboard shortcuts (for keys not handled by native menu)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const meta = e.metaKey || e.ctrlKey
-
-      // Cmd+T: new terminal
-      if (meta && e.key === 't') {
-        e.preventDefault()
-        if (activeProject) {
-          const count = getProjectTabs(activeProject.id).filter((t) => t.type === 'shell').length
-          createTerminal(activeProject.path, 80, 24).then((terminalId) => {
-            addTab({
-              id: crypto.randomUUID(),
-              type: 'shell',
-              label: `Terminal ${count + 1}`,
-              projectId: activeProject.id,
-              terminalId,
-            })
-          })
-        }
-      }
-
-      // Cmd+W: close tab
-      if (meta && e.key === 'w') {
-        e.preventDefault()
-        if (activeTabId) handleCloseTab(activeTabId)
-      }
-
-      // Cmd+B: toggle sidebar
-      if (meta && e.key === 'b') {
-        e.preventDefault()
-        setSidebarVisible((v) => !v)
-      }
-
-      // Escape: close modals
       if (e.key === 'Escape') {
         setDiscoverOpen(false)
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [activeProject, activeTabId, handleCloseTab])
+  }, [])
 
   return (
     <div className="flex flex-col h-full w-full">

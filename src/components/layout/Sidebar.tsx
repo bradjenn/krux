@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete01Icon, Search01Icon, Settings02Icon } from '@hugeicons/core-free-icons'
+import { Delete01Icon, Search01Icon } from '@hugeicons/core-free-icons'
 import { invoke } from '@tauri-apps/api/core'
 import { useAppStore, type Project } from '@/stores/appStore'
 import { PLUGINS } from '@/plugins'
@@ -41,7 +41,7 @@ function PluginSidebar({ projectId, projectPath }: { projectId: string; projectP
 }
 
 export default function Sidebar({ visible }: SidebarProps) {
-  const { projects, activeProjectId, setProjects, setActiveProject, tabs, activeView, setActiveView } = useAppStore()
+  const { projects, activeProjectId, setProjects, setActiveProject, tabs } = useAppStore()
   const [search, setSearch] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
   const activeProject = projects.find((p) => p.id === activeProjectId)
@@ -228,26 +228,6 @@ export default function Sidebar({ visible }: SidebarProps) {
         <PluginSidebar projectId={activeProjectId} projectPath={activeProject.path} />
       )}
 
-      {/* Settings footer */}
-      <div
-        className="border-t border-border"
-        style={{
-          padding: '8px 10px',
-        }}
-      >
-        <button
-          onClick={() => setActiveView(activeView === 'settings' ? 'projects' : 'settings')}
-          className={cn(
-            "flex items-center gap-2 w-full rounded-md px-2.5 py-2 text-xs transition-colors duration-100 cursor-pointer",
-            activeView === 'settings'
-              ? "text-primary bg-primary/[0.04]"
-              : "text-muted-foreground bg-transparent hover:bg-secondary/[0.04]"
-          )}
-        >
-          <HugeiconsIcon icon={Settings02Icon} size={15} strokeWidth={1.5} />
-          <span>Settings</span>
-        </button>
-      </div>
     </div>
   )
 }
