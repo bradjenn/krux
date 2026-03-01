@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Trash2, FolderSearch } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/core'
 import { useAppStore, type Project } from '../../stores/appStore'
+import SettingsDialog from './SettingsDialog'
 
 export default function Sidebar() {
   const { projects, activeProjectId, setProjects, setActiveProject } = useAppStore()
@@ -114,7 +115,7 @@ export default function Sidebar() {
       )}
 
       {/* Bottom actions */}
-      <div className="border-t p-2 flex gap-2" style={{ borderColor: 'var(--border)' }}>
+      <div className="border-t p-2 flex flex-col gap-1" style={{ borderColor: 'var(--border)' }}>
         <button
           onClick={() => setShowDiscover(!showDiscover)}
           className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors"
@@ -124,6 +125,7 @@ export default function Sidebar() {
           <FolderSearch size={14} />
           <span>Discover</span>
         </button>
+        <SettingsDialog />
       </div>
     </div>
   )

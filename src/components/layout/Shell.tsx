@@ -1,14 +1,24 @@
 import { useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import { useAppStore } from '../../stores/appStore'
+import { applyTheme } from '../../lib/themes'
 import Sidebar from './Sidebar'
 import TabBar from './TabBar'
 import XTerminal from '../terminal/XTerminal'
 
 export default function Shell() {
-  const { activeProjectId, activeTabId, tabs, projects, closeTab } = useAppStore()
+  const { activeProjectId, activeTabId, tabs, projects, closeTab, setTheme } = useAppStore()
 
   const activeTab = tabs.find((t) => t.id === activeTabId)
   const activeProject = projects.find((p) => p.id === activeProjectId)
+
+  // Load saved theme on startup
+  useEffect(() => {
+    invoke<{ theme: string }>('load_settings').then((settings) => {
+      setTheme(settings.theme)
+      applyTheme(settings.theme)
+    })
+  }, [])
 
   // Auto-create a shell tab when selecting a project with no tabs
   const { addTab, getProjectTabs } = useAppStore()
@@ -18,7 +28,6 @@ export default function Shell() {
 
     const projectTabs = getProjectTabs(activeProjectId)
     if (projectTabs.length === 0) {
-      // Import dynamically to avoid circular dependency
       import('../../hooks/useTauri').then(({ createTerminal }) => {
         createTerminal(activeProject.path, 80, 24).then((terminalId) => {
           addTab({

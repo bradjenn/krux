@@ -10,6 +10,8 @@ import {
   useTerminalOutput,
   useTerminalExit,
 } from '../../hooks/useTauri'
+import { useAppStore } from '../../stores/appStore'
+import { getTerminalTheme } from '../../lib/themes'
 
 interface XTerminalProps {
   projectPath: string
@@ -17,35 +19,12 @@ interface XTerminalProps {
   onExit?: () => void
 }
 
-const GHOSTTY_THEME = {
-  background: '#011423',
-  foreground: '#cbe0f0',
-  cursor: '#47ff9c',
-  cursorAccent: '#011423',
-  selectionBackground: '#033259',
-  selectionForeground: '#cbe0f0',
-  black: '#214969',
-  red: '#e52e2e',
-  green: '#44ffb1',
-  yellow: '#ffe073',
-  blue: '#0fc5ed',
-  magenta: '#a277ff',
-  cyan: '#24eaf7',
-  white: '#24eaf7',
-  brightBlack: '#214969',
-  brightRed: '#e52e2e',
-  brightGreen: '#44ffb1',
-  brightYellow: '#ffe073',
-  brightBlue: '#a277ff',
-  brightMagenta: '#a277ff',
-  brightCyan: '#24eaf7',
-  brightWhite: '#24eaf7',
-}
-
 export default function XTerminal({ projectPath, existingTerminalId, onExit }: XTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const [terminalId] = useState<string>(existingTerminalId)
+  const theme = useAppStore((s) => s.theme)
+  const termTheme = getTerminalTheme(theme)
 
   // Subscribe to PTY output → write to xterm
   useTerminalOutput(terminalId, (data) => {
@@ -57,11 +36,18 @@ export default function XTerminal({ projectPath, existingTerminalId, onExit }: X
     onExit?.()
   })
 
+  // Update xterm theme when app theme changes
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.options.theme = termTheme
+    }
+  }, [theme])
+
   useEffect(() => {
     if (!containerRef.current) return
 
     const term = new Terminal({
-      theme: GHOSTTY_THEME,
+      theme: termTheme,
       fontFamily: '"Berkeley Mono", "SF Mono", "Fira Code", "JetBrains Mono", monospace',
       fontSize: 14,
       lineHeight: 1.2,
@@ -119,7 +105,7 @@ export default function XTerminal({ projectPath, existingTerminalId, onExit }: X
     <div
       ref={containerRef}
       className="h-full w-full"
-      style={{ padding: '4px', backgroundColor: GHOSTTY_THEME.background }}
+      style={{ padding: '4px', backgroundColor: termTheme.background }}
     />
   )
 }
