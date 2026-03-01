@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete01Icon } from '@hugeicons/core-free-icons'
+import { Delete01Icon, Settings02Icon } from '@hugeicons/core-free-icons'
 import { invoke } from '@tauri-apps/api/core'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,7 @@ function PluginSidebar({ projectId, projectPath }: { projectId: string; projectP
 }
 
 export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
-  const { projects, activeProjectId, setProjects, setActiveProject, tabs } = useAppStore()
+  const { projects, activeProjectId, setProjects, setActiveProject, tabs, activeView, setActiveView } = useAppStore()
   const [search, setSearch] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
   const activeProject = projects.find((p) => p.id === activeProjectId)
@@ -199,6 +199,32 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
       {activeProjectId && activeProject && (
         <PluginSidebar projectId={activeProjectId} projectPath={activeProject.path} />
       )}
+
+      {/* Settings footer */}
+      <div
+        style={{
+          borderTop: '1px solid var(--border)',
+          padding: '8px 10px',
+        }}
+      >
+        <button
+          onClick={() => setActiveView('settings')}
+          className="flex items-center gap-2 w-full rounded-md px-2.5 py-2 text-xs transition-colors duration-100 cursor-pointer"
+          style={{
+            color: activeView === 'settings' ? 'var(--accent)' : 'var(--text-muted)',
+            background: activeView === 'settings' ? 'rgba(71,255,156,0.06)' : 'transparent',
+          }}
+          onMouseEnter={(e) => {
+            if (activeView !== 'settings') e.currentTarget.style.background = 'rgba(15,197,237,0.05)'
+          }}
+          onMouseLeave={(e) => {
+            if (activeView !== 'settings') e.currentTarget.style.background = 'transparent'
+          }}
+        >
+          <HugeiconsIcon icon={Settings02Icon} size={15} strokeWidth={1.5} />
+          <span>Settings</span>
+        </button>
+      </div>
     </div>
   )
 }

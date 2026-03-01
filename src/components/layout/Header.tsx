@@ -1,7 +1,6 @@
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   SidebarLeft01Icon,
-  Settings02Icon,
   PlusSignIcon,
   CommandLineIcon,
 } from '@hugeicons/core-free-icons'
@@ -10,14 +9,12 @@ import { Button } from '@/components/ui/button'
 interface HeaderProps {
   sidebarVisible: boolean
   onToggleSidebar: () => void
-  onOpenSettings: () => void
   onAddProject: () => void
 }
 
 export default function Header({
   sidebarVisible,
   onToggleSidebar,
-  onOpenSettings,
   onAddProject,
 }: HeaderProps) {
   return (
@@ -51,9 +48,6 @@ export default function Header({
             strokeWidth={1.5}
             style={{ opacity: sidebarVisible ? 1 : 0.5 }}
           />
-        </Button>
-        <Button variant="outline" size="sm" onClick={onOpenSettings} title="Settings">
-          <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.5} />
         </Button>
         <Button variant="outline" size="sm" onClick={onAddProject} title="Add project">
           <HugeiconsIcon icon={PlusSignIcon} size={14} strokeWidth={2} />

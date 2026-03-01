@@ -23,6 +23,10 @@ interface AppState {
   setProjects: (projects: Project[]) => void
   setActiveProject: (id: string | null) => void
 
+  // View
+  activeView: 'projects' | 'settings'
+  setActiveView: (view: 'projects' | 'settings') => void
+
   // Tabs
   tabs: Tab[]
   activeTabId: string | null
@@ -42,7 +46,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeProjectId: null,
   setProjects: (projects) => set({ projects }),
   setActiveProject: (id) => {
-    set({ activeProjectId: id })
+    set({ activeProjectId: id, activeView: 'projects' })
     // Auto-activate the first tab of the newly selected project
     if (id) {
       const tabs = get().tabs.filter((t) => t.projectId === id)
@@ -53,6 +57,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     } else {
       set({ activeTabId: null })
+    }
+  },
+
+  // View
+  activeView: 'projects',
+  setActiveView: (view) => {
+    if (view === 'settings') {
+      set({ activeView: view, activeProjectId: null, activeTabId: null })
+    } else {
+      set({ activeView: view })
     }
   },
 

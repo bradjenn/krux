@@ -7,7 +7,7 @@ import { getAllPluginTabTypes } from '@/plugins'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import TabBar from './TabBar'
-import SettingsDialog from './SettingsDialog'
+import SettingsPage from './SettingsPage'
 import DiscoverDialog from './DiscoverDialog'
 import XTerminal from '@/components/terminal/XTerminal'
 
@@ -15,6 +15,7 @@ export default function Shell() {
   const {
     activeProjectId,
     activeTabId,
+    activeView,
     tabs,
     projects,
     closeTab,
@@ -24,7 +25,6 @@ export default function Shell() {
   } = useAppStore()
 
   const [sidebarVisible, setSidebarVisible] = useState(true)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [discoverOpen, setDiscoverOpen] = useState(false)
 
   const activeProject = projects.find((p) => p.id === activeProjectId)
@@ -99,7 +99,6 @@ export default function Shell() {
 
       // Escape: close modals
       if (e.key === 'Escape') {
-        setSettingsOpen(false)
         setDiscoverOpen(false)
       }
     }
@@ -112,7 +111,6 @@ export default function Shell() {
       <Header
         sidebarVisible={sidebarVisible}
         onToggleSidebar={() => setSidebarVisible(!sidebarVisible)}
-        onOpenSettings={() => setSettingsOpen(true)}
         onAddProject={() => setDiscoverOpen(true)}
       />
 
@@ -122,92 +120,95 @@ export default function Shell() {
           onOpenDiscover={() => setDiscoverOpen(true)}
         />
 
-        <div className="flex flex-col flex-1 min-w-0">
-          <TabBar onCloseTab={handleCloseTab} />
+        {activeView === 'settings' ? (
+          <SettingsPage />
+        ) : (
+          <div className="flex flex-col flex-1 min-w-0">
+            <TabBar onCloseTab={handleCloseTab} />
 
-          {/* Tab content area */}
-          <div className="flex-1 min-h-0 relative">
-            {/* Render all shell tabs but only show active */}
-            {tabs
-              .filter((t) => t.type === 'shell' && t.terminalId && t.projectId === activeProjectId)
-              .map((tab) => (
-                <div
-                  key={tab.terminalId}
-                  className="absolute inset-0"
-                  style={{
-                    opacity: activeTabId === tab.id ? 1 : 0,
-                    pointerEvents: activeTabId === tab.id ? 'auto' : 'none',
-                    transition: 'opacity 0.1s',
-                  }}
-                >
-                  <XTerminal
-                    projectPath={activeProject?.path ?? '~'}
-                    existingTerminalId={tab.terminalId!}
-                    onExit={() => handleCloseTab(tab.id)}
-                  />
-                </div>
-              ))}
-
-            {/* Render plugin tabs */}
-            {tabs
-              .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
-              .map((tab) => {
-                const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
-                if (!tabType) return null
-                const TabComponent = tabType.component
-                return (
+            {/* Tab content area */}
+            <div className="flex-1 min-h-0 relative">
+              {/* Render all shell tabs but only show active */}
+              {tabs
+                .filter((t) => t.type === 'shell' && t.terminalId && t.projectId === activeProjectId)
+                .map((tab) => (
                   <div
-                    key={tab.id}
-                    className="absolute inset-0 overflow-auto"
+                    key={tab.terminalId}
+                    className="absolute inset-0"
                     style={{
                       opacity: activeTabId === tab.id ? 1 : 0,
                       pointerEvents: activeTabId === tab.id ? 'auto' : 'none',
                       transition: 'opacity 0.1s',
-                      background: 'var(--bg)',
                     }}
                   >
-                    <TabComponent
-                      projectId={tab.projectId}
-                      projectPath={activeProject?.path ?? ''}
+                    <XTerminal
+                      projectPath={activeProject?.path ?? '~'}
+                      existingTerminalId={tab.terminalId!}
+                      onExit={() => handleCloseTab(tab.id)}
                     />
                   </div>
-                )
-              })}
+                ))}
 
-            {/* Empty state */}
-            {!activeProjectId && (
-              <div
-                className="flex flex-col items-center justify-center h-full"
-                style={{ gap: 16, color: 'var(--text-dim)' }}
-              >
-                <svg
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ opacity: 0.3 }}
+              {/* Render plugin tabs */}
+              {tabs
+                .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
+                .map((tab) => {
+                  const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
+                  if (!tabType) return null
+                  const TabComponent = tabType.component
+                  return (
+                    <div
+                      key={tab.id}
+                      className="absolute inset-0 overflow-auto"
+                      style={{
+                        opacity: activeTabId === tab.id ? 1 : 0,
+                        pointerEvents: activeTabId === tab.id ? 'auto' : 'none',
+                        transition: 'opacity 0.1s',
+                        background: 'var(--bg)',
+                      }}
+                    >
+                      <TabComponent
+                        projectId={tab.projectId}
+                        projectPath={activeProject?.path ?? ''}
+                      />
+                    </div>
+                  )
+                })}
+
+              {/* Empty state */}
+              {!activeProjectId && (
+                <div
+                  className="flex flex-col items-center justify-center h-full"
+                  style={{ gap: 16, color: 'var(--text-dim)' }}
                 >
-                  <polyline points="4 17 10 11 4 5" />
-                  <line x1="12" y1="19" x2="20" y2="19" />
-                </svg>
-                <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>
-                  No project selected
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ opacity: 0.3 }}
+                  >
+                    <polyline points="4 17 10 11 4 5" />
+                    <line x1="12" y1="19" x2="20" y2="19" />
+                  </svg>
+                  <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>
+                    No project selected
+                  </div>
+                  <div style={{ fontSize: 12 }}>
+                    Select a project from the sidebar or add a new one
+                  </div>
                 </div>
-                <div style={{ fontSize: 12 }}>
-                  Select a project from the sidebar or add a new one
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modals */}
-      <SettingsDialog isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <DiscoverDialog isOpen={discoverOpen} onClose={() => setDiscoverOpen(false)} />
     </div>
   )
