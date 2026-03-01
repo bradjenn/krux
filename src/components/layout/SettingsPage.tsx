@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import { X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ChevronLeft } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { useAppStore } from '@/stores/appStore'
 import { THEME_PRESETS, applyTheme } from '@/lib/themes'
@@ -11,7 +10,19 @@ interface Settings {
   theme: string
   font_size: number
   default_shell: string
+  line_height: number
+  cursor_style: string
+  cursor_blink: boolean
+  scrollback: number
+  font_family: string
 }
+
+type Section = 'appearance' | 'terminal'
+
+const NAV_ITEMS: { id: Section; label: string }[] = [
+  { id: 'appearance', label: 'Appearance' },
+  { id: 'terminal', label: 'Terminal' },
+]
 
 interface SettingsPageProps {
   onClose: () => void
@@ -19,111 +30,241 @@ interface SettingsPageProps {
 
 export default function SettingsPage({ onClose }: SettingsPageProps) {
   const [settings, setSettings] = useState<Settings | null>(null)
-  const { theme, setTheme } = useAppStore()
+  const [activeSection, setActiveSection] = useState<Section>('appearance')
+  const { theme, setTheme, setFontSize, setLineHeight, setCursorStyle, setCursorBlink, setScrollback, setFontFamily } = useAppStore()
 
   useEffect(() => {
     invoke<Settings>('load_settings').then(setSettings)
   }, [])
 
-  const handleThemeChange = async (themeId: string) => {
-    setTheme(themeId)
-    applyTheme(themeId)
-    if (settings) {
-      const updated = { ...settings, theme: themeId }
-      setSettings(updated)
-      await invoke('save_settings', { settings: updated })
-    }
+  const save = (updated: Settings) => {
+    setSettings(updated)
+    invoke('save_settings', { settings: updated })
   }
 
-  const handleSave = async () => {
-    if (settings) {
-      await invoke('save_settings', { settings })
-    }
+  const handleThemeChange = (themeId: string) => {
+    setTheme(themeId)
+    applyTheme(themeId)
+    if (settings) save({ ...settings, theme: themeId })
+  }
+
+  const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
+    if (!settings) return
+    const updated = { ...settings, [key]: value }
+    save(updated)
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        className="fixed top-4 right-4 z-50 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.05] transition-colors duration-100"
-        title="Close (Esc)"
-      >
-        <X size={18} />
-      </button>
-
-      <div className="max-w-2xl mx-auto px-8 py-12 space-y-8">
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">
-            Settings
-          </h1>
-          <p className="text-xs mt-1 text-dim">
-            Configure your terminal manager
-          </p>
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Header */}
+      <div className="flex justify-center pt-8 pb-4">
+        <div className="w-full max-w-5xl px-8">
+        <button
+          onClick={onClose}
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-100 cursor-pointer"
+        >
+          <ChevronLeft size={18} />
+          <span className="text-lg font-semibold text-foreground">Settings</span>
+        </button>
         </div>
+      </div>
 
-        {/* Theme */}
-        <section>
-          <label className="block mb-3 uppercase tracking-wide font-medium text-[13px] text-muted-foreground">
-            Theme
-          </label>
-          <div className="grid grid-cols-3 gap-2.5">
-            {Object.entries(THEME_PRESETS).map(([id, preset]) => (
-              <button
-                key={id}
-                onClick={() => handleThemeChange(id)}
-                className={cn(
-                  "flex items-center gap-2.5 px-3.5 py-3 rounded-md text-xs transition-all duration-150 cursor-pointer border",
-                  theme === id
-                    ? "border-primary bg-green/[0.06] text-foreground"
-                    : "border-border bg-surface text-muted-foreground hover:border-dim"
-                )}
-              >
-                <div className="flex gap-1">
-                  <span className="w-3.5 h-3.5 rounded-full" style={{ background: preset.ui.accent }} />
-                  <span className="w-3.5 h-3.5 rounded-full" style={{ background: preset.ui.accent2 }} />
-                  <span className="w-3.5 h-3.5 rounded-full" style={{ background: preset.ui.bg }} />
+      {/* Body: sidebar + content, centered */}
+      <div className="flex flex-1 min-h-0 justify-center pb-8">
+        <div className="flex w-full max-w-5xl px-8">
+        {/* Sidebar nav */}
+        <nav className="w-44 shrink-0 pr-6 pt-2">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              className={cn(
+                "block w-full text-left px-3 py-1.5 rounded-md text-[13px] transition-colors duration-100 cursor-pointer",
+                activeSection === item.id
+                  ? "bg-white/[0.06] text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto border-l border-border pl-8 pt-2">
+          {activeSection === 'appearance' && (
+            <div className="space-y-6">
+              <h2 className="text-sm font-medium text-foreground">Appearance</h2>
+
+              <SettingRow label="Theme" description="Choose a color scheme for the app">
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.entries(THEME_PRESETS).map(([id, preset]) => (
+                    <button
+                      key={id}
+                      onClick={() => handleThemeChange(id)}
+                      className={cn(
+                        "flex items-center gap-2.5 px-3 py-2.5 rounded-md text-xs transition-all duration-150 cursor-pointer border",
+                        theme === id
+                          ? "border-primary bg-primary/[0.06] text-foreground"
+                          : "border-border bg-surface text-muted-foreground hover:border-dim"
+                      )}
+                    >
+                      <div className="flex gap-1">
+                        <span className="w-3 h-3 rounded-full" style={{ background: preset.ui.accent }} />
+                        <span className="w-3 h-3 rounded-full" style={{ background: preset.ui.accent2 }} />
+                        <span className="w-3 h-3 rounded-full" style={{ background: preset.ui.bg }} />
+                      </div>
+                      <span>{preset.name}</span>
+                    </button>
+                  ))}
                 </div>
-                <span>{preset.name}</span>
-              </button>
-            ))}
-          </div>
-        </section>
+              </SettingRow>
+            </div>
+          )}
 
-        {/* Default Shell */}
-        <section>
-          <label className="block mb-3 uppercase tracking-wide font-medium text-[13px] text-muted-foreground">
-            Default Shell
-          </label>
-          <Input
-            value={settings?.default_shell ?? ''}
-            onChange={(e) => settings && setSettings({ ...settings, default_shell: e.target.value })}
-            className="max-w-xs"
-          />
-        </section>
+          {activeSection === 'terminal' && (
+            <div className="space-y-6">
+              <h2 className="text-sm font-medium text-foreground">Terminal</h2>
 
-        {/* Font Size */}
-        <section>
-          <label className="block mb-3 uppercase tracking-wide font-medium text-[13px] text-muted-foreground">
-            Font Size
-          </label>
-          <Input
-            type="number"
-            min={8}
-            max={32}
-            value={settings?.font_size ?? 14}
-            onChange={(e) => settings && setSettings({ ...settings, font_size: Number(e.target.value) })}
-            className="w-24"
-          />
-        </section>
+              <SettingRow label="Font family" description="Primary font for the terminal">
+                <Input
+                  value={settings?.font_family ?? 'MesloLGS Nerd Font'}
+                  onChange={(e) => {
+                    updateSetting('font_family', e.target.value)
+                    setFontFamily(e.target.value)
+                  }}
+                  className="w-64"
+                />
+              </SettingRow>
 
-        {/* Save */}
-        <div>
-          <Button size="sm" onClick={handleSave}>
-            Save
-          </Button>
+              <SettingRow label="Font size" description="Terminal text size in pixels">
+                <Input
+                  type="number"
+                  min={8}
+                  max={32}
+                  value={settings?.font_size ?? 14}
+                  onChange={(e) => {
+                    const size = Number(e.target.value)
+                    updateSetting('font_size', size)
+                    setFontSize(size)
+                  }}
+                  className="w-20"
+                />
+              </SettingRow>
+
+              <SettingRow label="Line height" description="Spacing between lines (1.0 – 2.0)">
+                <Input
+                  type="number"
+                  min={1.0}
+                  max={2.0}
+                  step={0.1}
+                  value={settings?.line_height ?? 1.2}
+                  onChange={(e) => {
+                    const lh = Number(e.target.value)
+                    updateSetting('line_height', lh)
+                    setLineHeight(lh)
+                  }}
+                  className="w-20"
+                />
+              </SettingRow>
+
+              <SettingRow label="Cursor style" description="Shape of the terminal cursor">
+                <div className="flex gap-1.5">
+                  {(['block', 'bar', 'underline'] as const).map((style) => (
+                    <button
+                      key={style}
+                      onClick={() => {
+                        updateSetting('cursor_style', style)
+                        setCursorStyle(style)
+                      }}
+                      className={cn(
+                        "px-3 py-1.5 rounded-md text-xs border transition-colors duration-100 cursor-pointer capitalize",
+                        settings?.cursor_style === style
+                          ? "border-primary bg-primary/[0.06] text-foreground"
+                          : "border-border text-muted-foreground hover:border-dim"
+                      )}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+              </SettingRow>
+
+              <SettingRow label="Cursor blink" description="Whether the cursor blinks">
+                <Toggle
+                  checked={settings?.cursor_blink ?? true}
+                  onChange={(v) => {
+                    updateSetting('cursor_blink', v)
+                    setCursorBlink(v)
+                  }}
+                />
+              </SettingRow>
+
+              <SettingRow label="Scrollback" description="Number of lines kept in scroll history">
+                <Input
+                  type="number"
+                  min={1000}
+                  max={100000}
+                  step={1000}
+                  value={settings?.scrollback ?? 10000}
+                  onChange={(e) => {
+                    const val = Number(e.target.value)
+                    updateSetting('scrollback', val)
+                    setScrollback(val)
+                  }}
+                  className="w-28"
+                />
+              </SettingRow>
+
+              <SettingRow label="Default shell" description="Shell to use when opening new terminals">
+                <Input
+                  value={settings?.default_shell ?? ''}
+                  onChange={(e) => updateSetting('default_shell', e.target.value)}
+                  className="w-64"
+                />
+              </SettingRow>
+            </div>
+          )}
+        </div>
         </div>
       </div>
     </div>
+  )
+}
+
+function SettingRow({
+  label,
+  description,
+  children,
+}: {
+  label: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="border-b border-border pb-5">
+      <div className="text-[13px] text-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground mt-0.5 mb-3">{description}</div>
+      {children}
+    </div>
+  )
+}
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative w-9 h-5 rounded-full transition-colors duration-150 cursor-pointer",
+        checked ? "bg-primary" : "bg-border"
+      )}
+    >
+      <span
+        className={cn(
+          "absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background transition-transform duration-150",
+          checked && "translate-x-4"
+        )}
+      />
+    </button>
   )
 }

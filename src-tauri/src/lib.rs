@@ -57,6 +57,27 @@ pub fn run() {
                 .build()?;
 
             // View menu
+            let font_increase = MenuItem::with_id(
+                app,
+                "font-increase",
+                "Increase Font Size",
+                true,
+                Some("CmdOrCtrl+="),
+            )?;
+            let font_decrease = MenuItem::with_id(
+                app,
+                "font-decrease",
+                "Decrease Font Size",
+                true,
+                Some("CmdOrCtrl+-"),
+            )?;
+            let font_reset = MenuItem::with_id(
+                app,
+                "font-reset",
+                "Reset Font Size",
+                true,
+                Some("CmdOrCtrl+0"),
+            )?;
             let toggle_sidebar = MenuItem::with_id(
                 app,
                 "toggle-sidebar",
@@ -68,6 +89,10 @@ pub fn run() {
                 MenuItem::with_id(app, "open-gsd", "GSD Workflow", true, Some("CmdOrCtrl+G"))?;
             let view_menu = SubmenuBuilder::new(app, "View")
                 .item(&toggle_sidebar)
+                .separator()
+                .item(&font_increase)
+                .item(&font_decrease)
+                .item(&font_reset)
                 .separator()
                 .item(&open_gsd)
                 .build()?;
@@ -92,7 +117,7 @@ pub fn run() {
             let id = event.id().0.as_str();
             match id {
                 "settings" | "new-terminal" | "close-tab" | "add-project" | "toggle-sidebar"
-                | "open-gsd" => {
+                | "open-gsd" | "font-increase" | "font-decrease" | "font-reset" => {
                     let _ = app.emit("menu-action", id);
                 }
                 _ => {}

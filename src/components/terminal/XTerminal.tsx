@@ -24,7 +24,15 @@ export default function XTerminal({ existingTerminalId, onExit }: XTerminalProps
   const fitAddonRef = useRef<FitAddon | null>(null)
   const [terminalId] = useState<string>(existingTerminalId)
   const theme = useAppStore((s) => s.theme)
+  const fontSize = useAppStore((s) => s.fontSize)
+  const lineHeight = useAppStore((s) => s.lineHeight)
+  const cursorStyle = useAppStore((s) => s.cursorStyle)
+  const cursorBlink = useAppStore((s) => s.cursorBlink)
+  const scrollback = useAppStore((s) => s.scrollback)
+  const fontFamily = useAppStore((s) => s.fontFamily)
   const termTheme = getTerminalTheme(theme)
+
+  const fontFamilyCSS = `"${fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`
 
   // Subscribe to PTY output → write to xterm
   useTerminalOutput(terminalId, (data) => {
@@ -36,26 +44,32 @@ export default function XTerminal({ existingTerminalId, onExit }: XTerminalProps
     onExit?.()
   })
 
-  // Update xterm theme when app theme changes
+  // Update xterm options when settings change
   useEffect(() => {
-    if (terminalRef.current) {
-      terminalRef.current.options.theme = getTerminalTheme(theme)
-    }
-  }, [theme])
+    const term = terminalRef.current
+    if (!term) return
+    term.options.theme = getTerminalTheme(theme)
+    term.options.fontSize = fontSize
+    term.options.lineHeight = lineHeight
+    term.options.cursorStyle = cursorStyle
+    term.options.cursorBlink = cursorBlink
+    term.options.fontFamily = `"${fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`
+    fitAddonRef.current?.fit()
+  }, [theme, fontSize, lineHeight, cursorStyle, cursorBlink, fontFamily])
 
   useEffect(() => {
     if (!containerRef.current) return
 
-    const currentTheme = getTerminalTheme(useAppStore.getState().theme)
+    const s = useAppStore.getState()
 
     const term = new Terminal({
-      theme: currentTheme,
-      fontFamily: '"MesloLGS Nerd Font", "JetBrains Mono", "SF Mono", "Fira Code", monospace',
-      fontSize: 14,
-      lineHeight: 1.2,
-      cursorBlink: true,
-      cursorStyle: 'bar',
-      scrollback: 10000,
+      theme: getTerminalTheme(s.theme),
+      fontFamily: `"${s.fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`,
+      fontSize: s.fontSize,
+      lineHeight: s.lineHeight,
+      cursorBlink: s.cursorBlink,
+      cursorStyle: s.cursorStyle,
+      scrollback: s.scrollback,
       allowProposedApi: true,
     })
 

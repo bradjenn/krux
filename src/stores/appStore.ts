@@ -35,9 +35,21 @@ interface AppState {
   setActiveTab: (id: string) => void
   getProjectTabs: (projectId: string) => Tab[]
 
-  // Theme
+  // Theme & terminal settings
   theme: string
   setTheme: (theme: string) => void
+  fontSize: number
+  setFontSize: (size: number) => void
+  lineHeight: number
+  setLineHeight: (lh: number) => void
+  cursorStyle: 'block' | 'bar' | 'underline'
+  setCursorStyle: (style: 'block' | 'bar' | 'underline') => void
+  cursorBlink: boolean
+  setCursorBlink: (blink: boolean) => void
+  scrollback: number
+  setScrollback: (lines: number) => void
+  fontFamily: string
+  setFontFamily: (family: string) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -95,7 +107,19 @@ export const useAppStore = create<AppState>((set, get) => ({
   setActiveTab: (id) => set({ activeTabId: id }),
   getProjectTabs: (projectId) => get().tabs.filter((t) => t.projectId === projectId),
 
-  // Theme
+  // Theme & terminal settings
   theme: 'ghostty',
   setTheme: (theme) => set({ theme }),
+  fontSize: 14,
+  setFontSize: (fontSize) => set({ fontSize }),
+  lineHeight: 1.2,
+  setLineHeight: (lineHeight) => set({ lineHeight }),
+  cursorStyle: 'block',
+  setCursorStyle: (cursorStyle) => set({ cursorStyle }),
+  cursorBlink: true,
+  setCursorBlink: (cursorBlink) => set({ cursorBlink }),
+  scrollback: 10000,
+  setScrollback: (scrollback) => set({ scrollback }),
+  fontFamily: 'MesloLGS Nerd Font',
+  setFontFamily: (fontFamily) => set({ fontFamily }),
 }))

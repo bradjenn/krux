@@ -8,6 +8,32 @@ pub struct Settings {
     pub theme: String,
     pub font_size: u16,
     pub default_shell: String,
+    #[serde(default = "default_line_height")]
+    pub line_height: f32,
+    #[serde(default = "default_cursor_style")]
+    pub cursor_style: String,
+    #[serde(default = "default_true")]
+    pub cursor_blink: bool,
+    #[serde(default = "default_scrollback")]
+    pub scrollback: u32,
+    #[serde(default = "default_font_family")]
+    pub font_family: String,
+}
+
+fn default_line_height() -> f32 {
+    1.2
+}
+fn default_cursor_style() -> String {
+    "block".to_string()
+}
+fn default_true() -> bool {
+    true
+}
+fn default_scrollback() -> u32 {
+    10000
+}
+fn default_font_family() -> String {
+    "MesloLGS Nerd Font".to_string()
 }
 
 impl Default for Settings {
@@ -17,6 +43,11 @@ impl Default for Settings {
             theme: "ghostty".to_string(),
             font_size: 14,
             default_shell: shell,
+            line_height: default_line_height(),
+            cursor_style: default_cursor_style(),
+            cursor_blink: default_true(),
+            scrollback: default_scrollback(),
+            font_family: default_font_family(),
         }
     }
 }

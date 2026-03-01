@@ -48,11 +48,26 @@ export default function Shell() {
     [tabs, closeTab],
   )
 
-  // Load saved theme on startup
+  // Load saved settings on startup
   useEffect(() => {
-    invoke<{ theme: string }>('load_settings').then((settings) => {
-      setTheme(settings.theme)
-      applyTheme(settings.theme)
+    invoke<{
+      theme: string
+      font_size: number
+      line_height: number
+      cursor_style: string
+      cursor_blink: boolean
+      scrollback: number
+      font_family: string
+    }>('load_settings').then((s) => {
+      setTheme(s.theme)
+      applyTheme(s.theme)
+      const store = useAppStore.getState()
+      store.setFontSize(s.font_size)
+      store.setLineHeight(s.line_height)
+      store.setCursorStyle(s.cursor_style as 'block' | 'bar' | 'underline')
+      store.setCursorBlink(s.cursor_blink)
+      store.setScrollback(s.scrollback)
+      store.setFontFamily(s.font_family)
     })
   }, [])
 
@@ -112,6 +127,35 @@ export default function Shell() {
         case 'toggle-sidebar':
           setSidebarVisible((v) => !v)
           break
+
+        case 'font-increase': {
+          const store = useAppStore.getState()
+          const newSize = Math.min(32, store.fontSize + 1)
+          store.setFontSize(newSize)
+          invoke('load_settings').then((s: any) => {
+            invoke('save_settings', { settings: { ...s, font_size: newSize } })
+          })
+          break
+        }
+
+        case 'font-decrease': {
+          const store = useAppStore.getState()
+          const newSize = Math.max(8, store.fontSize - 1)
+          store.setFontSize(newSize)
+          invoke('load_settings').then((s: any) => {
+            invoke('save_settings', { settings: { ...s, font_size: newSize } })
+          })
+          break
+        }
+
+        case 'font-reset': {
+          const store = useAppStore.getState()
+          store.setFontSize(14)
+          invoke('load_settings').then((s: any) => {
+            invoke('save_settings', { settings: { ...s, font_size: 14 } })
+          })
+          break
+        }
 
         case 'open-gsd':
           if (activeProjectId) {
