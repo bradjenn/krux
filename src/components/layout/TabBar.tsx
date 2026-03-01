@@ -4,9 +4,8 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { PlusSignIcon, Cancel01Icon, CommandLineIcon } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
-import { createTerminal } from '@/hooks/useTauri'
+import { createTerminal, writeTerminal } from '@/hooks/useTauri'
 import { PLUGINS } from '@/plugins'
-import type { TabType } from '@/plugins/types'
 
 interface TabBarProps {
   onCloseTab: (id: string) => void
@@ -18,32 +17,11 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
-  const [availablePluginTabs, setAvailablePluginTabs] = useState<TabType[]>([])
   const menuRef = useRef<HTMLDivElement>(null)
   const plusBtnRef = useRef<HTMLButtonElement>(null)
 
   const projectTabs = tabs.filter((t) => t.projectId === activeProjectId)
   const activeProject = projects.find((p) => p.id === activeProjectId)
-
-  // Check plugin availability when project changes
-  useEffect(() => {
-    if (!activeProject) return
-
-    async function checkPlugins() {
-      const available: TabType[] = []
-      for (const plugin of PLUGINS) {
-        let isAvail = true
-        if (plugin.isAvailable) {
-          isAvail = await plugin.isAvailable(activeProject!.path)
-        }
-        if (isAvail) {
-          available.push(...plugin.tabTypes)
-        }
-      }
-      setAvailablePluginTabs(available)
-    }
-    checkPlugins()
-  }, [activeProject])
 
   // Close menu on click outside
   useEffect(() => {
@@ -74,23 +52,26 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
     setMenuOpen(false)
   }
 
-  const handleNewPluginTab = (tabType: TabType) => {
+  const handleStartGsd = async () => {
     if (!activeProject) return
+    const terminalId = await createTerminal(activeProject.path, 80, 24)
     addTab({
       id: crypto.randomUUID(),
-      type: tabType.id,
-      label: tabType.label,
+      type: 'shell',
+      label: 'GSD Init',
       projectId: activeProject.id,
+      terminalId,
     })
     setMenuOpen(false)
+    setTimeout(() => {
+      writeTerminal(terminalId, 'claude "/gsd:new-project"\r')
+    }, 500)
   }
 
   const handlePlusClick = () => {
-    if (availablePluginTabs.length === 0) {
-      // No plugin tabs available — create a terminal directly
+    if (PLUGINS.length === 0) {
       handleNewShellTab()
     } else {
-      // Show dropdown with terminal + plugin options
       if (plusBtnRef.current) {
         const rect = plusBtnRef.current.getBoundingClientRect()
         setMenuPos({ top: rect.bottom, left: rect.left })
@@ -174,18 +155,21 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
             Terminal
           </button>
 
-          <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
-
-          {availablePluginTabs.map((tabType) => (
-            <button
-              key={tabType.id}
-              onClick={() => handleNewPluginTab(tabType)}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
-            >
-              <tabType.icon size={14} />
-              {tabType.label}
-            </button>
-          ))}
+          {PLUGINS.length > 0 && (
+            <>
+              <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
+              {PLUGINS.map((plugin) => (
+                <button
+                  key={plugin.id}
+                  onClick={handleStartGsd}
+                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+                >
+                  <plugin.icon size={14} />
+                  {plugin.name}
+                </button>
+              ))}
+            </>
+          )}
         </div>,
         document.body
       )}

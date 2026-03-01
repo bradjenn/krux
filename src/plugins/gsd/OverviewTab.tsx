@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Circle } from 'lucide-react'
+import { invoke } from '@tauri-apps/api/core'
+import { CheckCircle2, Circle, Rocket } from 'lucide-react'
+import { useAppStore } from '@/stores/appStore'
+import { createTerminal, writeTerminal } from '@/hooks/useTauri'
 import {
   parseRoadmap,
   parseState,
@@ -95,32 +98,78 @@ interface OverviewTabProps {
   projectPath: string
 }
 
-export default function OverviewTab({ projectPath }: OverviewTabProps) {
+export default function OverviewTab({ projectId, projectPath }: OverviewTabProps) {
+  const { addTab } = useAppStore()
   const [phases, setPhases] = useState<Phase[]>([])
   const [state, setState] = useState<ProjectState>({ phase: null, plan: null, status: null, progress: null })
   const [meta, setMeta] = useState<ProjectMeta>({ name: 'Loading...', description: null })
+  const [hasPlanning, setHasPlanning] = useState(true)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const [p, s, m] = await Promise.all([
-        parseRoadmap(projectPath),
-        parseState(projectPath),
-        parseProjectMeta(projectPath),
-      ])
-      setPhases(p)
-      setState(s)
-      setMeta(m)
+      const exists = await invoke<boolean>('path_exists', { path: `${projectPath}/.planning` })
+      setHasPlanning(exists)
+      if (exists) {
+        const [p, s, m] = await Promise.all([
+          parseRoadmap(projectPath),
+          parseState(projectPath),
+          parseProjectMeta(projectPath),
+        ])
+        setPhases(p)
+        setState(s)
+        setMeta(m)
+      }
       setLoading(false)
     }
     load()
   }, [projectPath])
 
+  const handleStartGsd = async () => {
+    const terminalId = await createTerminal(projectPath, 80, 24)
+    addTab({
+      id: crypto.randomUUID(),
+      type: 'shell',
+      label: 'GSD Init',
+      projectId,
+      terminalId,
+    })
+    // Give the shell a moment to initialize, then launch claude with the command
+    setTimeout(() => {
+      writeTerminal(terminalId, 'claude "/gsd:new-project"\r')
+    }, 500)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-base text-muted-foreground">Loading project...</p>
+      </div>
+    )
+  }
+
+  if (!hasPlanning) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-5">
+        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/[0.08]">
+          <Rocket className="w-7 h-7 text-primary" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-foreground mb-1">
+            Start a GSD Project
+          </h2>
+          <p className="text-xs text-muted-foreground max-w-xs">
+            Initialize a GSD workflow for this project. This will open a terminal
+            and run the setup process.
+          </p>
+        </div>
+        <button
+          onClick={handleStartGsd}
+          className="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 bg-primary text-background hover:bg-primary/90"
+        >
+          Initialize GSD Workflow
+        </button>
       </div>
     )
   }

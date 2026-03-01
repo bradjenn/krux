@@ -10,8 +10,9 @@ export interface TabType {
 export interface PluginDefinition {
   id: string
   name: string
+  icon: ComponentType<{ size?: number }>
   tabTypes: TabType[]
+  /** Tab type to open from the + dropdown (defaults to first tabType) */
+  defaultTabType?: string
   sidebarSection?: ComponentType<{ projectId: string; projectPath: string }>
-  /** Gate plugin visibility — e.g. check if .planning/ exists */
-  isAvailable?: (projectPath: string) => Promise<boolean>
 }

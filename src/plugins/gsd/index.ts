@@ -1,5 +1,4 @@
-import { invoke } from '@tauri-apps/api/core'
-import { LayoutDashboard, FileText, Play } from 'lucide-react'
+import { LayoutDashboard, FileText, Play, Rocket } from 'lucide-react'
 import type { PluginDefinition } from '../types'
 import OverviewTab from './OverviewTab'
 import DocumentsTab from './DocumentsTab'
@@ -9,6 +8,8 @@ import GsdSidebar from './GsdSidebar'
 export const gsdPlugin: PluginDefinition = {
   id: 'gsd',
   name: 'GSD Workflow',
+  icon: Rocket,
+  defaultTabType: 'gsd:overview',
   tabTypes: [
     {
       id: 'gsd:overview',
@@ -30,7 +31,5 @@ export const gsdPlugin: PluginDefinition = {
     },
   ],
   sidebarSection: GsdSidebar,
-  isAvailable: async (projectPath: string) => {
-    return invoke<boolean>('path_exists', { path: `${projectPath}/.planning` })
-  },
+  // Always available — tabs handle missing .planning/ gracefully
 }

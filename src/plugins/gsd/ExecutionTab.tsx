@@ -3,6 +3,13 @@ import { Play, Square, ChevronDown, RotateCcw } from 'lucide-react'
 import { Command } from '@tauri-apps/plugin-shell'
 import { parseRoadmap, type Phase } from './parser'
 import { cn } from '@/lib/utils'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
 
 type ExecStatus = 'idle' | 'starting' | 'running' | 'done' | 'error' | 'cancelled'
 
@@ -114,18 +121,22 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
       <div className="shrink-0 px-4 py-3 bg-surface border-b border-border">
         <div className="flex items-center gap-3">
           {/* Phase selector */}
-          <select
-            value={selectedPhase ?? ''}
-            onChange={(e) => setSelectedPhase(e.target.value)}
+          <Select
+            value={selectedPhase ?? undefined}
+            onValueChange={setSelectedPhase}
             disabled={isRunning}
-            className="text-xs px-3 py-1.5 rounded bg-background text-foreground border border-border"
           >
-            {phases.map((p) => (
-              <option key={p.number} value={p.number}>
-                Phase {p.number}: {p.name} ({p.disk_status.replace('_', ' ')})
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-auto min-w-[200px]">
+              <SelectValue placeholder="Select a phase..." />
+            </SelectTrigger>
+            <SelectContent>
+              {phases.map((p) => (
+                <SelectItem key={p.number} value={p.number}>
+                  Phase {p.number}: {p.name} ({p.disk_status.replace('_', ' ')})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Start/Stop buttons */}
           {!isRunning && (
