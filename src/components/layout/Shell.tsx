@@ -34,7 +34,8 @@ export default function Shell() {
   const handleCloseTab = useCallback(
     (tabId: string) => {
       const tab = tabs.find((t) => t.id === tabId)
-      if (tab?.terminalId) {
+      if (!tab) return // Already closed (e.g. PTY exit after manual close)
+      if (tab.terminalId) {
         closeTerminal(tab.terminalId).catch(() => {})
       }
       closeTab(tabId)
@@ -50,25 +51,24 @@ export default function Shell() {
     })
   }, [])
 
-  // Auto-create a shell tab when selecting a project with no tabs
+  // Auto-create a shell tab when a project has no tabs (on select or after closing last tab)
+  const projectTabs = activeProjectId ? getProjectTabs(activeProjectId) : []
   useEffect(() => {
     if (!activeProjectId) return
+    if (projectTabs.length > 0) return
     const project = projects.find((p) => p.id === activeProjectId)
     if (!project) return
 
-    const projectTabs = getProjectTabs(activeProjectId)
-    if (projectTabs.length === 0) {
-      createTerminal(project.path, 80, 24).then((terminalId) => {
-        addTab({
-          id: crypto.randomUUID(),
-          type: 'shell',
-          label: 'Terminal 1',
-          projectId: activeProjectId,
-          terminalId,
-        })
+    createTerminal(project.path, 80, 24).then((terminalId) => {
+      addTab({
+        id: crypto.randomUUID(),
+        type: 'shell',
+        label: 'Terminal 1',
+        projectId: activeProjectId,
+        terminalId,
       })
-    }
-  }, [activeProjectId, projects])
+    })
+  }, [activeProjectId, projects, projectTabs.length])
 
   // Keyboard shortcuts
   useEffect(() => {

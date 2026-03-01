@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { PlusSignIcon, Cancel01Icon, CommandLineIcon } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
@@ -16,15 +17,17 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
     useAppStore()
 
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
   const [availablePluginTabs, setAvailablePluginTabs] = useState<TabType[]>([])
   const menuRef = useRef<HTMLDivElement>(null)
+  const plusBtnRef = useRef<HTMLButtonElement>(null)
 
   const projectTabs = tabs.filter((t) => t.projectId === activeProjectId)
   const activeProject = projects.find((p) => p.id === activeProjectId)
 
-  // Check plugin availability when project changes or menu opens
+  // Check plugin availability when project changes
   useEffect(() => {
-    if (!menuOpen || !activeProject) return
+    if (!activeProject) return
 
     async function checkPlugins() {
       const available: TabType[] = []
@@ -40,13 +43,16 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
       setAvailablePluginTabs(available)
     }
     checkPlugins()
-  }, [menuOpen, activeProject])
+  }, [activeProject])
 
   // Close menu on click outside
   useEffect(() => {
     if (!menuOpen) return
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        plusBtnRef.current && !plusBtnRef.current.contains(e.target as Node)
+      ) {
         setMenuOpen(false)
       }
     }
@@ -79,7 +85,21 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
     setMenuOpen(false)
   }
 
-  if (!activeProjectId || projectTabs.length === 0) return null
+  const handlePlusClick = () => {
+    if (availablePluginTabs.length === 0) {
+      // No plugin tabs available — create a terminal directly
+      handleNewShellTab()
+    } else {
+      // Show dropdown with terminal + plugin options
+      if (plusBtnRef.current) {
+        const rect = plusBtnRef.current.getBoundingClientRect()
+        setMenuPos({ top: rect.bottom, left: rect.left })
+      }
+      setMenuOpen(!menuOpen)
+    }
+  }
+
+  if (!activeProjectId) return null
 
   return (
     <div
@@ -120,66 +140,55 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
         )
       })}
 
-      {/* New tab button with dropdown */}
-      <div className="relative" ref={menuRef}>
-        <button
-          onClick={() => {
-            if (availablePluginTabs.length === 0 && PLUGINS.length === 0) {
-              // No plugins — just create a shell tab directly
-              handleNewShellTab()
-            } else {
-              setMenuOpen(!menuOpen)
-            }
-          }}
-          className="flex items-center justify-center shrink-0 transition-colors duration-150 cursor-pointer text-dim hover:text-primary"
-          style={{
-            width: 36,
-            height: '100%',
-          }}
-          title="New tab (⌘T)"
-        >
-          <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
-        </button>
+      {/* New tab button */}
+      <button
+        ref={plusBtnRef}
+        onClick={handlePlusClick}
+        className="flex items-center justify-center shrink-0 transition-colors duration-150 cursor-pointer text-dim hover:text-primary"
+        style={{
+          width: 36,
+          height: '100%',
+        }}
+        title="New tab (⌘T)"
+      >
+        <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
+      </button>
 
-        {menuOpen && (
-          <div
-            className="absolute top-full left-0 z-50 py-1 min-w-[160px] bg-surface border border-border"
-            style={{
-              borderRadius: 6,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            }}
+      {/* Dropdown via portal to escape overflow clipping */}
+      {menuOpen && createPortal(
+        <div
+          ref={menuRef}
+          className="fixed z-50 py-1 min-w-[160px] bg-surface border border-border"
+          style={{
+            top: menuPos.top,
+            left: menuPos.left,
+            borderRadius: 6,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          }}
+        >
+          <button
+            onClick={handleNewShellTab}
+            className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
           >
-            {/* Shell option */}
+            <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
+            Terminal
+          </button>
+
+          <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
+
+          {availablePluginTabs.map((tabType) => (
             <button
-              onClick={handleNewShellTab}
+              key={tabType.id}
+              onClick={() => handleNewPluginTab(tabType)}
               className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
             >
-              <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
-              Terminal
+              <tabType.icon size={14} />
+              {tabType.label}
             </button>
-
-            {/* Plugin tab types */}
-            {availablePluginTabs.length > 0 && (
-              <>
-                <div
-                  className="mx-2 my-1 bg-border"
-                  style={{ height: 1 }}
-                />
-                {availablePluginTabs.map((tabType) => (
-                  <button
-                    key={tabType.id}
-                    onClick={() => handleNewPluginTab(tabType)}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
-                  >
-                    <tabType.icon size={14} />
-                    {tabType.label}
-                  </button>
-                ))}
-              </>
-            )}
-          </div>
-        )}
-      </div>
+          ))}
+        </div>,
+        document.body
+      )}
     </div>
   )
 }
