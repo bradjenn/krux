@@ -143,6 +143,9 @@ export default function Shell() {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setDiscoverOpen(false)
+        if (useAppStore.getState().activeView === 'settings') {
+          useAppStore.getState().setActiveView('projects')
+        }
       }
     }
     window.addEventListener('keydown', handler)
@@ -158,81 +161,82 @@ export default function Shell() {
       <div className="flex flex-1 min-h-0">
         <Sidebar visible={sidebarVisible} />
 
-        {activeView === 'settings' ? (
-          <SettingsPage />
-        ) : (
-          <div className="flex flex-col flex-1 min-w-0">
-            <TabBar onCloseTab={handleCloseTab} />
+        <div className="flex flex-col flex-1 min-w-0">
+          <TabBar onCloseTab={handleCloseTab} />
 
-            {/* Tab content area */}
-            <div className="flex-1 min-h-0 relative">
-              {/* Render all shell tabs but only show active */}
-              {tabs
-                .filter((t) => t.type === 'shell' && t.terminalId && t.projectId === activeProjectId)
-                .map((tab) => (
+          {/* Tab content area */}
+          <div className="flex-1 min-h-0 relative">
+            {/* Render all shell tabs but only show active */}
+            {tabs
+              .filter((t) => t.type === 'shell' && t.terminalId && t.projectId === activeProjectId)
+              .map((tab) => (
+                <div
+                  key={tab.terminalId}
+                  className={cn(
+                    "absolute inset-0 transition-opacity duration-100",
+                    activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                  )}
+                >
+                  <XTerminal
+                    projectPath={activeProject?.path ?? '~'}
+                    existingTerminalId={tab.terminalId!}
+                    onExit={() => handleCloseTab(tab.id)}
+                  />
+                </div>
+              ))}
+
+            {/* Render plugin tabs */}
+            {tabs
+              .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
+              .map((tab) => {
+                const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
+                if (!tabType) return null
+                const TabComponent = tabType.component
+                return (
                   <div
-                    key={tab.terminalId}
+                    key={tab.id}
                     className={cn(
-                      "absolute inset-0 transition-opacity duration-100",
+                      "absolute inset-0 overflow-auto bg-background transition-opacity duration-100",
                       activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
                     )}
                   >
-                    <XTerminal
-                      projectPath={activeProject?.path ?? '~'}
-                      existingTerminalId={tab.terminalId!}
-                      onExit={() => handleCloseTab(tab.id)}
+                    <TabComponent
+                      projectId={tab.projectId}
+                      projectPath={activeProject?.path ?? ''}
                     />
                   </div>
-                ))}
+                )
+              })}
 
-              {/* Render plugin tabs */}
-              {tabs
-                .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
-                .map((tab) => {
-                  const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
-                  if (!tabType) return null
-                  const TabComponent = tabType.component
-                  return (
-                    <div
-                      key={tab.id}
-                      className={cn(
-                        "absolute inset-0 overflow-auto bg-background transition-opacity duration-100",
-                        activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-                      )}
-                    >
-                      <TabComponent
-                        projectId={tab.projectId}
-                        projectPath={activeProject?.path ?? ''}
-                      />
-                    </div>
-                  )
-                })}
-
-              {/* Empty state */}
-              {!activeProjectId && (
+            {/* Empty state */}
+            {!activeProjectId && (
+              <div
+                className="flex flex-col items-center justify-center h-full gap-4 text-dim"
+              >
                 <div
-                  className="flex flex-col items-center justify-center h-full gap-4 text-dim"
+                  className="flex items-center justify-center"
+                  style={{ fontSize: 28, opacity: 0.3, fontWeight: 300 }}
                 >
-                  <div
-                    className="flex items-center justify-center"
-                    style={{ fontSize: 28, opacity: 0.3, fontWeight: 300 }}
-                  >
-                    <span className="text-muted-foreground">&gt;_</span>
+                  <span className="text-muted-foreground">&gt;_</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-base font-medium text-muted-foreground">
+                    Select a project
                   </div>
-                  <div className="text-center">
-                    <div className="text-base font-medium text-muted-foreground">
-                      Select a project
-                    </div>
-                    <div className="text-xs mt-1">
-                      Choose a project from the sidebar to manage its Claude Code sessions
-                    </div>
+                  <div className="text-xs mt-1">
+                    Choose a project from the sidebar to manage its Claude Code sessions
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Settings overlay */}
+      {activeView === 'settings' && (
+        <SettingsPage onClose={() => useAppStore.getState().setActiveView('projects')} />
+      )}
 
       {/* Modals */}
       <DiscoverDialog isOpen={discoverOpen} onClose={() => setDiscoverOpen(false)} />

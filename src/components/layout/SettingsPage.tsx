@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAppStore } from '@/stores/appStore'
@@ -12,7 +13,11 @@ interface Settings {
   default_shell: string
 }
 
-export default function SettingsPage() {
+interface SettingsPageProps {
+  onClose: () => void
+}
+
+export default function SettingsPage({ onClose }: SettingsPageProps) {
   const [settings, setSettings] = useState<Settings | null>(null)
   const { theme, setTheme } = useAppStore()
 
@@ -37,10 +42,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <div
-      className="h-full overflow-y-auto bg-background"
-    >
-      <div className="max-w-2xl mx-auto px-8 py-8 space-y-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="fixed top-4 right-4 z-50 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.05] transition-colors duration-100"
+        title="Close (Esc)"
+      >
+        <X size={18} />
+      </button>
+
+      <div className="max-w-2xl mx-auto px-8 py-12 space-y-8">
         <div>
           <h1 className="text-lg font-semibold text-foreground">
             Settings
