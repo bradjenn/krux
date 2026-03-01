@@ -19,9 +19,10 @@ interface XTerminalProps {
   onExit?: () => void
 }
 
-export default function XTerminal({ projectPath, existingTerminalId, onExit }: XTerminalProps) {
+export default function XTerminal({ existingTerminalId, onExit }: XTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
+  const fitAddonRef = useRef<FitAddon | null>(null)
   const [terminalId] = useState<string>(existingTerminalId)
   const theme = useAppStore((s) => s.theme)
   const termTheme = getTerminalTheme(theme)
@@ -39,20 +40,23 @@ export default function XTerminal({ projectPath, existingTerminalId, onExit }: X
   // Update xterm theme when app theme changes
   useEffect(() => {
     if (terminalRef.current) {
-      terminalRef.current.options.theme = termTheme
+      terminalRef.current.options.theme = getTerminalTheme(theme)
     }
   }, [theme])
 
   useEffect(() => {
     if (!containerRef.current) return
 
+    const currentTheme = getTerminalTheme(useAppStore.getState().theme)
+
     const term = new Terminal({
-      theme: termTheme,
-      fontFamily: '"Berkeley Mono", "SF Mono", "Fira Code", "JetBrains Mono", monospace',
+      theme: currentTheme,
+      fontFamily: '"MesloLGS Nerd Font", "JetBrains Mono", "SF Mono", "Fira Code", monospace',
       fontSize: 14,
       lineHeight: 1.2,
       cursorBlink: true,
       cursorStyle: 'bar',
+      scrollback: 10000,
       allowProposedApi: true,
     })
 
@@ -61,41 +65,53 @@ export default function XTerminal({ projectPath, existingTerminalId, onExit }: X
 
     term.open(containerRef.current)
 
-    // Try WebGL, fall back to canvas
+    // Try WebGL addon for GPU acceleration
     try {
       const webglAddon = new WebglAddon()
-      webglAddon.onContextLoss(() => {
-        webglAddon.dispose()
-      })
+      webglAddon.onContextLoss(() => webglAddon.dispose())
       term.loadAddon(webglAddon)
     } catch {
-      // WebGL not available — canvas renderer is fine
+      // Canvas fallback is fine
     }
 
-    fitAddon.fit()
     terminalRef.current = term
+    fitAddonRef.current = fitAddon
 
-    // Hook xterm input → PTY stdin
-    term.onData((data) => {
+    // Initial fit after a tick to ensure container has dimensions
+    requestAnimationFrame(() => {
+      fitAddon.fit()
+      // Send initial size to PTY
+      resizeTerminal(terminalId, term.cols, term.rows)
+    })
+
+    // Keystroke → PTY stdin
+    const dataDisposable = term.onData((data) => {
       writeTerminal(terminalId, data)
     })
 
-    // Hook xterm resize → PTY resize
-    term.onResize(({ cols, rows }) => {
+    // Xterm resize → PTY resize
+    const resizeDisposable = term.onResize(({ cols, rows }) => {
       resizeTerminal(terminalId, cols, rows)
     })
 
-    // Send initial resize to sync PTY with actual rendered dimensions
-    resizeTerminal(terminalId, term.cols, term.rows)
-
-    // Handle container resize
+    // Container resize → fit
     const resizeObserver = new ResizeObserver(() => {
-      fitAddon.fit()
+      // Debounce resize to avoid excessive calls
+      requestAnimationFrame(() => {
+        if (fitAddonRef.current) {
+          fitAddonRef.current.fit()
+        }
+      })
     })
     resizeObserver.observe(containerRef.current)
 
+    // Focus terminal
+    term.focus()
+
     return () => {
       resizeObserver.disconnect()
+      dataDisposable.dispose()
+      resizeDisposable.dispose()
       term.dispose()
       closeTerminal(terminalId)
     }
@@ -105,7 +121,10 @@ export default function XTerminal({ projectPath, existingTerminalId, onExit }: X
     <div
       ref={containerRef}
       className="h-full w-full"
-      style={{ padding: '4px', backgroundColor: termTheme.background }}
+      style={{
+        padding: 1,
+        background: termTheme.background,
+      }}
     />
   )
 }
