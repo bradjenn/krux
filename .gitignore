@@ -19,3 +19,6 @@ src-tauri/target/
 .DS_Store
 *.local
 *.sw?
+
+# Worktrees
+.worktrees/
