@@ -119,7 +119,7 @@ export default function DocumentsTab({ projectPath }: DocumentsTabProps) {
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <FileText size={48} className="mx-auto mb-3 opacity-30 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">File not found</p>
+                  <p className="text-base text-muted-foreground">File not found</p>
                 </div>
               </div>
             )
@@ -127,7 +127,7 @@ export default function DocumentsTab({ projectPath }: DocumentsTabProps) {
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
                 <FileText size={48} className="mx-auto mb-3 opacity-50" />
-                <p className="text-sm">Select a file from the tree</p>
+                <p className="text-base">Select a file from the tree</p>
               </div>
             </div>
           )}

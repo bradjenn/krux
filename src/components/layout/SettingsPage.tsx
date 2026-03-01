@@ -52,7 +52,7 @@ export default function SettingsPage() {
 
         {/* Theme */}
         <section>
-          <label className="block mb-3 uppercase tracking-wide font-medium text-[11px] text-muted-foreground">
+          <label className="block mb-3 uppercase tracking-wide font-medium text-[13px] text-muted-foreground">
             Theme
           </label>
           <div className="grid grid-cols-3 gap-2.5">
@@ -80,7 +80,7 @@ export default function SettingsPage() {
 
         {/* Default Shell */}
         <section>
-          <label className="block mb-3 uppercase tracking-wide font-medium text-[11px] text-muted-foreground">
+          <label className="block mb-3 uppercase tracking-wide font-medium text-[13px] text-muted-foreground">
             Default Shell
           </label>
           <Input
@@ -92,7 +92,7 @@ export default function SettingsPage() {
 
         {/* Font Size */}
         <section>
-          <label className="block mb-3 uppercase tracking-wide font-medium text-[11px] text-muted-foreground">
+          <label className="block mb-3 uppercase tracking-wide font-medium text-[13px] text-muted-foreground">
             Font Size
           </label>
           <Input

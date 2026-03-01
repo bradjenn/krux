@@ -31,14 +31,14 @@ export default function Header({
           style={{
             width: 34,
             height: 34,
-            fontSize: 13,
+            fontSize: 15,
             letterSpacing: '0.5px',
           }}
         >
           CC
         </div>
         <div data-tauri-drag-region>
-          <div className="flex items-center gap-1.5" style={{ fontSize: 14 }}>
+          <div className="flex items-center gap-1.5" style={{ fontSize: 16 }}>
             <span className="font-semibold text-foreground">Claude Code</span>
             <span
               className="font-semibold text-primary [text-shadow:0_0_10px_var(--accent-glow)]"
@@ -48,7 +48,7 @@ export default function Header({
           </div>
           <div
             className="uppercase tracking-widest text-dim"
-            style={{ fontSize: 10, marginTop: 1 }}
+            style={{ fontSize: 12, marginTop: 1 }}
           >
             {projects.length} project{projects.length !== 1 ? 's' : ''}
             {' \u00b7 '}

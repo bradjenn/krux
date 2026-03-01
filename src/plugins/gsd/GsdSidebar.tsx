@@ -35,7 +35,7 @@ export default function GsdSidebar({ projectId }: GsdSidebarProps) {
 
   return (
     <div className="py-2">
-      <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-dim">
+      <div className="px-3 py-1 text-[12px] font-semibold uppercase tracking-wider text-dim">
         GSD Workflow
       </div>
       {GSD_TABS.map(({ id, label, icon: Icon }) => {

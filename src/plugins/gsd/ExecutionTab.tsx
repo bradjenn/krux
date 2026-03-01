@@ -206,7 +206,7 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
           {lines.length === 0 && status === 'idle' && (
             <div className="flex flex-col items-center justify-center h-full text-dim">
               <Play size={32} className="mb-3 opacity-30" />
-              <p className="text-sm">Select a phase and click Execute</p>
+              <p className="text-base">Select a phase and click Execute</p>
               <p className="text-xs mt-1 opacity-60">
                 This will run the Claude agent to execute the selected GSD phase
               </p>

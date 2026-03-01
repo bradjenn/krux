@@ -26,24 +26,24 @@ const markdownComponents: Components = {
     </h4>
   ),
   p: ({ children }) => (
-    <p className="text-sm mb-3 leading-relaxed text-foreground">
+    <p className="text-base mb-3 leading-relaxed text-foreground">
       {children}
     </p>
   ),
   ul: ({ children }) => (
-    <ul className="list-disc list-inside text-sm mb-3 space-y-1 text-foreground">
+    <ul className="list-disc list-inside text-base mb-3 space-y-1 text-foreground">
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol className="list-decimal list-inside text-sm mb-3 space-y-1 text-foreground">
+    <ol className="list-decimal list-inside text-base mb-3 space-y-1 text-foreground">
       {children}
     </ol>
   ),
-  li: ({ children }) => <li className="text-sm">{children}</li>,
+  li: ({ children }) => <li className="text-base">{children}</li>,
   table: ({ children }) => (
     <div className="overflow-x-auto mb-4">
-      <table className="border-collapse w-full text-sm">{children}</table>
+      <table className="border-collapse w-full text-base">{children}</table>
     </div>
   ),
   thead: ({ children }) => (
@@ -69,7 +69,7 @@ const markdownComponents: Components = {
     />
   ),
   pre: ({ children }) => (
-    <pre className="p-4 mb-4 overflow-x-auto text-sm rounded-lg bg-background border border-border">
+    <pre className="p-4 mb-4 overflow-x-auto text-base rounded-lg bg-background border border-border">
       {children}
     </pre>
   ),
@@ -80,7 +80,7 @@ const markdownComponents: Components = {
     }
     return (
       <code
-        className="px-1.5 py-0.5 rounded text-sm bg-surface text-primary"
+        className="px-1.5 py-0.5 rounded text-base bg-surface text-primary"
         {...props}
       >
         {children}

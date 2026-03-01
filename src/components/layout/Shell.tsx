@@ -184,7 +184,7 @@ export default function Shell() {
                     <span className="text-muted-foreground">&gt;_</span>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground">
+                    <div className="text-base font-medium text-muted-foreground">
                       Select a project
                     </div>
                     <div className="text-xs mt-1">

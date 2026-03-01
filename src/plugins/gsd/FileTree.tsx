@@ -29,7 +29,7 @@ function TreeItem({ node, depth, selectedPath, onSelect }: TreeItemProps) {
           className="flex items-center gap-1 w-full text-left px-2 py-0.5 transition-colors duration-100 text-muted-foreground hover:bg-white/[0.03]"
           style={{
             paddingLeft: `${8 + indentPx}px`,
-            fontSize: 12,
+            fontSize: 14,
           }}
         >
           {open ? (
@@ -68,7 +68,7 @@ function TreeItem({ node, depth, selectedPath, onSelect }: TreeItemProps) {
       )}
       style={{
         paddingLeft: `${8 + indentPx}px`,
-        fontSize: 12,
+        fontSize: 14,
       }}
     >
       <FileText size={12} className="shrink-0 opacity-50 ml-3.5" />

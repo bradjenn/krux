@@ -99,10 +99,10 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
             <div
               className="px-6 py-3 flex items-center justify-between border-b border-border"
             >
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-[13px] text-muted-foreground">
                 {discovered.length} project{discovered.length !== 1 ? 's' : ''} found
               </span>
-              <Button variant="ghost" size="sm" onClick={handleAddAll} className="text-primary text-[11px]">
+              <Button variant="ghost" size="sm" onClick={handleAddAll} className="text-primary text-[13px]">
                 <HugeiconsIcon icon={PlusSignIcon} size={11} strokeWidth={2} />
                 Add all
               </Button>
@@ -133,8 +133,8 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
                   <HugeiconsIcon icon={PlusSignIcon} size={14} strokeWidth={1.5} className="shrink-0 text-dim" />
                 )}
                 <div className="min-w-0">
-                  <div className="truncate text-[13px] text-foreground">{d.name}</div>
-                  <div className="truncate text-[11px] text-dim" style={{ marginTop: 1 }}>
+                  <div className="truncate text-[15px] text-foreground">{d.name}</div>
+                  <div className="truncate text-[13px] text-dim" style={{ marginTop: 1 }}>
                     {d.path.replace(/^\/Users\/[^/]+/, '~')}
                   </div>
                 </div>

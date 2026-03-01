@@ -48,7 +48,7 @@ function PhaseCard({ phase }: { phase: Phase }) {
             >
               {phase.number}
             </span>
-            <span className="text-sm font-semibold truncate text-foreground">
+            <span className="text-base font-semibold truncate text-foreground">
               {phase.name}
             </span>
           </div>
@@ -120,7 +120,7 @@ export default function OverviewTab({ projectPath }: OverviewTabProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-sm text-muted-foreground">Loading project...</p>
+        <p className="text-base text-muted-foreground">Loading project...</p>
       </div>
     )
   }
@@ -186,7 +186,7 @@ export default function OverviewTab({ projectPath }: OverviewTabProps) {
       {/* Phase grid */}
       {phases.length === 0 ? (
         <div className="text-center py-8 rounded-lg bg-surface border border-border">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             No phases found in this project
           </p>
           <p className="text-xs mt-1 text-dim">

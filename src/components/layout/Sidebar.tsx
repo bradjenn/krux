@@ -10,7 +10,6 @@ interface SidebarProps {
   visible: boolean
 }
 
-const FILTERS = ['All', 'Active', 'Paused', 'Completed', 'Archived'] as const
 
 function PluginSidebar({ projectId, projectPath }: { projectId: string; projectPath: string }) {
   const [availablePlugins, setAvailablePlugins] = useState<typeof PLUGINS>([])
@@ -44,7 +43,6 @@ function PluginSidebar({ projectId, projectPath }: { projectId: string; projectP
 export default function Sidebar({ visible }: SidebarProps) {
   const { projects, activeProjectId, setProjects, setActiveProject, tabs, activeView, setActiveView } = useAppStore()
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<string>('all')
   const searchRef = useRef<HTMLInputElement>(null)
   const activeProject = projects.find((p) => p.id === activeProjectId)
 
@@ -63,13 +61,12 @@ export default function Sidebar({ visible }: SidebarProps) {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const filtered = search
-    ? projects.filter(
-        (p) =>
-          p.name.toLowerCase().includes(search.toLowerCase()) ||
-          p.path.toLowerCase().includes(search.toLowerCase()),
-      )
-    : projects
+  const filtered = projects.filter(
+    (p) =>
+      !search ||
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.path.toLowerCase().includes(search.toLowerCase()),
+  )
 
   const handleRemove = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
@@ -93,7 +90,7 @@ export default function Sidebar({ visible }: SidebarProps) {
       }}
     >
       {/* Search */}
-      <div style={{ padding: '12px 12px 8px' }}>
+      <div className="border-b border-border" style={{ padding: '12px 12px 10px' }}>
         <div
           className="flex items-center bg-background border border-border transition-[border-color,box-shadow] duration-150 focus-within:border-secondary focus-within:[box-shadow:0_0_8px_var(--accent2-glow)]"
           style={{
@@ -112,7 +109,7 @@ export default function Sidebar({ visible }: SidebarProps) {
             placeholder="Search projects..."
             className="flex-1 bg-transparent text-foreground border-none outline-none min-w-0"
             style={{
-              fontSize: 12,
+              fontSize: 14,
               fontFamily: 'inherit',
             }}
           />
@@ -120,7 +117,7 @@ export default function Sidebar({ visible }: SidebarProps) {
             <kbd
               className="shrink-0 leading-none text-dim bg-white/[0.04] border border-border"
               style={{
-                fontSize: 9,
+                fontSize: 11,
                 fontFamily: 'inherit',
                 borderRadius: 3,
                 padding: '3px 6px',
@@ -130,39 +127,6 @@ export default function Sidebar({ visible }: SidebarProps) {
             </kbd>
           )}
         </div>
-      </div>
-
-      {/* Filter tabs */}
-      <div
-        className="flex items-center border-b border-border"
-        style={{
-          gap: 4,
-          padding: '0 12px 10px',
-        }}
-      >
-        {FILTERS.map((f) => {
-          const key = f.toLowerCase()
-          const isActive = filter === key
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(key)}
-              className={cn(
-                "transition-all duration-100 whitespace-nowrap",
-                isActive
-                  ? "bg-primary text-background font-semibold"
-                  : "bg-transparent text-muted-foreground font-normal hover:text-foreground"
-              )}
-              style={{
-                fontSize: 11,
-                padding: '4px 10px',
-                borderRadius: 4,
-              }}
-            >
-              {f}
-            </button>
-          )
-        })}
       </div>
 
       {/* Project list */}
@@ -194,11 +158,11 @@ export default function Sidebar({ visible }: SidebarProps) {
               />
 
               <div className="flex-1 min-w-0">
-                <div className="truncate font-medium text-[13px]">
+                <div className="truncate font-medium text-[15px]">
                   {project.name}
                 </div>
                 <div
-                  className="truncate text-[11px] text-dim"
+                  className="truncate text-[13px] text-dim"
                   style={{ marginTop: 1 }}
                 >
                   {project.path.replace(/^\/Users\/[^/]+/, '~')}
@@ -207,7 +171,7 @@ export default function Sidebar({ visible }: SidebarProps) {
 
               {termCount > 0 && (
                 <div
-                  className="flex items-center gap-1 shrink-0 text-[10px] text-primary"
+                  className="flex items-center gap-1 shrink-0 text-[12px] text-primary"
                 >
                   <span
                     className="w-1.5 h-1.5 rounded-full bg-primary animate-[pulse_2s_ease-in-out_infinite] [box-shadow:0_0_4px_var(--accent-glow)]"
@@ -248,7 +212,7 @@ export default function Sidebar({ visible }: SidebarProps) {
             >
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
-            <div className="mt-3 text-sm text-muted-foreground">
+            <div className="mt-3 text-base text-muted-foreground">
               No projects yet
             </div>
             <div className="mt-1 text-xs text-dim">
@@ -256,6 +220,7 @@ export default function Sidebar({ visible }: SidebarProps) {
             </div>
           </div>
         )}
+
       </div>
 
       {/* Plugin sidebar sections */}
@@ -271,7 +236,7 @@ export default function Sidebar({ visible }: SidebarProps) {
         }}
       >
         <button
-          onClick={() => setActiveView('settings')}
+          onClick={() => setActiveView(activeView === 'settings' ? 'projects' : 'settings')}
           className={cn(
             "flex items-center gap-2 w-full rounded-md px-2.5 py-2 text-xs transition-colors duration-100 cursor-pointer",
             activeView === 'settings'
