@@ -1,113 +1,117 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
-:root {
-  /* Ghostty theme (default) */
-  --bg: #011423;
-  --bg2: #01192b;
-  --border: #0a2a4a;
-  --accent: #47ff9c;
-  --accent2: #0fc5ed;
-  --text: #cbe0f0;
-  --text-muted: #4a6a8a;
-  --text-dim: #214969;
-  --danger: #e52e2e;
-  --green: #44ffb1;
-  --yellow: #ffe073;
-  --magenta: #a277ff;
+/*
+ * Theme variables — set dynamically by applyTheme() in themes.ts.
+ * These are the raw values that @theme aliases reference.
+ */
+@layer base {
+  :root {
+    --bg: #080810;
+    --bg2: #0c1018;
+    --border: #1e2d40;
+    --accent: #c8ff00;
+    --accent2: #0fc5ed;
+    --text: #d0e0f0;
+    --text-muted: #4a6585;
+    --text-dim: #253545;
+    --danger: #ff2e4a;
+    --green: #44ffb1;
+    --yellow: #ffe073;
+    --magenta: #a277ff;
+    --accent-glow: rgba(200, 255, 0, 0.2);
+    --accent-glow-strong: rgba(200, 255, 0, 0.35);
+    --accent2-glow: rgba(15, 197, 237, 0.2);
+    --radius: 0.5rem;
 
-  font-family: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body, #root {
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  background: var(--bg);
-  color: var(--text);
+    font-family: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
-/* Prevent text selection during drag */
-.no-select {
-  -webkit-user-select: none;
-  user-select: none;
+/*
+ * Map raw theme variables to shadcn-convention Tailwind colors.
+ * This gives us utility classes like bg-background, text-foreground, bg-primary, etc.
+ */
+@theme {
+  --color-background: var(--bg);
+  --color-surface: var(--bg2);
+  --color-foreground: var(--text);
+  --color-muted-foreground: var(--text-muted);
+  --color-dim: var(--text-dim);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--accent);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--bg);
+  --color-secondary: var(--accent2);
+  --color-secondary-foreground: var(--bg);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--text);
+  --color-muted: var(--text-dim);
+  --color-accent-glow: var(--accent-glow);
+  --color-accent-glow-strong: var(--accent-glow-strong);
+  --color-accent2-glow: var(--accent2-glow);
+  --color-green: var(--green);
+  --color-yellow: var(--yellow);
+  --color-magenta: var(--magenta);
+  --radius: 0.5rem;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
+@layer base {
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  ::placeholder {
+    color: var(--text-dim);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--accent2);
+    outline-offset: -1px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-dim);
+  }
 }
 
-/* Project item hover → show remove button */
-.project-item:hover .project-remove {
-  opacity: 1 !important;
+/* Component-level selectors that need CSS (parent hover → child visibility) */
+@layer components {
+  .project-item:hover .project-remove {
+    opacity: 1 !important;
+  }
+  .tab:hover .tab-close {
+    opacity: 1;
+  }
 }
 
-/* Tab close visibility */
-.tab:hover .tab-close {
-  opacity: 1;
-}
-
-/* Pulsing terminal indicator */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
-}
-
-/* Modal animations */
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-/* Button base */
-button {
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: inherit;
-  color: inherit;
-  outline: none;
-}
-
-input, select {
-  font-family: inherit;
-  outline: none;
-}
-
-/* Placeholder color */
-::placeholder {
-  color: var(--text-dim);
-}
-
-/* Focus ring for keyboard navigation */
-:focus-visible {
-  outline: 1px solid var(--accent2);
-  outline-offset: -1px;
 }

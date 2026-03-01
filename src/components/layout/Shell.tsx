@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
 import { applyTheme } from '@/lib/themes'
 import { createTerminal, closeTerminal } from '@/hooks/useTauri'
@@ -97,6 +98,12 @@ export default function Shell() {
         if (activeTabId) handleCloseTab(activeTabId)
       }
 
+      // Cmd+B: toggle sidebar
+      if (meta && e.key === 'b') {
+        e.preventDefault()
+        setSidebarVisible((v) => !v)
+      }
+
       // Escape: close modals
       if (e.key === 'Escape') {
         setDiscoverOpen(false)
@@ -109,16 +116,11 @@ export default function Shell() {
   return (
     <div className="flex flex-col h-full w-full">
       <Header
-        sidebarVisible={sidebarVisible}
-        onToggleSidebar={() => setSidebarVisible(!sidebarVisible)}
         onAddProject={() => setDiscoverOpen(true)}
       />
 
       <div className="flex flex-1 min-h-0">
-        <Sidebar
-          visible={sidebarVisible}
-          onOpenDiscover={() => setDiscoverOpen(true)}
-        />
+        <Sidebar visible={sidebarVisible} />
 
         {activeView === 'settings' ? (
           <SettingsPage />
@@ -134,12 +136,10 @@ export default function Shell() {
                 .map((tab) => (
                   <div
                     key={tab.terminalId}
-                    className="absolute inset-0"
-                    style={{
-                      opacity: activeTabId === tab.id ? 1 : 0,
-                      pointerEvents: activeTabId === tab.id ? 'auto' : 'none',
-                      transition: 'opacity 0.1s',
-                    }}
+                    className={cn(
+                      "absolute inset-0 transition-opacity duration-100",
+                      activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                    )}
                   >
                     <XTerminal
                       projectPath={activeProject?.path ?? '~'}
@@ -159,13 +159,10 @@ export default function Shell() {
                   return (
                     <div
                       key={tab.id}
-                      className="absolute inset-0 overflow-auto"
-                      style={{
-                        opacity: activeTabId === tab.id ? 1 : 0,
-                        pointerEvents: activeTabId === tab.id ? 'auto' : 'none',
-                        transition: 'opacity 0.1s',
-                        background: 'var(--bg)',
-                      }}
+                      className={cn(
+                        "absolute inset-0 overflow-auto bg-background transition-opacity duration-100",
+                        activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                      )}
                     >
                       <TabComponent
                         projectId={tab.projectId}
@@ -178,28 +175,21 @@ export default function Shell() {
               {/* Empty state */}
               {!activeProjectId && (
                 <div
-                  className="flex flex-col items-center justify-center h-full"
-                  style={{ gap: 16, color: 'var(--text-dim)' }}
+                  className="flex flex-col items-center justify-center h-full gap-4 text-dim"
                 >
-                  <svg
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ opacity: 0.3 }}
+                  <div
+                    className="flex items-center justify-center"
+                    style={{ fontSize: 28, opacity: 0.3, fontWeight: 300 }}
                   >
-                    <polyline points="4 17 10 11 4 5" />
-                    <line x1="12" y1="19" x2="20" y2="19" />
-                  </svg>
-                  <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>
-                    No project selected
+                    <span className="text-muted-foreground">&gt;_</span>
                   </div>
-                  <div style={{ fontSize: 12 }}>
-                    Select a project from the sidebar or add a new one
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Select a project
+                    </div>
+                    <div className="text-xs mt-1">
+                      Choose a project from the sidebar to manage its Claude Code sessions
+                    </div>
                   </div>
                 </div>
               )}

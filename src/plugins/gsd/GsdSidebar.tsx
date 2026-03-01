@@ -1,5 +1,6 @@
 import { LayoutDashboard, FileText, Play } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
+import { cn } from '@/lib/utils'
 
 interface GsdSidebarProps {
   projectId: string
@@ -34,10 +35,7 @@ export default function GsdSidebar({ projectId }: GsdSidebarProps) {
 
   return (
     <div className="py-2">
-      <div
-        className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider"
-        style={{ color: 'var(--text-dim)' }}
-      >
+      <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-dim">
         GSD Workflow
       </div>
       {GSD_TABS.map(({ id, label, icon: Icon }) => {
@@ -48,23 +46,12 @@ export default function GsdSidebar({ projectId }: GsdSidebarProps) {
           <button
             key={id}
             onClick={() => openOrFocusTab(id, `GSD ${label}`)}
-            className="flex items-center gap-2 w-full px-3 py-1 text-xs transition-colors duration-100"
-            style={{
-              color: isActive ? 'var(--accent)' : 'var(--text-muted)',
-              background: isActive ? 'rgba(71,255,156,0.06)' : 'transparent',
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                e.currentTarget.style.color = 'var(--text)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = 'var(--text-muted)'
-              }
-            }}
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-1 text-xs transition-colors duration-100',
+              isActive
+                ? 'text-primary bg-primary/[0.04]'
+                : 'text-muted-foreground hover:bg-white/[0.03] hover:text-foreground'
+            )}
           >
             <Icon size={13} />
             {label}

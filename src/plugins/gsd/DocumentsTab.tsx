@@ -71,23 +71,14 @@ export default function DocumentsTab({ projectPath }: DocumentsTabProps) {
   return (
     <div className="flex h-full">
       {/* File tree panel */}
-      <div
-        className="w-[260px] flex-shrink-0 overflow-y-auto"
-        style={{
-          borderRight: '1px solid var(--border)',
-          background: 'var(--bg2)',
-        }}
-      >
+      <div className="w-[260px] flex-shrink-0 overflow-y-auto border-r border-border bg-surface">
         {treeLoading ? (
           <div className="py-2 px-3 space-y-1.5">
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
-                className="h-4 rounded animate-pulse"
-                style={{
-                  background: 'var(--border)',
-                  width: `${60 + Math.random() * 30}%`,
-                }}
+                className="h-4 rounded animate-pulse bg-border"
+                style={{ width: `${60 + Math.random() * 30}%` }}
               />
             ))}
           </div>
@@ -97,20 +88,14 @@ export default function DocumentsTab({ projectPath }: DocumentsTabProps) {
       </div>
 
       {/* Document content panel */}
-      <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
+      <div className="flex-1 flex flex-col overflow-hidden bg-background">
         {/* Breadcrumb */}
         {selectedFile && (
-          <div
-            className="shrink-0 px-6 py-2 text-xs"
-            style={{
-              color: 'var(--text-muted)',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
+          <div className="shrink-0 px-6 py-2 text-xs text-muted-foreground border-b border-border">
             {selectedFile.split('/').map((segment, i, arr) => (
               <span key={i}>
-                {i > 0 && <span style={{ color: 'var(--text-dim)' }}> / </span>}
-                <span style={i === arr.length - 1 ? { color: 'var(--text)' } : undefined}>
+                {i > 0 && <span className="text-dim"> / </span>}
+                <span className={i === arr.length - 1 ? 'text-foreground' : undefined}>
                   {segment}
                 </span>
               </span>
@@ -123,23 +108,23 @@ export default function DocumentsTab({ projectPath }: DocumentsTabProps) {
           {selectedFile && !selectedFile.endsWith('/') ? (
             docLoading ? (
               <div className="space-y-3 max-w-4xl">
-                <div className="h-8 w-2/3 rounded animate-pulse" style={{ background: 'var(--border)' }} />
-                <div className="h-4 w-full rounded animate-pulse" style={{ background: 'var(--bg2)' }} />
-                <div className="h-4 w-5/6 rounded animate-pulse" style={{ background: 'var(--bg2)' }} />
-                <div className="h-4 w-4/5 rounded animate-pulse" style={{ background: 'var(--bg2)' }} />
+                <div className="h-8 w-2/3 rounded animate-pulse bg-border" />
+                <div className="h-4 w-full rounded animate-pulse bg-surface" />
+                <div className="h-4 w-5/6 rounded animate-pulse bg-surface" />
+                <div className="h-4 w-4/5 rounded animate-pulse bg-surface" />
               </div>
             ) : content ? (
               <DocViewer content={content} />
             ) : (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
-                  <FileText size={48} className="mx-auto mb-3 opacity-30" style={{ color: 'var(--text-muted)' }} />
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>File not found</p>
+                  <FileText size={48} className="mx-auto mb-3 opacity-30 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">File not found</p>
                 </div>
               </div>
             )
           ) : (
-            <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
                 <FileText size={48} className="mx-auto mb-3 opacity-50" />
                 <p className="text-sm">Select a file from the tree</p>

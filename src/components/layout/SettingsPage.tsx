@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAppStore } from '@/stores/appStore'
 import { THEME_PRESETS, applyTheme } from '@/lib/themes'
+import { cn } from '@/lib/utils'
 
 interface Settings {
   theme: string
@@ -37,22 +38,21 @@ export default function SettingsPage() {
 
   return (
     <div
-      className="h-full overflow-y-auto"
-      style={{ background: 'var(--bg)' }}
+      className="h-full overflow-y-auto bg-background"
     >
       <div className="max-w-2xl mx-auto px-8 py-8 space-y-8">
         <div>
-          <h1 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>
+          <h1 className="text-lg font-semibold text-foreground">
             Settings
           </h1>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>
+          <p className="text-xs mt-1 text-dim">
             Configure your terminal manager
           </p>
         </div>
 
         {/* Theme */}
         <section>
-          <label className="block mb-3 uppercase tracking-wide font-medium text-[11px] text-[var(--text-muted)]">
+          <label className="block mb-3 uppercase tracking-wide font-medium text-[11px] text-muted-foreground">
             Theme
           </label>
           <div className="grid grid-cols-3 gap-2.5">
@@ -60,18 +60,12 @@ export default function SettingsPage() {
               <button
                 key={id}
                 onClick={() => handleThemeChange(id)}
-                className="flex items-center gap-2.5 px-3.5 py-3 rounded-md text-xs transition-all duration-150 cursor-pointer"
-                style={{
-                  border: `1px solid ${theme === id ? 'var(--accent)' : 'var(--border)'}`,
-                  background: theme === id ? 'rgba(71,255,156,0.06)' : 'var(--bg2)',
-                  color: theme === id ? 'var(--text)' : 'var(--text-muted)',
-                }}
-                onMouseEnter={(e) => {
-                  if (theme !== id) e.currentTarget.style.borderColor = 'var(--text-dim)'
-                }}
-                onMouseLeave={(e) => {
-                  if (theme !== id) e.currentTarget.style.borderColor = 'var(--border)'
-                }}
+                className={cn(
+                  "flex items-center gap-2.5 px-3.5 py-3 rounded-md text-xs transition-all duration-150 cursor-pointer border",
+                  theme === id
+                    ? "border-primary bg-green/[0.06] text-foreground"
+                    : "border-border bg-surface text-muted-foreground hover:border-dim"
+                )}
               >
                 <div className="flex gap-1">
                   <span className="w-3.5 h-3.5 rounded-full" style={{ background: preset.ui.accent }} />
@@ -86,7 +80,7 @@ export default function SettingsPage() {
 
         {/* Default Shell */}
         <section>
-          <label className="block mb-3 uppercase tracking-wide font-medium text-[11px] text-[var(--text-muted)]">
+          <label className="block mb-3 uppercase tracking-wide font-medium text-[11px] text-muted-foreground">
             Default Shell
           </label>
           <Input
@@ -98,7 +92,7 @@ export default function SettingsPage() {
 
         {/* Font Size */}
         <section>
-          <label className="block mb-3 uppercase tracking-wide font-medium text-[11px] text-[var(--text-muted)]">
+          <label className="block mb-3 uppercase tracking-wide font-medium text-[11px] text-muted-foreground">
             Font Size
           </label>
           <Input

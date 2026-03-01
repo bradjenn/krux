@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { PlusSignIcon, Cancel01Icon, CommandLineIcon } from '@hugeicons/core-free-icons'
+import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
 import { createTerminal } from '@/hooks/useTauri'
 import { PLUGINS } from '@/plugins'
@@ -82,11 +83,9 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
 
   return (
     <div
-      className="flex items-stretch shrink-0 select-none overflow-x-auto"
+      className="flex items-stretch shrink-0 select-none overflow-x-auto bg-surface border-b border-border"
       style={{
         height: 36,
-        background: 'var(--bg2)',
-        borderBottom: '1px solid var(--border)',
         scrollbarWidth: 'none',
       }}
     >
@@ -96,25 +95,15 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="tab group flex items-center gap-1.5 shrink-0 transition-colors duration-100 cursor-pointer text-xs"
+            className={cn(
+              "tab group flex items-center gap-1.5 shrink-0 transition-colors duration-100 cursor-pointer text-xs hover:text-foreground hover:bg-white/[0.02]",
+              isActive
+                ? 'text-foreground border-b-2 border-primary bg-white/[0.02]'
+                : 'text-muted-foreground border-b-2 border-transparent'
+            )}
             style={{
               padding: '0 14px',
               height: '100%',
-              color: isActive ? 'var(--text)' : 'var(--text-muted)',
-              borderBottom: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
-              background: isActive ? 'rgba(255,255,255,0.02)' : 'transparent',
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.color = 'var(--text)'
-                e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.color = 'var(--text-muted)'
-                e.currentTarget.style.background = 'transparent'
-              }
             }}
           >
             <span>{tab.label}</span>
@@ -123,7 +112,7 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
                 e.stopPropagation()
                 onCloseTab(tab.id)
               }}
-              className="tab-close opacity-0 group-hover:opacity-100 transition-opacity duration-100 p-0.5 rounded hover:text-[var(--danger)] hover:bg-[rgba(229,46,46,0.15)]"
+              className="tab-close opacity-0 group-hover:opacity-100 transition-opacity duration-100 p-0.5 rounded hover:text-destructive hover:bg-destructive/[0.15]"
             >
               <HugeiconsIcon icon={Cancel01Icon} size={11} strokeWidth={2} />
             </span>
@@ -142,11 +131,10 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
               setMenuOpen(!menuOpen)
             }
           }}
-          className="flex items-center justify-center shrink-0 transition-colors duration-150 cursor-pointer hover:text-[var(--accent)]"
+          className="flex items-center justify-center shrink-0 transition-colors duration-150 cursor-pointer text-dim hover:text-primary"
           style={{
             width: 36,
             height: '100%',
-            color: 'var(--text-dim)',
           }}
           title="New tab (⌘T)"
         >
@@ -155,10 +143,8 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
 
         {menuOpen && (
           <div
-            className="absolute top-full left-0 z-50 py-1 min-w-[160px]"
+            className="absolute top-full left-0 z-50 py-1 min-w-[160px] bg-surface border border-border"
             style={{
-              background: 'var(--bg2)',
-              border: '1px solid var(--border)',
               borderRadius: 6,
               boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
             }}
@@ -166,10 +152,7 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
             {/* Shell option */}
             <button
               onClick={handleNewShellTab}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100"
-              style={{ color: 'var(--text)' }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
             >
               <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
               Terminal
@@ -179,17 +162,14 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
             {availablePluginTabs.length > 0 && (
               <>
                 <div
-                  className="mx-2 my-1"
-                  style={{ height: 1, background: 'var(--border)' }}
+                  className="mx-2 my-1 bg-border"
+                  style={{ height: 1 }}
                 />
                 {availablePluginTabs.map((tabType) => (
                   <button
                     key={tabType.id}
                     onClick={() => handleNewPluginTab(tabType)}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100"
-                    style={{ color: 'var(--text)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
                   >
                     <tabType.icon size={14} />
                     {tabType.label}

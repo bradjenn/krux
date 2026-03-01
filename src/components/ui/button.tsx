@@ -9,15 +9,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-[var(--accent)] text-[var(--bg)] border border-[var(--accent)] hover:brightness-110',
+          'bg-primary text-primary-foreground border border-primary hover:brightness-110',
         outline:
-          'bg-transparent border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-dim)] hover:text-[var(--text)] hover:bg-[rgba(71,255,156,0.05)]',
+          'bg-transparent border border-border text-muted-foreground hover:border-dim hover:text-foreground hover:bg-primary/5',
         ghost:
-          'bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[rgba(255,255,255,0.05)]',
+          'bg-transparent text-muted-foreground hover:text-foreground hover:bg-white/5',
         destructive:
-          'bg-transparent border border-[var(--danger)] text-[var(--danger)] hover:bg-[rgba(229,46,46,0.1)]',
+          'bg-transparent border border-destructive text-destructive hover:bg-destructive/10',
         dashed:
-          'bg-transparent border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]',
+          'bg-transparent border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary',
       },
       size: {
         default: 'h-8 px-4 py-1.5',

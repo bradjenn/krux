@@ -1,16 +1,16 @@
 import { useEffect, useState, useRef } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete01Icon, Settings02Icon } from '@hugeicons/core-free-icons'
+import { Delete01Icon, Search01Icon, Settings02Icon } from '@hugeicons/core-free-icons'
 import { invoke } from '@tauri-apps/api/core'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { useAppStore, type Project } from '@/stores/appStore'
 import { PLUGINS } from '@/plugins'
+import { cn } from '@/lib/utils'
 
 interface SidebarProps {
   visible: boolean
-  onOpenDiscover: () => void
 }
+
+const FILTERS = ['All', 'Active', 'Paused', 'Completed', 'Archived'] as const
 
 function PluginSidebar({ projectId, projectPath }: { projectId: string; projectPath: string }) {
   const [availablePlugins, setAvailablePlugins] = useState<typeof PLUGINS>([])
@@ -32,7 +32,7 @@ function PluginSidebar({ projectId, projectPath }: { projectId: string; projectP
   if (availablePlugins.length === 0) return null
 
   return (
-    <div style={{ borderTop: '1px solid var(--border)' }}>
+    <div className="border-t border-border">
       {availablePlugins.map((plugin) => {
         const Section = plugin.sidebarSection!
         return <Section key={plugin.id} projectId={projectId} projectPath={projectPath} />
@@ -41,9 +41,10 @@ function PluginSidebar({ projectId, projectPath }: { projectId: string; projectP
   )
 }
 
-export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
+export default function Sidebar({ visible }: SidebarProps) {
   const { projects, activeProjectId, setProjects, setActiveProject, tabs, activeView, setActiveView } = useAppStore()
   const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<string>('all')
   const searchRef = useRef<HTMLInputElement>(null)
   const activeProject = projects.find((p) => p.id === activeProjectId)
 
@@ -82,30 +83,86 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
 
   return (
     <div
-      className="flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out"
+      className={cn(
+        "flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out bg-surface",
+        visible && "border-r border-border"
+      )}
       style={{
-        width: visible ? 280 : 0,
-        minWidth: visible ? 280 : 0,
-        borderRight: visible ? '1px solid var(--border)' : 'none',
-        background: 'var(--bg2)',
+        width: visible ? 340 : 0,
+        minWidth: visible ? 340 : 0,
       }}
     >
       {/* Search */}
-      <div className="p-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
-        <Input
-          ref={searchRef}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search projects... (Cmd+K)"
-          className="text-xs py-[7px]"
-        />
+      <div style={{ padding: '12px 12px 8px' }}>
+        <div
+          className="flex items-center bg-background border border-border transition-[border-color,box-shadow] duration-150 focus-within:border-secondary focus-within:[box-shadow:0_0_8px_var(--accent2-glow)]"
+          style={{
+            gap: 10,
+            height: 38,
+            padding: '0 12px',
+            borderRadius: 6,
+          }}
+          onClick={() => searchRef.current?.focus()}
+        >
+          <HugeiconsIcon icon={Search01Icon} size={14} strokeWidth={1.5} className="shrink-0 text-dim" />
+          <input
+            ref={searchRef}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search projects..."
+            className="flex-1 bg-transparent text-foreground border-none outline-none min-w-0"
+            style={{
+              fontSize: 12,
+              fontFamily: 'inherit',
+            }}
+          />
+          {!search && (
+            <kbd
+              className="shrink-0 leading-none text-dim bg-white/[0.04] border border-border"
+              style={{
+                fontSize: 9,
+                fontFamily: 'inherit',
+                borderRadius: 3,
+                padding: '3px 6px',
+              }}
+            >
+              {'\u2318'}K
+            </kbd>
+          )}
+        </div>
       </div>
 
-      {/* Scan */}
-      <div className="px-2 pb-1.5 pt-1">
-        <Button variant="dashed" size="sm" className="w-full text-[11px]" onClick={onOpenDiscover}>
-          Scan
-        </Button>
+      {/* Filter tabs */}
+      <div
+        className="flex items-center border-b border-border"
+        style={{
+          gap: 4,
+          padding: '0 12px 10px',
+        }}
+      >
+        {FILTERS.map((f) => {
+          const key = f.toLowerCase()
+          const isActive = filter === key
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(key)}
+              className={cn(
+                "transition-all duration-100 whitespace-nowrap",
+                isActive
+                  ? "bg-primary text-background font-semibold"
+                  : "bg-transparent text-muted-foreground font-normal hover:text-foreground"
+              )}
+              style={{
+                fontSize: 11,
+                padding: '4px 10px',
+                borderRadius: 4,
+              }}
+            >
+              {f}
+            </button>
+          )
+        })}
       </div>
 
       {/* Project list */}
@@ -121,18 +178,14 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
               tabIndex={0}
               onClick={() => setActiveProject(project.id)}
               onKeyDown={(e) => e.key === 'Enter' && setActiveProject(project.id)}
-              className="project-item group flex items-center gap-2.5 w-full text-left transition-all duration-100 cursor-pointer"
+              className={cn(
+                "project-item group flex items-center gap-2.5 w-full text-left transition-all duration-100 cursor-pointer border-l-[3px]",
+                isActive
+                  ? "border-l-primary bg-primary/[0.04] text-foreground"
+                  : "border-l-transparent bg-transparent text-muted-foreground hover:bg-secondary/[0.04]"
+              )}
               style={{
-                padding: '7px 10px 7px 9px',
-                borderLeft: `3px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
-                background: isActive ? 'rgba(71,255,156,0.06)' : 'transparent',
-                color: isActive ? 'var(--text)' : 'var(--text-muted)',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) e.currentTarget.style.background = 'rgba(15,197,237,0.05)'
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) e.currentTarget.style.background = 'transparent'
+                padding: '8px 12px 8px 10px',
               }}
             >
               <span
@@ -145,8 +198,8 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
                   {project.name}
                 </div>
                 <div
-                  className="truncate text-[11px]"
-                  style={{ color: 'var(--text-dim)', marginTop: 1 }}
+                  className="truncate text-[11px] text-dim"
+                  style={{ marginTop: 1 }}
                 >
                   {project.path.replace(/^\/Users\/[^/]+/, '~')}
                 </div>
@@ -154,15 +207,10 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
 
               {termCount > 0 && (
                 <div
-                  className="flex items-center gap-1 shrink-0 text-[10px]"
-                  style={{ color: 'var(--accent)' }}
+                  className="flex items-center gap-1 shrink-0 text-[10px] text-primary"
                 >
                   <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{
-                      background: 'var(--accent)',
-                      animation: 'pulse 2s ease-in-out infinite',
-                    }}
+                    className="w-1.5 h-1.5 rounded-full bg-primary animate-[pulse_2s_ease-in-out_infinite] [box-shadow:0_0_4px_var(--accent-glow)]"
                   />
                   {termCount > 1 && <span>{termCount}</span>}
                 </div>
@@ -170,8 +218,7 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
 
               <button
                 onClick={(e) => handleRemove(e, project.id)}
-                className="project-remove shrink-0 p-1 rounded opacity-0 transition-opacity duration-100 cursor-pointer hover:text-[var(--danger)]"
-                style={{ color: 'var(--text-dim)' }}
+                className="project-remove shrink-0 p-1 rounded opacity-0 transition-opacity duration-100 cursor-pointer text-dim hover:text-destructive"
                 title="Remove project"
               >
                 <HugeiconsIcon icon={Delete01Icon} size={13} strokeWidth={1.5} />
@@ -181,16 +228,32 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
         })}
 
         {filtered.length === 0 && projects.length > 0 && (
-          <div className="px-4 py-6 text-center text-xs" style={{ color: 'var(--text-dim)' }}>
+          <div className="px-4 py-6 text-center text-xs text-dim">
             No matching projects
           </div>
         )}
 
         {projects.length === 0 && (
-          <div className="px-4 py-8 text-center text-xs" style={{ color: 'var(--text-dim)' }}>
-            No projects yet.
-            <br />
-            Click &quot;Scan&quot; to discover projects.
+          <div className="flex flex-col items-center justify-center flex-1 px-4 py-16 text-center">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-dim opacity-50"
+            >
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            </svg>
+            <div className="mt-3 text-sm text-muted-foreground">
+              No projects yet
+            </div>
+            <div className="mt-1 text-xs text-dim">
+              Click &quot;New Project&quot; to get started
+            </div>
           </div>
         )}
       </div>
@@ -202,24 +265,19 @@ export default function Sidebar({ visible, onOpenDiscover }: SidebarProps) {
 
       {/* Settings footer */}
       <div
+        className="border-t border-border"
         style={{
-          borderTop: '1px solid var(--border)',
           padding: '8px 10px',
         }}
       >
         <button
           onClick={() => setActiveView('settings')}
-          className="flex items-center gap-2 w-full rounded-md px-2.5 py-2 text-xs transition-colors duration-100 cursor-pointer"
-          style={{
-            color: activeView === 'settings' ? 'var(--accent)' : 'var(--text-muted)',
-            background: activeView === 'settings' ? 'rgba(71,255,156,0.06)' : 'transparent',
-          }}
-          onMouseEnter={(e) => {
-            if (activeView !== 'settings') e.currentTarget.style.background = 'rgba(15,197,237,0.05)'
-          }}
-          onMouseLeave={(e) => {
-            if (activeView !== 'settings') e.currentTarget.style.background = 'transparent'
-          }}
+          className={cn(
+            "flex items-center gap-2 w-full rounded-md px-2.5 py-2 text-xs transition-colors duration-100 cursor-pointer",
+            activeView === 'settings'
+              ? "text-primary bg-primary/[0.04]"
+              : "text-muted-foreground bg-transparent hover:bg-secondary/[0.04]"
+          )}
         >
           <HugeiconsIcon icon={Settings02Icon} size={15} strokeWidth={1.5} />
           <span>Settings</span>

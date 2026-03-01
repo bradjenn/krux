@@ -21,44 +21,44 @@ export interface ThemePreset {
 
 export const THEME_PRESETS: Record<string, ThemePreset> = {
   ghostty: {
-    name: 'Ghostty',
+    name: 'Cyberpunk',
     ui: {
-      bg: '#011423',
-      bg2: '#01192b',
-      border: '#0a2a4a',
-      accent: '#47ff9c',
+      bg: '#080810',
+      bg2: '#0c1018',
+      border: '#1e2d40',
+      accent: '#c8ff00',
       accent2: '#0fc5ed',
-      text: '#cbe0f0',
-      textMuted: '#4a6a8a',
-      textDim: '#214969',
-      danger: '#e52e2e',
+      text: '#d0e0f0',
+      textMuted: '#4a6585',
+      textDim: '#253545',
+      danger: '#ff2e4a',
       green: '#44ffb1',
       yellow: '#ffe073',
       magenta: '#a277ff',
     },
     terminal: {
-      background: '#011423',
-      foreground: '#cbe0f0',
-      cursor: '#47ff9c',
-      cursorAccent: '#011423',
-      selectionBackground: '#033259',
-      selectionForeground: '#cbe0f0',
-      black: '#214969',
-      red: '#e52e2e',
+      background: '#080810',
+      foreground: '#d0e0f0',
+      cursor: '#c8ff00',
+      cursorAccent: '#080810',
+      selectionBackground: '#1e2d40',
+      selectionForeground: '#d0e0f0',
+      black: '#253545',
+      red: '#ff2e4a',
       green: '#44ffb1',
       yellow: '#ffe073',
       blue: '#0fc5ed',
       magenta: '#a277ff',
       cyan: '#24eaf7',
-      white: '#24eaf7',
-      brightBlack: '#214969',
-      brightRed: '#e52e2e',
-      brightGreen: '#44ffb1',
-      brightYellow: '#ffe073',
-      brightBlue: '#a277ff',
-      brightMagenta: '#a277ff',
-      brightCyan: '#24eaf7',
-      brightWhite: '#24eaf7',
+      white: '#d0e0f0',
+      brightBlack: '#4a6585',
+      brightRed: '#ff5068',
+      brightGreen: '#5cffbe',
+      brightYellow: '#ffe88a',
+      brightBlue: '#3dd4f5',
+      brightMagenta: '#b48aff',
+      brightCyan: '#4aeeff',
+      brightWhite: '#e8f0ff',
     },
   },
   dracula: {
@@ -187,6 +187,16 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
 }
 
 /**
+ * Convert hex color to rgba string for glow effects.
+ */
+function hexToGlow(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+/**
  * Apply a theme's UI colors as CSS custom properties on document root.
  */
 export function applyTheme(themeId: string) {
@@ -206,6 +216,11 @@ export function applyTheme(themeId: string) {
   root.style.setProperty('--green', theme.ui.green)
   root.style.setProperty('--yellow', theme.ui.yellow)
   root.style.setProperty('--magenta', theme.ui.magenta)
+
+  // Compute glow values from accent colors
+  root.style.setProperty('--accent-glow', hexToGlow(theme.ui.accent, 0.2))
+  root.style.setProperty('--accent-glow-strong', hexToGlow(theme.ui.accent, 0.35))
+  root.style.setProperty('--accent2-glow', hexToGlow(theme.ui.accent2, 0.2))
 }
 
 /**
