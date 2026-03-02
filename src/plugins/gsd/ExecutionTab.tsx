@@ -173,7 +173,7 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
             </button>
           )}
 
-          {isStopped && status !== 'idle' && (
+          {isStopped && (
             <button
               onClick={startExecution}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium transition-colors duration-100 bg-border text-muted-foreground"

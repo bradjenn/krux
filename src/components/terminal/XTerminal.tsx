@@ -30,11 +30,8 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   const lineHeight = useAppStore((s) => s.lineHeight)
   const cursorStyle = useAppStore((s) => s.cursorStyle)
   const cursorBlink = useAppStore((s) => s.cursorBlink)
-  const scrollback = useAppStore((s) => s.scrollback)
   const fontFamily = useAppStore((s) => s.fontFamily)
   const termTheme = getTerminalTheme(theme)
-
-  const fontFamilyCSS = `"${fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`
 
   // Subscribe to PTY output → write to xterm
   useTerminalOutput(terminalId, (data) => {
