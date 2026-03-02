@@ -11,7 +11,7 @@ import {
   useTerminalExit,
 } from '../../hooks/useTauri'
 import { useAppStore } from '../../stores/appStore'
-import { getTerminalTheme } from '../../lib/themes'
+import { getTerminalTheme, hexToRgba } from '../../lib/themes'
 
 interface XTerminalProps {
   projectPath: string
@@ -31,7 +31,11 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   const cursorStyle = useAppStore((s) => s.cursorStyle)
   const cursorBlink = useAppStore((s) => s.cursorBlink)
   const fontFamily = useAppStore((s) => s.fontFamily)
-  const termTheme = getTerminalTheme(theme)
+  const backgroundImage = useAppStore((s) => s.backgroundImage)
+  const baseTermTheme = getTerminalTheme(theme)
+  const termTheme = backgroundImage
+    ? { ...baseTermTheme, background: hexToRgba(baseTermTheme.background ?? '#000000', 0.75) }
+    : baseTermTheme
 
   // Subscribe to PTY output → write to xterm
   useTerminalOutput(terminalId, (data) => {
@@ -57,14 +61,17 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   useEffect(() => {
     const term = terminalRef.current
     if (!term) return
-    term.options.theme = getTerminalTheme(theme)
+    const baseTheme = getTerminalTheme(theme)
+    term.options.theme = backgroundImage
+      ? { ...baseTheme, background: hexToRgba(baseTheme.background ?? '#000000', 0.75) }
+      : baseTheme
     term.options.fontSize = fontSize
     term.options.lineHeight = lineHeight
     term.options.cursorStyle = cursorStyle
     term.options.cursorBlink = cursorBlink
     term.options.fontFamily = `"${fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`
     fitAddonRef.current?.fit()
-  }, [theme, fontSize, lineHeight, cursorStyle, cursorBlink, fontFamily])
+  }, [theme, fontSize, lineHeight, cursorStyle, cursorBlink, fontFamily, backgroundImage])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -72,7 +79,9 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     const s = useAppStore.getState()
 
     const term = new Terminal({
-      theme: getTerminalTheme(s.theme),
+      theme: s.backgroundImage
+        ? { ...getTerminalTheme(s.theme), background: hexToRgba(getTerminalTheme(s.theme).background ?? '#000000', 0.75) }
+        : getTerminalTheme(s.theme),
       fontFamily: `"${s.fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`,
       fontSize: s.fontSize,
       lineHeight: s.lineHeight,
