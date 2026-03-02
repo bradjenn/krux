@@ -26,9 +26,10 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
     const el = textareaRef.current
     if (!el) return
     el.style.height = 'auto'
-    const newHeight = Math.min(el.scrollHeight, 96)
+    const maxHeight = 150
+    const newHeight = Math.min(el.scrollHeight, maxHeight)
     el.style.height = newHeight + 'px'
-    el.style.overflow = el.scrollHeight > 96 ? 'auto' : 'hidden'
+    el.style.overflow = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
   }, [])
 
   const handleSend = useCallback(() => {
@@ -55,8 +56,8 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
   )
 
   return (
-    <div className="border-t border-border bg-surface flex-shrink-0">
-      <div className="max-w-[700px] mx-auto w-full px-4 py-3 flex items-end gap-2">
+    <div className="border-t border-border flex-shrink-0">
+      <div className="max-w-[700px] mx-auto w-full flex items-end gap-2 pr-3 pb-3">
         <textarea
           ref={textareaRef}
           rows={1}
@@ -64,13 +65,13 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
           onInput={resizeTextarea}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          className="bg-transparent text-foreground placeholder:text-dim focus:outline-none resize-none w-full text-sm leading-relaxed overflow-hidden"
-          style={{ height: 'auto', minHeight: '24px' }}
+          className="bg-transparent text-foreground placeholder:text-dim focus:outline-none resize-none w-full text-sm leading-relaxed overflow-hidden px-4 pt-3 pb-2"
+          style={{ height: 'auto', minHeight: '44px' }}
         />
         {isStreaming ? (
           <button
             onClick={onStop}
-            className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors"
+            className="flex-shrink-0 w-8 h-8 mb-0.5 flex items-center justify-center rounded bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors"
             title="Stop generation (Esc)"
           >
             <Square size={14} />
@@ -79,7 +80,7 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
           <button
             onClick={handleSend}
             disabled={disabled}
-            className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex-shrink-0 w-8 h-8 mb-0.5 flex items-center justify-center rounded bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title="Send message (Enter)"
           >
             <Send size={14} />
