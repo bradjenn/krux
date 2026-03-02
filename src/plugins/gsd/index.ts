@@ -1,13 +1,14 @@
 import { Rocket } from 'lucide-react'
+import { invoke } from '@tauri-apps/api/core'
 import type { PluginDefinition } from '../types'
 import GsdTab from './GsdTab'
-import GsdSidebar from './GsdSidebar'
 
 export const gsdPlugin: PluginDefinition = {
   id: 'gsd',
   name: 'GSD Workflow',
   icon: Rocket,
   defaultTabType: 'gsd:main',
+  autoOpen: true,
   tabTypes: [
     {
       id: 'gsd:main',
@@ -16,5 +17,11 @@ export const gsdPlugin: PluginDefinition = {
       component: GsdTab,
     },
   ],
-  sidebarSection: GsdSidebar,
+  isAvailable: async (projectPath: string) => {
+    try {
+      return await invoke<boolean>('path_exists', { path: projectPath + '/.planning' })
+    } catch {
+      return false
+    }
+  },
 }

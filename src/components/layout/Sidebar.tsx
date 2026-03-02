@@ -3,48 +3,16 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete01Icon, Search01Icon } from '@hugeicons/core-free-icons'
 import { invoke } from '@tauri-apps/api/core'
 import { useAppStore, type Project } from '@/stores/appStore'
-import { PLUGINS } from '@/plugins'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
   visible: boolean
 }
 
-
-function PluginSidebar({ projectId, projectPath }: { projectId: string; projectPath: string }) {
-  const [availablePlugins, setAvailablePlugins] = useState<typeof PLUGINS>([])
-
-  useEffect(() => {
-    async function check() {
-      const available = []
-      for (const plugin of PLUGINS) {
-        if (plugin.sidebarSection) {
-          const isAvail = plugin.isAvailable ? await plugin.isAvailable(projectPath) : true
-          if (isAvail) available.push(plugin)
-        }
-      }
-      setAvailablePlugins(available)
-    }
-    check()
-  }, [projectId, projectPath])
-
-  if (availablePlugins.length === 0) return null
-
-  return (
-    <div className="border-t border-border">
-      {availablePlugins.map((plugin) => {
-        const Section = plugin.sidebarSection!
-        return <Section key={plugin.id} projectId={projectId} projectPath={projectPath} />
-      })}
-    </div>
-  )
-}
-
 export default function Sidebar({ visible }: SidebarProps) {
   const { projects, activeProjectId, setProjects, setActiveProject, tabs } = useAppStore()
   const [search, setSearch] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
-  const activeProject = projects.find((p) => p.id === activeProjectId)
 
   useEffect(() => {
     invoke<Project[]>('list_projects').then(setProjects)
@@ -222,11 +190,6 @@ export default function Sidebar({ visible }: SidebarProps) {
         )}
 
       </div>
-
-      {/* Plugin sidebar sections */}
-      {activeProjectId && activeProject && (
-        <PluginSidebar projectId={activeProjectId} projectPath={activeProject.path} />
-      )}
 
     </div>
   )

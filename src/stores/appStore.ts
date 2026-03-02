@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { appEvents } from '@/plugins/events'
 
 export interface Project {
   id: string
@@ -70,6 +71,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     } else {
       set({ activeTabId: null })
     }
+    appEvents.emit('project:switched', { projectId: id })
   },
 
   // View
