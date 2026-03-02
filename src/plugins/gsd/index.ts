@@ -1,5 +1,5 @@
-import { Rocket } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/core'
+import { Rocket } from 'lucide-react'
 import type { PluginDefinition } from '../types'
 import GsdTab from './GsdTab'
 
@@ -18,7 +18,7 @@ export const gsdPlugin: PluginDefinition = {
   ],
   isAvailable: async (projectPath: string) => {
     try {
-      return await invoke<boolean>('path_exists', { path: projectPath + '/.planning' })
+      return await invoke<boolean>('path_exists', { path: `${projectPath}/.planning` })
     } catch {
       return false
     }

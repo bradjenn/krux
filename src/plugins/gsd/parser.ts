@@ -7,7 +7,14 @@ export interface Phase {
   depends_on: string | null
   plan_count: number
   summary_count: number
-  disk_status: 'complete' | 'partial' | 'planned' | 'researched' | 'discussed' | 'empty' | 'no_directory'
+  disk_status:
+    | 'complete'
+    | 'partial'
+    | 'planned'
+    | 'researched'
+    | 'discussed'
+    | 'empty'
+    | 'no_directory'
   roadmap_complete: boolean
 }
 
@@ -54,7 +61,8 @@ export async function parseRoadmap(projectPath: string): Promise<Phase[]> {
   const phases: Phase[] = []
   let match: RegExpExecArray | null
 
-  while ((match = phasePattern.exec(content)) !== null) {
+  match = phasePattern.exec(content)
+  while (match !== null) {
     const phaseNum = match[1]
     const phaseName = match[2].replace(/\(INSERTED\)/i, '').trim()
 
@@ -83,15 +91,19 @@ export async function parseRoadmap(projectPath: string): Promise<Phase[]> {
     let planCount = 0
     let summaryCount = 0
 
-    const dirMatch = phaseDirNames.find((d) => d.startsWith(padded + '-') || d === padded)
+    const dirMatch = phaseDirNames.find((d) => d.startsWith(`${padded}-`) || d === padded)
     if (dirMatch) {
       try {
         const phaseFiles = await invoke<string[]>('list_dir', {
           path: `${phasesDir}/${dirMatch}`,
         })
         planCount = phaseFiles.filter((f) => f.endsWith('-PLAN.md') || f === 'PLAN.md').length
-        summaryCount = phaseFiles.filter((f) => f.endsWith('-SUMMARY.md') || f === 'SUMMARY.md').length
-        const hasResearch = phaseFiles.some((f) => f.endsWith('-RESEARCH.md') || f === 'RESEARCH.md')
+        summaryCount = phaseFiles.filter(
+          (f) => f.endsWith('-SUMMARY.md') || f === 'SUMMARY.md',
+        ).length
+        const hasResearch = phaseFiles.some(
+          (f) => f.endsWith('-RESEARCH.md') || f === 'RESEARCH.md',
+        )
         const hasContext = phaseFiles.some((f) => f.endsWith('-CONTEXT.md') || f === 'CONTEXT.md')
 
         if (summaryCount >= planCount && planCount > 0) diskStatus = 'complete'
@@ -121,6 +133,8 @@ export async function parseRoadmap(projectPath: string): Promise<Phase[]> {
       disk_status: diskStatus,
       roadmap_complete,
     })
+
+    match = phasePattern.exec(content)
   }
 
   return phases

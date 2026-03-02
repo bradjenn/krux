@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/stores/appStore'
 
 interface ProjectSwitcherProps {
@@ -90,16 +90,21 @@ export default function ProjectSwitcher({ isOpen, onClose }: ProjectSwitcherProp
     <div
       className="fixed inset-0 z-50 flex items-start justify-center"
       style={{ paddingTop: '18vh' }}
-      onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" />
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        aria-label="Close project switcher"
+      />
 
       {/* Modal */}
       <div
+        role="dialog"
         className="relative w-full max-w-md bg-surface border border-border overflow-hidden"
         style={{ borderRadius: 10, boxShadow: '0 16px 48px rgba(0,0,0,0.4)' }}
-        onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
         {/* Search input */}
@@ -125,15 +130,20 @@ export default function ProjectSwitcher({ isOpen, onClose }: ProjectSwitcherProp
             const termCount = getTerminalCount(project.id)
 
             return (
-              <div
+              <button
+                type="button"
                 key={project.id}
-                role="button"
                 onClick={() => selectProject(project.id)}
                 onMouseEnter={() => setSelectedIndex(index)}
-                className="flex items-center gap-3 cursor-pointer transition-colors duration-75"
+                className="flex items-center gap-3 cursor-pointer transition-colors duration-75 w-full text-left"
                 style={{
                   padding: '10px 16px',
-                  background: isSelected ? 'var(--color-white-alpha-5, rgba(255,255,255,0.05))' : 'transparent',
+                  background: isSelected
+                    ? 'var(--color-white-alpha-5, rgba(255,255,255,0.05))'
+                    : 'transparent',
+                  border: 'none',
+                  font: 'inherit',
+                  color: 'inherit',
                 }}
               >
                 <span
@@ -142,9 +152,7 @@ export default function ProjectSwitcher({ isOpen, onClose }: ProjectSwitcherProp
                 />
 
                 <div className="flex-1 min-w-0">
-                  <div className="truncate text-sm font-medium text-foreground">
-                    {project.name}
-                  </div>
+                  <div className="truncate text-sm font-medium text-foreground">{project.name}</div>
                   <div className="truncate text-xs text-dim" style={{ marginTop: 1 }}>
                     {project.path.replace(/^\/Users\/[^/]+/, '~')}
                   </div>
@@ -157,17 +165,13 @@ export default function ProjectSwitcher({ isOpen, onClose }: ProjectSwitcherProp
                   </div>
                 )}
 
-                {isActive && (
-                  <span className="text-xs text-dim shrink-0">current</span>
-                )}
-              </div>
+                {isActive && <span className="text-xs text-dim shrink-0">current</span>}
+              </button>
             )
           })}
 
           {filtered.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm text-dim">
-              No matching projects
-            </div>
+            <div className="px-4 py-8 text-center text-sm text-dim">No matching projects</div>
           )}
         </div>
 
@@ -176,9 +180,15 @@ export default function ProjectSwitcher({ isOpen, onClose }: ProjectSwitcherProp
           className="border-t border-border flex items-center gap-4 text-dim"
           style={{ padding: '8px 16px', fontSize: 11 }}
         >
-          <span><kbd className="text-muted-foreground">↑↓</kbd> navigate</span>
-          <span><kbd className="text-muted-foreground">↵</kbd> select</span>
-          <span><kbd className="text-muted-foreground">esc</kbd> close</span>
+          <span>
+            <kbd className="text-muted-foreground">↑↓</kbd> navigate
+          </span>
+          <span>
+            <kbd className="text-muted-foreground">↵</kbd> select
+          </span>
+          <span>
+            <kbd className="text-muted-foreground">esc</kbd> close
+          </span>
         </div>
       </div>
     </div>

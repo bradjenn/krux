@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Play, Square, ChevronDown, RotateCcw } from 'lucide-react'
 import { Command } from '@tauri-apps/plugin-shell'
-import { parseRoadmap, type Phase } from './parser'
-import { appEvents } from '@/plugins/events'
-import { cn } from '@/lib/utils'
+import { ChevronDown, Play, RotateCcw, Square } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
+import { appEvents } from '@/plugins/events'
+import { type Phase, parseRoadmap } from './parser'
 
 type ExecStatus = 'idle' | 'starting' | 'running' | 'done' | 'error' | 'cancelled'
 
@@ -41,12 +41,13 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
     })
   }, [projectPath])
 
-  // Auto-scroll
+  // Auto-scroll when new lines arrive
+  const lineCount = lines.length
   useEffect(() => {
-    if (autoScroll && bottomRef.current) {
+    if (lineCount > 0 && autoScroll && bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: 'instant' })
     }
-  }, [lines, autoScroll])
+  }, [lineCount, autoScroll])
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current
@@ -64,16 +65,15 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
     setLines([])
     setAutoScroll(true)
 
-    const prompt = `Execute GSD phase ${phase.number}: ${phase.name}. ` +
+    const prompt =
+      `Execute GSD phase ${phase.number}: ${phase.name}. ` +
       `Use /gsd:execute-phase to run this phase. ` +
       `The project is at ${projectPath}.`
 
     try {
-      const cmd = Command.create('claude', [
-        '--print',
-        '--dangerously-skip-permissions',
-        prompt,
-      ], { cwd: projectPath })
+      const cmd = Command.create('claude', ['--print', '--dangerously-skip-permissions', prompt], {
+        cwd: projectPath,
+      })
 
       cmd.stdout.on('data', (data: string) => {
         setStatus('running')
@@ -126,11 +126,7 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
       <div className="shrink-0 px-4 py-3 bg-surface border-b border-border">
         <div className="flex items-center gap-3">
           {/* Phase selector */}
-          <Select
-            value={selectedPhase}
-            onValueChange={setSelectedPhase}
-            disabled={isRunning}
-          >
+          <Select value={selectedPhase} onValueChange={setSelectedPhase} disabled={isRunning}>
             <SelectTrigger className="w-auto min-w-[200px]">
               <SelectValue placeholder="Select a phase..." />
             </SelectTrigger>
@@ -146,6 +142,7 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
           {/* Start/Stop buttons */}
           {!isRunning && (
             <button
+              type="button"
               onClick={startExecution}
               disabled={!selectedPhase}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-semibold transition-colors duration-100 bg-primary"
@@ -161,6 +158,7 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
 
           {isRunning && (
             <button
+              type="button"
               onClick={stopExecution}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium transition-colors duration-100 text-destructive"
               style={{
@@ -175,6 +173,7 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
 
           {isStopped && (
             <button
+              type="button"
               onClick={startExecution}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium transition-colors duration-100 bg-border text-muted-foreground"
             >
@@ -195,17 +194,24 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
               )}
               style={{
                 background:
-                  status === 'running' || status === 'starting' ? 'rgba(200,255,0,0.08)' :
-                  status === 'done' ? 'rgba(68,255,177,0.1)' :
-                  status === 'error' ? 'rgba(229,46,46,0.1)' :
-                  undefined,
+                  status === 'running' || status === 'starting'
+                    ? 'rgba(200,255,0,0.08)'
+                    : status === 'done'
+                      ? 'rgba(68,255,177,0.1)'
+                      : status === 'error'
+                        ? 'rgba(229,46,46,0.1)'
+                        : undefined,
               }}
             >
-              {status === 'starting' ? 'Starting...' :
-               status === 'running' ? `Running ${selectedPhaseName ?? ''}` :
-               status === 'done' ? 'Complete' :
-               status === 'error' ? 'Failed' :
-               'Stopped'}
+              {status === 'starting'
+                ? 'Starting...'
+                : status === 'running'
+                  ? `Running ${selectedPhaseName ?? ''}`
+                  : status === 'done'
+                    ? 'Complete'
+                    : status === 'error'
+                      ? 'Failed'
+                      : 'Stopped'}
             </span>
           )}
         </div>
@@ -236,11 +242,14 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
             </div>
           )}
 
-          {lines.map((line, i) => (
-            <div key={i} className="whitespace-pre-wrap break-all">
-              {line}
-            </div>
-          ))}
+          {lines.map((line, i) => {
+            const key = `${i}-${line.slice(0, 32)}`
+            return (
+              <div key={key} className="whitespace-pre-wrap break-all">
+                {line}
+              </div>
+            )
+          })}
 
           <div ref={bottomRef} />
         </div>
@@ -248,6 +257,7 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
         {/* Jump to bottom */}
         {!autoScroll && lines.length > 0 && (
           <button
+            type="button"
             onClick={() => {
               setAutoScroll(true)
               bottomRef.current?.scrollIntoView({ behavior: 'instant' })

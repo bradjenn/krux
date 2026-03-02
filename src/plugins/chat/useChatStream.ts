@@ -1,10 +1,6 @@
-import { useRef, useCallback, useState, useEffect } from 'react'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
-import {
-  startClaudeChat,
-  abortClaudeChat,
-  cleanupClaudeChat,
-} from '@/hooks/useTauri'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { abortClaudeChat, cleanupClaudeChat, startClaudeChat } from '@/hooks/useTauri'
 
 export type StreamStatus = 'idle' | 'streaming' | 'done' | 'error' | 'aborted'
 
@@ -23,9 +19,7 @@ interface ChatDonePayload {
  * The message.content array may contain text blocks, tool_use blocks, etc.
  * We only extract text blocks for display.
  */
-function extractText(
-  content: Array<{ type: string; text?: string }>,
-): string {
+function extractText(content: Array<{ type: string; text?: string }>): string {
   return content
     .filter((b) => b.type === 'text' && b.text)
     .map((b) => b.text!)
@@ -66,10 +60,7 @@ export function useChatStream(projectPath: string) {
   }, [cleanup])
 
   const sendMessage = useCallback(
-    async (
-      _history: Array<{ role: string; content: string }>,
-      userMessage: string,
-    ) => {
+    async (_history: Array<{ role: string; content: string }>, userMessage: string) => {
       cleanup()
       streamContentRef.current = ''
       setStreamingContent('')
@@ -82,66 +73,53 @@ export function useChatStream(projectPath: string) {
 
       try {
         // Set up event listeners BEFORE starting the process
-        const dataUnlisten = await listen<ChatOutputPayload>(
-          'claude:chat:data',
-          (event) => {
-            if (event.payload.chat_id !== chatId) return
+        const dataUnlisten = await listen<ChatOutputPayload>('claude:chat:data', (event) => {
+          if (event.payload.chat_id !== chatId) return
 
-            try {
-              const parsed = JSON.parse(event.payload.data)
+          try {
+            const parsed = JSON.parse(event.payload.data)
 
-              // Partial assistant messages contain cumulative content
-              if (parsed.type === 'assistant' && parsed.message?.content) {
-                const text = extractText(parsed.message.content)
-                if (text) {
-                  streamContentRef.current = text
-                  setStreamingContent(text)
-                }
+            // Partial assistant messages contain cumulative content
+            if (parsed.type === 'assistant' && parsed.message?.content) {
+              const text = extractText(parsed.message.content)
+              if (text) {
+                streamContentRef.current = text
+                setStreamingContent(text)
               }
-
-              // Result message contains the final complete text
-              if (parsed.type === 'result' && parsed.result) {
-                streamContentRef.current = parsed.result
-                setStreamingContent(parsed.result)
-              }
-            } catch {
-              // Ignore unparseable lines (e.g. system init messages)
             }
-          },
-        )
 
-        const doneUnlisten = await listen<ChatDonePayload>(
-          'claude:chat:done',
-          (event) => {
-            if (event.payload.chat_id !== chatId) return
-            if (streamContentRef.current) {
-              setStatus('done')
-            } else {
-              setStatus('error')
-              setLastError(event.payload.error || 'Claude exited with no output')
+            // Result message contains the final complete text
+            if (parsed.type === 'result' && parsed.result) {
+              streamContentRef.current = parsed.result
+              setStreamingContent(parsed.result)
             }
-            cleanup()
-            cleanupClaudeChat(chatId).catch(() => {})
-          },
-        )
+          } catch {
+            // Ignore unparseable lines (e.g. system init messages)
+          }
+        })
+
+        const doneUnlisten = await listen<ChatDonePayload>('claude:chat:done', (event) => {
+          if (event.payload.chat_id !== chatId) return
+          if (streamContentRef.current) {
+            setStatus('done')
+          } else {
+            setStatus('error')
+            setLastError(event.payload.error || 'Claude exited with no output')
+          }
+          cleanup()
+          cleanupClaudeChat(chatId).catch(() => {})
+        })
 
         unlistenDataRef.current = dataUnlisten
         unlistenDoneRef.current = doneUnlisten
 
         // Start the Claude CLI process with session tracking
         const session = sessionRef.current
-        await startClaudeChat(
-          chatId,
-          userMessage,
-          projectPath,
-          session.id,
-          session.started,
-        )
+        await startClaudeChat(chatId, userMessage, projectPath, session.id, session.started)
         // Mark session as started after first successful spawn
         session.started = true
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'Failed to start Claude'
+        const message = err instanceof Error ? err.message : 'Failed to start Claude'
         console.error('Claude chat error:', message)
         setStatus('error')
       }

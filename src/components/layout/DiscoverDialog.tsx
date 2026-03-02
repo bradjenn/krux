@@ -1,19 +1,19 @@
-import { useState } from 'react'
+import { CheckmarkCircle01Icon, FolderSearchIcon, PlusSignIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { FolderSearchIcon, PlusSignIcon, CheckmarkCircle01Icon } from '@hugeicons/core-free-icons'
 import { invoke } from '@tauri-apps/api/core'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { useAppStore, type Project } from '@/stores/appStore'
+import { type Project, useAppStore } from '@/stores/appStore'
 
 interface DiscoverDialogProps {
   isOpen: boolean
@@ -64,9 +64,17 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
           <div className="flex items-center gap-3">
             <div
               className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0"
-              style={{ background: 'rgba(15,197,237,0.08)', border: '1px solid rgba(15,197,237,0.15)' }}
+              style={{
+                background: 'rgba(15,197,237,0.08)',
+                border: '1px solid rgba(15,197,237,0.15)',
+              }}
             >
-              <HugeiconsIcon icon={FolderSearchIcon} size={15} strokeWidth={1.5} className="text-secondary" />
+              <HugeiconsIcon
+                icon={FolderSearchIcon}
+                size={15}
+                strokeWidth={1.5}
+                className="text-secondary"
+              />
             </div>
             <div>
               <DialogTitle>Discover Projects</DialogTitle>
@@ -77,11 +85,15 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
 
         {/* Scan input */}
         <div className="px-6 py-5 border-b border-border">
-          <label className="block mb-3 text-xs font-medium text-muted-foreground">
+          <label
+            htmlFor="discover-scan-path"
+            className="block mb-3 text-xs font-medium text-muted-foreground"
+          >
             Scan Directory
           </label>
           <div className="flex gap-2.5">
             <Input
+              id="discover-scan-path"
               value={scanPath}
               onChange={(e) => setScanPath(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleScan()}
@@ -96,13 +108,16 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
         {/* Results */}
         <div className="overflow-y-auto" style={{ maxHeight: 'calc(85vh - 300px)' }}>
           {discovered.length > 0 && (
-            <div
-              className="px-6 py-3 flex items-center justify-between border-b border-border"
-            >
+            <div className="px-6 py-3 flex items-center justify-between border-b border-border">
               <span className="text-[13px] text-muted-foreground">
                 {discovered.length} project{discovered.length !== 1 ? 's' : ''} found
               </span>
-              <Button variant="ghost" size="sm" onClick={handleAddAll} className="text-primary text-[13px]">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleAddAll}
+                className="text-primary text-[13px]"
+              >
                 <HugeiconsIcon icon={PlusSignIcon} size={11} strokeWidth={2} />
                 Add all
               </Button>
@@ -112,15 +127,16 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
           {discovered.map((d) => {
             const isAdded = added.has(d.path)
             return (
-              <div
+              <button
+                type="button"
                 key={d.path}
-                role="button"
-                tabIndex={0}
                 onClick={() => !isAdded && handleAdd(d)}
-                onKeyDown={(e) => e.key === 'Enter' && !isAdded && handleAdd(d)}
+                disabled={isAdded}
                 className={cn(
-                  "flex items-center gap-3 w-full text-left transition-all duration-100",
-                  isAdded ? 'opacity-50 cursor-default' : 'cursor-pointer hover:bg-secondary/[0.05]'
+                  'flex items-center gap-3 w-full text-left transition-all duration-100',
+                  isAdded
+                    ? 'opacity-50 cursor-default'
+                    : 'cursor-pointer hover:bg-secondary/[0.05]',
                 )}
                 style={{
                   padding: '10px 24px',
@@ -128,9 +144,19 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
                 }}
               >
                 {isAdded ? (
-                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} strokeWidth={1.5} className="shrink-0 text-green-500" />
+                  <HugeiconsIcon
+                    icon={CheckmarkCircle01Icon}
+                    size={14}
+                    strokeWidth={1.5}
+                    className="shrink-0 text-green-500"
+                  />
                 ) : (
-                  <HugeiconsIcon icon={PlusSignIcon} size={14} strokeWidth={1.5} className="shrink-0 text-dim" />
+                  <HugeiconsIcon
+                    icon={PlusSignIcon}
+                    size={14}
+                    strokeWidth={1.5}
+                    className="shrink-0 text-dim"
+                  />
                 )}
                 <div className="min-w-0">
                   <div className="truncate text-[15px] text-foreground">{d.name}</div>
@@ -138,7 +164,7 @@ export default function DiscoverDialog({ isOpen, onClose }: DiscoverDialogProps)
                     {d.path.replace(/^\/Users\/[^/]+/, '~')}
                   </div>
                 </div>
-              </div>
+              </button>
             )
           })}
 

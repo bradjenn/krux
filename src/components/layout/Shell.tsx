@@ -1,19 +1,33 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
-import { invoke, convertFileSrc } from '@tauri-apps/api/core'
+import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
-import { cn } from '@/lib/utils'
-import { useAppStore } from '@/stores/appStore'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import XTerminal from '@/components/terminal/XTerminal'
+import { closeTerminal, createTerminal } from '@/hooks/useTauri'
 import { applyTheme } from '@/lib/themes'
+import { cn } from '@/lib/utils'
 import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
-import { createTerminal, closeTerminal } from '@/hooks/useTauri'
 import { getAllPluginTabTypes } from '@/plugins'
-import Sidebar from './Sidebar'
-import TabBar from './TabBar'
-import SettingsPage from './SettingsPage'
+import { useAppStore } from '@/stores/appStore'
 import DiscoverDialog from './DiscoverDialog'
 import ProjectSwitcher from './ProjectSwitcher'
-import XTerminal from '@/components/terminal/XTerminal'
+import SettingsPage from './SettingsPage'
+import Sidebar from './Sidebar'
+import TabBar from './TabBar'
 import WallpaperSwitcher from './WallpaperSwitcher'
+
+interface Settings {
+  theme: string
+  font_size: number
+  line_height: number
+  cursor_style: string
+  cursor_blink: boolean
+  scrollback: number
+  font_family: string
+  background_image: string | null
+  background_opacity: number
+  background_blur: number
+  hide_titlebar: boolean
+}
 
 export default function Shell() {
   const {
@@ -65,19 +79,7 @@ export default function Shell() {
 
   // Load saved settings on startup
   useEffect(() => {
-    invoke<{
-      theme: string
-      font_size: number
-      line_height: number
-      cursor_style: string
-      cursor_blink: boolean
-      scrollback: number
-      font_family: string
-      background_image: string | null
-      background_opacity: number
-      background_blur: number
-      hide_titlebar: boolean
-    }>('load_settings').then((s) => {
+    invoke<Settings>('load_settings').then((s) => {
       setTheme(s.theme)
       applyTheme(s.theme)
       const store = useAppStore.getState()
@@ -92,7 +94,7 @@ export default function Shell() {
       store.setBackgroundBlur(s.background_blur)
       store.setHideTitlebar(s.hide_titlebar)
     })
-  }, [])
+  }, [setTheme])
 
   // Auto-create a shell tab when a project has no tabs (on select or after closing last tab)
   const projectTabs = activeProjectId ? getProjectTabs(activeProjectId) : []
@@ -111,8 +113,7 @@ export default function Shell() {
         terminalId,
       })
     })
-  }, [activeProjectId, projects, projectTabs.length])
-
+  }, [activeProjectId, projects, projectTabs.length, addTab])
 
   // Native menu event listener
   useEffect(() => {
@@ -164,7 +165,7 @@ export default function Shell() {
           const store = useAppStore.getState()
           const newSize = Math.min(32, store.fontSize + 1)
           store.setFontSize(newSize)
-          invoke('load_settings').then((s: any) => {
+          invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, font_size: newSize } })
           })
           break
@@ -174,7 +175,7 @@ export default function Shell() {
           const store = useAppStore.getState()
           const newSize = Math.max(8, store.fontSize - 1)
           store.setFontSize(newSize)
-          invoke('load_settings').then((s: any) => {
+          invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, font_size: newSize } })
           })
           break
@@ -183,7 +184,7 @@ export default function Shell() {
         case 'font-reset': {
           const store = useAppStore.getState()
           store.setFontSize(14)
-          invoke('load_settings').then((s: any) => {
+          invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, font_size: 14 } })
           })
           break
@@ -194,7 +195,7 @@ export default function Shell() {
           if (!store.backgroundImage) break
           const newOpacity = Math.min(1, Math.round((store.backgroundOpacity + 0.05) * 100) / 100)
           store.setBackgroundOpacity(newOpacity)
-          invoke('load_settings').then((s: any) => {
+          invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, background_opacity: newOpacity } })
           })
           break
@@ -205,7 +206,7 @@ export default function Shell() {
           if (!store.backgroundImage) break
           const newOpacity = Math.max(0.1, Math.round((store.backgroundOpacity - 0.05) * 100) / 100)
           store.setBackgroundOpacity(newOpacity)
-          invoke('load_settings').then((s: any) => {
+          invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, background_opacity: newOpacity } })
           })
           break
@@ -216,7 +217,7 @@ export default function Shell() {
           if (!store.backgroundImage) break
           const newBlur = Math.min(32, store.backgroundBlur + 2)
           store.setBackgroundBlur(newBlur)
-          invoke('load_settings').then((s: any) => {
+          invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, background_blur: newBlur } })
           })
           break
@@ -227,7 +228,7 @@ export default function Shell() {
           if (!store.backgroundImage) break
           const newBlur = Math.max(0, store.backgroundBlur - 2)
           store.setBackgroundBlur(newBlur)
-          invoke('load_settings').then((s: any) => {
+          invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, background_blur: newBlur } })
           })
           break
@@ -327,98 +328,114 @@ export default function Shell() {
         />
       )}
 
-        <Sidebar visible={sidebarVisible} onAddProject={() => setDiscoverOpen(true)} />
+      <Sidebar visible={sidebarVisible} onAddProject={() => setDiscoverOpen(true)} />
 
-        <div className="flex flex-col flex-1 min-w-0">
-          <TabBar onCloseTab={handleCloseTab} />
+      <div className="flex flex-col flex-1 min-w-0">
+        <TabBar onCloseTab={handleCloseTab} />
 
-          {/* Tab content area */}
-          <div className="flex-1 min-h-0 relative overflow-hidden">
-            {wallpaperUrl && (
-              <img
-                src={wallpaperUrl}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
-                style={backgroundBlur > 0 ? { filter: `blur(${backgroundBlur}px)`, transform: 'scale(1.1)' } : undefined}
-              />
-            )}
-            {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
-            {tabs
-              .filter((t) => t.type === 'shell' && t.terminalId)
-              .map((tab) => {
-                const project = projects.find((p) => p.id === tab.projectId)
-                return (
-                  <div
-                    key={tab.terminalId}
-                    className={cn(
-                      "absolute inset-0 transition-opacity duration-100",
-                      activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
-                      wallpaperUrl && "z-10"
-                    )}
-                  >
-                    <XTerminal
-                      projectPath={project?.path ?? '~'}
-                      existingTerminalId={tab.terminalId!}
-                      isActive={activeTabId === tab.id}
-                      onExit={() => handleCloseTab(tab.id)}
-                    />
-                  </div>
-                )
-              })}
-
-            {/* Render plugin tabs */}
-            {tabs
-              .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
-              .map((tab) => {
-                const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
-                if (!tabType) return null
-                const TabComponent = tabType.component
-                return (
-                  <div
-                    key={tab.id}
-                    className={cn(
-                      "absolute inset-0 overflow-auto transition-opacity duration-100",
-                      activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
-                      wallpaperUrl ? "z-10" : "bg-background"
-                    )}
-                    style={wallpaperUrl ? {
-                      background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
-                      '--color-background': 'transparent',
-                      '--color-surface': 'color-mix(in srgb, var(--bg2) 50%, transparent)',
-                    } as React.CSSProperties : undefined}
-                  >
-                    <TabComponent
-                      projectId={tab.projectId}
-                      projectPath={activeProject?.path ?? ''}
-                    />
-                  </div>
-                )
-              })}
-
-            {/* Empty state */}
-            {!activeProjectId && (
-              <div
-                className={cn("flex flex-col items-center justify-center h-full gap-4 text-dim", wallpaperUrl && "relative z-10")}
-                style={wallpaperUrl ? { background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)` } : undefined}
-              >
+        {/* Tab content area */}
+        <div className="flex-1 min-h-0 relative overflow-hidden">
+          {wallpaperUrl && (
+            <img
+              src={wallpaperUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+              style={
+                backgroundBlur > 0
+                  ? { filter: `blur(${backgroundBlur}px)`, transform: 'scale(1.1)' }
+                  : undefined
+              }
+            />
+          )}
+          {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
+          {tabs
+            .filter((t) => t.type === 'shell' && t.terminalId)
+            .map((tab) => {
+              const project = projects.find((p) => p.id === tab.projectId)
+              return (
                 <div
-                  className="flex items-center justify-center"
-                  style={{ fontSize: 28, opacity: 0.3, fontWeight: 300 }}
+                  key={tab.terminalId}
+                  className={cn(
+                    'absolute inset-0 transition-opacity duration-100',
+                    activeTabId === tab.id
+                      ? 'opacity-100 pointer-events-auto'
+                      : 'opacity-0 pointer-events-none',
+                    wallpaperUrl && 'z-10',
+                  )}
                 >
-                  <span className="text-muted-foreground">&gt;_</span>
+                  <XTerminal
+                    projectPath={project?.path ?? '~'}
+                    existingTerminalId={tab.terminalId!}
+                    isActive={activeTabId === tab.id}
+                    onExit={() => handleCloseTab(tab.id)}
+                  />
                 </div>
-                <div className="text-center">
-                  <div className="text-base font-medium text-muted-foreground">
-                    Select a project
-                  </div>
-                  <div className="text-xs mt-1">
-                    Choose a project from the sidebar to manage its Claude Code sessions
-                  </div>
+              )
+            })}
+
+          {/* Render plugin tabs */}
+          {tabs
+            .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
+            .map((tab) => {
+              const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
+              if (!tabType) return null
+              const TabComponent = tabType.component
+              return (
+                <div
+                  key={tab.id}
+                  className={cn(
+                    'absolute inset-0 overflow-auto transition-opacity duration-100',
+                    activeTabId === tab.id
+                      ? 'opacity-100 pointer-events-auto'
+                      : 'opacity-0 pointer-events-none',
+                    wallpaperUrl ? 'z-10' : 'bg-background',
+                  )}
+                  style={
+                    wallpaperUrl
+                      ? ({
+                          background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+                          '--color-background': 'transparent',
+                          '--color-surface': 'color-mix(in srgb, var(--bg2) 50%, transparent)',
+                        } as React.CSSProperties)
+                      : undefined
+                  }
+                >
+                  <TabComponent projectId={tab.projectId} projectPath={activeProject?.path ?? ''} />
+                </div>
+              )
+            })}
+
+          {/* Empty state */}
+          {!activeProjectId && (
+            <div
+              className={cn(
+                'flex flex-col items-center justify-center h-full gap-4 text-dim',
+                wallpaperUrl && 'relative z-10',
+              )}
+              style={
+                wallpaperUrl
+                  ? {
+                      background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+                    }
+                  : undefined
+              }
+            >
+              <div
+                className="flex items-center justify-center"
+                style={{ fontSize: 28, opacity: 0.3, fontWeight: 300 }}
+              >
+                <span className="text-muted-foreground">&gt;_</span>
+              </div>
+              <div className="text-center">
+                <div className="text-base font-medium text-muted-foreground">Select a project</div>
+                <div className="text-xs mt-1">
+                  Choose a project from the sidebar to manage its Claude Code sessions
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
+      </div>
 
       {/* Settings overlay */}
       {activeView === 'settings' && (
@@ -428,7 +445,10 @@ export default function Shell() {
       {/* Modals */}
       <DiscoverDialog isOpen={discoverOpen} onClose={() => setDiscoverOpen(false)} />
       <ProjectSwitcher isOpen={switcherOpen} onClose={() => setSwitcherOpen(false)} />
-      <WallpaperSwitcher isOpen={wallpaperSwitcherOpen} onClose={() => setWallpaperSwitcherOpen(false)} />
+      <WallpaperSwitcher
+        isOpen={wallpaperSwitcherOpen}
+        onClose={() => setWallpaperSwitcherOpen(false)}
+      />
     </div>
   )
 }

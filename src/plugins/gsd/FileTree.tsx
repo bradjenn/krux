@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { ChevronDown, ChevronRight, FileText, Folder } from 'lucide-react'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface TreeNode {
@@ -25,6 +25,7 @@ function TreeItem({ node, depth, selectedPath, onSelect }: TreeItemProps) {
     return (
       <div>
         <button
+          type="button"
           onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-1 w-full text-left px-2 py-0.5 transition-colors duration-100 text-muted-foreground hover:bg-white/[0.03]"
           style={{
@@ -59,12 +60,13 @@ function TreeItem({ node, depth, selectedPath, onSelect }: TreeItemProps) {
 
   return (
     <button
+      type="button"
       onClick={() => onSelect(node.path)}
       className={cn(
         'flex items-center gap-1 w-full text-left px-2 py-0.5 transition-colors duration-100 border-l-2',
         isSelected
           ? 'text-primary bg-white/[0.04] border-l-primary'
-          : 'text-foreground border-l-transparent hover:bg-white/[0.03]'
+          : 'text-foreground border-l-transparent hover:bg-white/[0.03]',
       )}
       style={{
         paddingLeft: `${8 + indentPx}px`,
@@ -89,7 +91,13 @@ export function FileTree({
   return (
     <div className="py-2">
       {nodes.map((node) => (
-        <TreeItem key={node.path} node={node} depth={0} selectedPath={selectedPath} onSelect={onSelect} />
+        <TreeItem
+          key={node.path}
+          node={node}
+          depth={0}
+          selectedPath={selectedPath}
+          onSelect={onSelect}
+        />
       ))}
     </div>
   )

@@ -16,10 +16,7 @@ export async function createTerminal(
   })
 }
 
-export async function writeTerminal(
-  terminalId: string,
-  data: string,
-): Promise<void> {
+export async function writeTerminal(terminalId: string, data: string): Promise<void> {
   return invoke('write_terminal', { terminalId, data })
 }
 
@@ -80,10 +77,7 @@ interface TerminalExitPayload {
  * Subscribe to terminal output events for a specific terminal.
  * Returns an unlisten function on cleanup.
  */
-export function useTerminalOutput(
-  terminalId: string | null,
-  onData: (data: string) => void,
-) {
+export function useTerminalOutput(terminalId: string | null, onData: (data: string) => void) {
   const callbackRef = useRef(onData)
   callbackRef.current = onData
 
@@ -109,10 +103,7 @@ export function useTerminalOutput(
 /**
  * Subscribe to terminal exit events for a specific terminal.
  */
-export function useTerminalExit(
-  terminalId: string | null,
-  onExit: () => void,
-) {
+export function useTerminalExit(terminalId: string | null, onExit: () => void) {
   const callbackRef = useRef(onExit)
   callbackRef.current = onExit
 

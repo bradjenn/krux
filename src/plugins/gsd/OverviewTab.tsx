@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { CheckCircle2, Circle, Play, Rocket } from 'lucide-react'
-import { useAppStore } from '@/stores/appStore'
+import { useEffect, useState } from 'react'
 import { createTerminal, writeTerminal } from '@/hooks/useTauri'
+import { useAppStore } from '@/stores/appStore'
 import {
+  type Phase,
+  type ProjectMeta,
+  type ProjectState,
+  parseProjectMeta,
   parseRoadmap,
   parseState,
-  parseProjectMeta,
-  type Phase,
-  type ProjectState,
-  type ProjectMeta,
 } from './parser'
 
 function ProgressBar({ value }: { value: number }) {
@@ -23,7 +23,10 @@ function ProgressBar({ value }: { value: number }) {
   )
 }
 
-function getStatusBadgeClasses(status: Phase['disk_status']): { className: string; style?: React.CSSProperties } {
+function getStatusBadgeClasses(status: Phase['disk_status']): {
+  className: string
+  style?: React.CSSProperties
+} {
   switch (status) {
     case 'complete':
       return { className: 'text-green rounded', style: { background: 'rgba(68,255,177,0.1)' } }
@@ -53,14 +56,10 @@ function PhaseCard({ phase, onNavigate }: { phase: Phase; onNavigate?: (view: Gs
             >
               {phase.number}
             </span>
-            <span className="text-base font-semibold truncate text-foreground">
-              {phase.name}
-            </span>
+            <span className="text-base font-semibold truncate text-foreground">{phase.name}</span>
           </div>
           {phase.goal && (
-            <p className="text-xs mt-1.5 line-clamp-2 text-muted-foreground">
-              {phase.goal}
-            </p>
+            <p className="text-xs mt-1.5 line-clamp-2 text-muted-foreground">{phase.goal}</p>
           )}
         </div>
 
@@ -80,13 +79,12 @@ function PhaseCard({ phase, onNavigate }: { phase: Phase; onNavigate?: (view: Gs
             {phase.plan_count} plan{phase.plan_count !== 1 ? 's' : ''}
           </span>
           <span className="text-xs text-dim">·</span>
-          <span className="text-xs text-muted-foreground">
-            {phase.summary_count} complete
-          </span>
+          <span className="text-xs text-muted-foreground">{phase.summary_count} complete</span>
         </div>
         <div className="flex items-center gap-2">
           {phase.disk_status !== 'complete' && onNavigate && (
             <button
+              type="button"
               onClick={() => onNavigate('execution')}
               className="flex items-center gap-1 text-xs px-2 py-1 rounded font-medium transition-colors duration-100 bg-primary/[0.08] text-primary hover:bg-primary/[0.15]"
             >
@@ -115,7 +113,12 @@ interface OverviewTabProps {
 export default function OverviewTab({ projectId, projectPath, onNavigate }: OverviewTabProps) {
   const { addTab } = useAppStore()
   const [phases, setPhases] = useState<Phase[]>([])
-  const [state, setState] = useState<ProjectState>({ phase: null, plan: null, status: null, progress: null })
+  const [state, setState] = useState<ProjectState>({
+    phase: null,
+    plan: null,
+    status: null,
+    progress: null,
+  })
   const [meta, setMeta] = useState<ProjectMeta>({ name: 'Loading...', description: null })
   const [hasPlanning, setHasPlanning] = useState(true)
   const [loading, setLoading] = useState(true)
@@ -170,15 +173,14 @@ export default function OverviewTab({ projectId, projectPath, onNavigate }: Over
           <Rocket className="w-7 h-7 text-primary" />
         </div>
         <div className="text-center">
-          <h2 className="text-lg font-semibold text-foreground mb-1">
-            Start a GSD Project
-          </h2>
+          <h2 className="text-lg font-semibold text-foreground mb-1">Start a GSD Project</h2>
           <p className="text-xs text-muted-foreground max-w-xs">
-            Initialize a GSD workflow for this project. This will open a terminal
-            and run the setup process.
+            Initialize a GSD workflow for this project. This will open a terminal and run the setup
+            process.
           </p>
         </div>
         <button
+          type="button"
           onClick={handleStartGsd}
           className="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 bg-primary text-background hover:bg-primary/90"
         >
@@ -196,13 +198,9 @@ export default function OverviewTab({ projectId, projectPath, onNavigate }: Over
     <div className="max-w-4xl mx-auto p-6">
       {/* Project header */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold mb-1 text-foreground">
-          {meta.name}
-        </h1>
+        <h1 className="text-xl font-bold mb-1 text-foreground">{meta.name}</h1>
         {meta.description && (
-          <p className="text-xs mb-3 text-muted-foreground">
-            {meta.description}
-          </p>
+          <p className="text-xs mb-3 text-muted-foreground">{meta.description}</p>
         )}
 
         {/* State info */}
@@ -229,9 +227,7 @@ export default function OverviewTab({ projectId, projectPath, onNavigate }: Over
               </div>
             )}
             {state.progress && (
-              <div className="text-xs text-muted-foreground">
-                {state.progress}
-              </div>
+              <div className="text-xs text-muted-foreground">{state.progress}</div>
             )}
           </div>
         )}
@@ -239,7 +235,9 @@ export default function OverviewTab({ projectId, projectPath, onNavigate }: Over
         {/* Progress bar */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{completedPhases} of {totalPhases} phases complete</span>
+            <span>
+              {completedPhases} of {totalPhases} phases complete
+            </span>
             <span className="text-primary">{Math.round(progress)}%</span>
           </div>
           <ProgressBar value={progress} />
@@ -249,9 +247,7 @@ export default function OverviewTab({ projectId, projectPath, onNavigate }: Over
       {/* Phase grid */}
       {phases.length === 0 ? (
         <div className="text-center py-8 rounded-lg bg-surface border border-border">
-          <p className="text-base text-muted-foreground">
-            No phases found in this project
-          </p>
+          <p className="text-base text-muted-foreground">No phases found in this project</p>
           <p className="text-xs mt-1 text-dim">
             Make sure .planning/ROADMAP.md exists with phase definitions
           </p>

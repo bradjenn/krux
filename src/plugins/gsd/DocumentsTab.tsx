@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { FileText } from 'lucide-react'
-import { FileTree, type TreeNode } from './FileTree'
+import { useEffect, useState } from 'react'
 import { DocViewer } from './DocViewer'
+import { FileTree, type TreeNode } from './FileTree'
 
 interface DocumentsTabProps {
   projectId: string
@@ -76,7 +76,7 @@ export default function DocumentsTab({ projectPath }: DocumentsTabProps) {
           <div className="py-2 px-3 space-y-1.5">
             {[...Array(8)].map((_, i) => (
               <div
-                key={i}
+                key={`skeleton-${String(i)}`}
                 className="h-4 rounded animate-pulse bg-border"
                 style={{ width: `${60 + Math.random() * 30}%` }}
               />
@@ -93,7 +93,7 @@ export default function DocumentsTab({ projectPath }: DocumentsTabProps) {
         {selectedFile && (
           <div className="shrink-0 px-6 py-2 text-xs text-muted-foreground border-b border-border">
             {selectedFile.split('/').map((segment, i, arr) => (
-              <span key={i}>
+              <span key={`${segment}-${String(i)}`}>
                 {i > 0 && <span className="text-dim"> / </span>}
                 <span className={i === arr.length - 1 ? 'text-foreground' : undefined}>
                   {segment}

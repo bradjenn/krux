@@ -1,6 +1,6 @@
-import type { PluginDefinition } from './types'
-import { gsdPlugin } from './gsd'
 import { chatPlugin } from './chat'
+import { gsdPlugin } from './gsd'
+import type { PluginDefinition } from './types'
 
 // All registered plugins
 export const PLUGINS: PluginDefinition[] = [gsdPlugin, chatPlugin]

@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { Copy, RotateCcw } from 'lucide-react'
-import { Streamdown } from 'streamdown'
 import { code } from '@streamdown/code'
+import { Copy, RotateCcw } from 'lucide-react'
+import { useState } from 'react'
+import { Streamdown } from 'streamdown'
 import type { ChatMessage } from '@/lib/chatDb'
 
 interface MessageBubbleProps {
@@ -42,7 +42,11 @@ export default function MessageBubble({
   return (
     <div className="group py-2">
       <div className="text-foreground text-sm">
-        <Streamdown plugins={{ code }} isAnimating={isStreaming && isLastAssistant} shikiTheme={['github-dark', 'github-dark']}>
+        <Streamdown
+          plugins={{ code }}
+          isAnimating={isStreaming && isLastAssistant}
+          shikiTheme={['github-dark', 'github-dark']}
+        >
           {message.content}
         </Streamdown>
         {isStreaming && isLastAssistant && (
@@ -53,6 +57,7 @@ export default function MessageBubble({
       {!isStreaming && (
         <div className="flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
+            type="button"
             onClick={handleCopy}
             className="flex items-center gap-1 text-dim hover:text-foreground text-xs px-1.5 py-0.5 rounded transition-colors"
             title="Copy message"
@@ -62,6 +67,7 @@ export default function MessageBubble({
           </button>
           {onRetry && (
             <button
+              type="button"
               onClick={onRetry}
               className="flex items-center gap-1 text-dim hover:text-foreground text-xs px-1.5 py-0.5 rounded transition-colors"
               title="Retry"

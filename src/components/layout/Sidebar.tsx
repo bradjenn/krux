@@ -1,9 +1,9 @@
-import { useEffect } from 'react'
-import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete01Icon, NoteAddIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { invoke } from '@tauri-apps/api/core'
-import { useAppStore, type Project } from '@/stores/appStore'
+import { useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { type Project, useAppStore } from '@/stores/appStore'
 
 interface SidebarProps {
   visible: boolean
@@ -11,7 +11,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ visible, onAddProject }: SidebarProps) {
-  const { projects, activeProjectId, setProjects, setActiveProject, tabs, hideTitlebar } = useAppStore()
+  const { projects, activeProjectId, setProjects, setActiveProject, tabs, hideTitlebar } =
+    useAppStore()
 
   useEffect(() => {
     invoke<Project[]>('list_projects').then(setProjects)
@@ -30,8 +31,8 @@ export default function Sidebar({ visible, onAddProject }: SidebarProps) {
   return (
     <div
       className={cn(
-        "flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out bg-surface",
-        visible && "border-r border-border"
+        'flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out bg-surface',
+        visible && 'border-r border-border',
       )}
       style={{
         width: visible ? 340 : 0,
@@ -47,6 +48,7 @@ export default function Sidebar({ visible, onAddProject }: SidebarProps) {
           Projects
         </span>
         <button
+          type="button"
           onClick={onAddProject}
           className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors duration-100 cursor-pointer"
           title="Add project"
@@ -62,20 +64,19 @@ export default function Sidebar({ visible, onAddProject }: SidebarProps) {
           const termCount = getTerminalCount(project.id)
 
           return (
-            <div
+            <button
+              type="button"
               key={project.id}
-              role="button"
-              tabIndex={0}
               onClick={() => setActiveProject(project.id)}
-              onKeyDown={(e) => e.key === 'Enter' && setActiveProject(project.id)}
               className={cn(
-                "project-item group flex items-center gap-2.5 w-full text-left transition-all duration-100 cursor-pointer border-l-[3px]",
+                'project-item group flex items-center gap-2.5 w-full text-left transition-all duration-100 cursor-pointer border-l-[3px]',
                 isActive
-                  ? "border-l-primary bg-primary/[0.04] text-foreground"
-                  : "border-l-transparent bg-transparent text-muted-foreground hover:bg-secondary/[0.04]"
+                  ? 'border-l-primary bg-primary/[0.04] text-foreground'
+                  : 'border-l-transparent bg-transparent text-muted-foreground hover:bg-secondary/[0.04]',
               )}
               style={{
                 padding: '8px 12px 8px 10px',
+                background: 'none',
               }}
             >
               <span
@@ -84,42 +85,35 @@ export default function Sidebar({ visible, onAddProject }: SidebarProps) {
               />
 
               <div className="flex-1 min-w-0">
-                <div className="truncate font-medium text-[15px]">
-                  {project.name}
-                </div>
-                <div
-                  className="truncate text-[13px] text-dim"
-                  style={{ marginTop: 1 }}
-                >
+                <div className="truncate font-medium text-[15px]">{project.name}</div>
+                <div className="truncate text-[13px] text-dim" style={{ marginTop: 1 }}>
                   {project.path.replace(/^\/Users\/[^/]+/, '~')}
                 </div>
               </div>
 
               {termCount > 0 && (
-                <div
-                  className="flex items-center gap-1 shrink-0 text-[12px] text-primary"
-                >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-primary animate-[pulse_2s_ease-in-out_infinite] [box-shadow:0_0_4px_var(--accent-glow)]"
-                  />
+                <div className="flex items-center gap-1 shrink-0 text-[12px] text-primary">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-[pulse_2s_ease-in-out_infinite] [box-shadow:0_0_4px_var(--accent-glow)]" />
                   {termCount > 1 && <span>{termCount}</span>}
                 </div>
               )}
 
               <button
+                type="button"
                 onClick={(e) => handleRemove(e, project.id)}
                 className="project-remove shrink-0 p-1 rounded opacity-0 transition-opacity duration-100 cursor-pointer text-dim hover:text-destructive"
                 title="Remove project"
               >
                 <HugeiconsIcon icon={Delete01Icon} size={13} strokeWidth={1.5} />
               </button>
-            </div>
+            </button>
           )
         })}
 
         {projects.length === 0 && (
           <div className="flex flex-col items-center justify-center flex-1 px-4 py-16 text-center">
             <svg
+              aria-hidden="true"
               width="48"
               height="48"
               viewBox="0 0 24 24"
@@ -132,17 +126,11 @@ export default function Sidebar({ visible, onAddProject }: SidebarProps) {
             >
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
-            <div className="mt-3 text-base text-muted-foreground">
-              No projects yet
-            </div>
-            <div className="mt-1 text-xs text-dim">
-              Tap the icon above to add one
-            </div>
+            <div className="mt-3 text-base text-muted-foreground">No projects yet</div>
+            <div className="mt-1 text-xs text-dim">Tap the icon above to add one</div>
           </div>
         )}
-
       </div>
-
     </div>
   )
 }

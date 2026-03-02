@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import { useAppStore } from '@/stores/appStore'
-import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
+import { useAppStore } from '@/stores/appStore'
 
 const COLS = 3
 
@@ -27,7 +27,12 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
   // Build the options list: None + filtered presets + Custom
   const allOptions: WallpaperOption[] = [
     { type: 'none' },
-    ...WALLPAPER_PRESETS.map((p) => ({ type: 'preset' as const, id: p.id, name: p.name, file: p.file })),
+    ...WALLPAPER_PRESETS.map((p) => ({
+      type: 'preset' as const,
+      id: p.id,
+      name: p.name,
+      file: p.file,
+    })),
     { type: 'custom' },
   ]
 
@@ -40,6 +45,7 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
     : allOptions
 
   // Stash original wallpaper on open, reset state
+  // biome-ignore lint/correctness/useExhaustiveDependencies: backgroundImage and findCurrentIndex are intentionally excluded — this effect must only run when isOpen transitions to true, not when the preview changes the wallpaper
   useEffect(() => {
     if (isOpen) {
       setOriginalWallpaper(backgroundImage)
@@ -47,7 +53,7 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
       setSelectedIndex(findCurrentIndex())
       requestAnimationFrame(() => inputRef.current?.focus())
     }
-  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen])
 
   function findCurrentIndex(): number {
     if (!backgroundImage) return 0
@@ -86,8 +92,9 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
     if (isOpen && filtered[selectedIndex]?.type !== 'custom') {
       applyPreview(selectedIndex)
     }
-  }, [selectedIndex, isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedIndex, isOpen, applyPreview, filtered])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: save is a stable local function that only uses invoke (external) and its parameter
   const confirm = useCallback(
     (option: WallpaperOption) => {
       if (option.type === 'custom') {
@@ -110,11 +117,11 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
       save(value)
       onClose()
     },
-    [originalWallpaper, onClose, setBackgroundImage], // eslint-disable-line react-hooks/exhaustive-deps
+    [originalWallpaper, onClose, setBackgroundImage],
   )
 
   function save(value: string | null) {
-    invoke('load_settings').then((s: any) => {
+    invoke<Record<string, unknown>>('load_settings').then((s) => {
       invoke('save_settings', { settings: { ...s, background_image: value } })
     })
   }
@@ -167,17 +174,22 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
     <div
       className="fixed inset-0 z-50 flex items-start justify-center"
       style={{ paddingTop: '18vh' }}
-      onClick={revert}
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" />
+      {/* Backdrop — click to dismiss */}
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50"
+        onClick={revert}
+        aria-label="Close wallpaper switcher"
+        tabIndex={-1}
+      />
 
       {/* Modal */}
       <div
         className="relative w-full max-w-lg bg-surface border border-border overflow-hidden"
         style={{ borderRadius: 10, boxShadow: '0 16px 48px rgba(0,0,0,0.4)' }}
-        onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
+        role="dialog"
       >
         {/* Search input */}
         <div className="border-b border-border" style={{ padding: '12px 16px' }}>
@@ -207,6 +219,7 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
             if (option.type === 'none') {
               return (
                 <button
+                  type="button"
                   key="none"
                   onClick={() => confirm(option)}
                   onMouseEnter={() => setSelectedIndex(index)}
@@ -227,6 +240,7 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
             if (option.type === 'custom') {
               return (
                 <button
+                  type="button"
                   key="custom"
                   onClick={() => confirm(option)}
                   onMouseEnter={() => setSelectedIndex(index)}
@@ -244,6 +258,7 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
 
             return (
               <button
+                type="button"
                 key={option.id}
                 onClick={() => confirm(option)}
                 onMouseEnter={() => setSelectedIndex(index)}
@@ -280,9 +295,15 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
           className="border-t border-border flex items-center gap-4 text-dim"
           style={{ padding: '8px 16px', fontSize: 11 }}
         >
-          <span><kbd className="text-muted-foreground">←→↑↓</kbd> navigate</span>
-          <span><kbd className="text-muted-foreground">↵</kbd> apply</span>
-          <span><kbd className="text-muted-foreground">esc</kbd> cancel</span>
+          <span>
+            <kbd className="text-muted-foreground">←→↑↓</kbd> navigate
+          </span>
+          <span>
+            <kbd className="text-muted-foreground">↵</kbd> apply
+          </span>
+          <span>
+            <kbd className="text-muted-foreground">esc</kbd> cancel
+          </span>
         </div>
       </div>
     </div>

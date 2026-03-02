@@ -1,17 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
-import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 // WebGL addon removed — canvas renderer handles Unicode glyphs (braille, spinners) better
 import { Unicode11Addon } from '@xterm/addon-unicode11'
+import { Terminal } from '@xterm/xterm'
+import { useEffect, useRef, useState } from 'react'
 import '@xterm/xterm/css/xterm.css'
 import {
-  writeTerminal,
   resizeTerminal,
-  useTerminalOutput,
   useTerminalExit,
+  useTerminalOutput,
+  writeTerminal,
 } from '../../hooks/useTauri'
-import { useAppStore } from '../../stores/appStore'
 import { getTerminalTheme, hexToRgba } from '../../lib/themes'
+import { useAppStore } from '../../stores/appStore'
 
 /**
  * When wallpaper is active, make xterm's own background fully transparent
@@ -85,7 +85,7 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     term.options.cursorBlink = cursorBlink
     term.options.fontFamily = `"${fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`
     fitAddonRef.current?.fit()
-  }, [theme, fontSize, lineHeight, cursorStyle, cursorBlink, fontFamily, backgroundImage, backgroundOpacity])
+  }, [theme, fontSize, lineHeight, cursorStyle, cursorBlink, fontFamily, hasWallpaper])
 
   useEffect(() => {
     if (!containerRef.current) return

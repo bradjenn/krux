@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { Cancel01Icon, CommandLineIcon, PlusSignIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { PlusSignIcon, Cancel01Icon, CommandLineIcon } from '@hugeicons/core-free-icons'
-import { cn } from '@/lib/utils'
-import { useAppStore } from '@/stores/appStore'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createTerminal, writeTerminal } from '@/hooks/useTauri'
+import { cn } from '@/lib/utils'
 import { PLUGINS } from '@/plugins'
 import type { PluginDefinition } from '@/plugins/types'
+import { useAppStore } from '@/stores/appStore'
 
 interface TabBarProps {
   onCloseTab: (id: string) => void
@@ -26,8 +26,10 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
   const activeProject = projects.find((p) => p.id === activeProjectId)
 
   // Check plugin availability whenever the active project changes
+  const activeProjectId_ = activeProject?.id
+  const activeProjectPath = activeProject?.path
   useEffect(() => {
-    if (!activeProject) {
+    if (!activeProjectId_ || !activeProjectPath) {
       setPluginAvailability({})
       return
     }
@@ -37,7 +39,7 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
       for (const plugin of PLUGINS) {
         if (plugin.isAvailable) {
           try {
-            results[plugin.id] = await plugin.isAvailable(activeProject.path)
+            results[plugin.id] = await plugin.isAvailable(activeProjectPath)
           } catch {
             results[plugin.id] = false
           }
@@ -49,15 +51,17 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
     }
 
     checkAvailability()
-  }, [activeProject?.id, activeProject?.path])
+  }, [activeProjectId_, activeProjectPath])
 
   // Close menu on click outside
   useEffect(() => {
     if (!menuOpen) return
     const handler = (e: MouseEvent) => {
       if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        plusBtnRef.current && !plusBtnRef.current.contains(e.target as Node)
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        plusBtnRef.current &&
+        !plusBtnRef.current.contains(e.target as Node)
       ) {
         setMenuOpen(false)
       }
@@ -145,13 +149,14 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
         const shortcutNum = index < 9 ? index + 1 : null
         return (
           <button
+            type="button"
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "tab group flex items-center gap-1.5 shrink-0 transition-colors duration-100 cursor-pointer text-xs hover:text-foreground hover:bg-white/[0.02]",
+              'tab group flex items-center gap-1.5 shrink-0 transition-colors duration-100 cursor-pointer text-xs hover:text-foreground hover:bg-white/[0.02]',
               isActive
                 ? 'text-foreground border-b-2 border-primary bg-white/[0.02]'
-                : 'text-muted-foreground border-b-2 border-transparent'
+                : 'text-muted-foreground border-b-2 border-transparent',
             )}
             style={{
               padding: '0 14px',
@@ -160,15 +165,10 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
           >
             <span>{tab.label}</span>
             {shortcutNum && (
-              <span
-                className={cn(
-                  "text-[10px] text-muted-foreground/50"
-                )}
-              >
-                ⌘{shortcutNum}
-              </span>
+              <span className={cn('text-[10px] text-muted-foreground/50')}>⌘{shortcutNum}</span>
             )}
-            <span
+            <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation()
                 onCloseTab(tab.id)
@@ -176,13 +176,14 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
               className="tab-close opacity-0 group-hover:opacity-100 transition-opacity duration-100 p-0.5 rounded hover:text-destructive hover:bg-destructive/[0.15]"
             >
               <HugeiconsIcon icon={Cancel01Icon} size={11} strokeWidth={2} />
-            </span>
+            </button>
           </button>
         )
       })}
 
       {/* New tab button */}
       <button
+        type="button"
         ref={plusBtnRef}
         onClick={handlePlusClick}
         className="flex items-center justify-center shrink-0 transition-colors duration-150 cursor-pointer text-dim hover:text-primary"
@@ -196,76 +197,85 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
       </button>
 
       {/* Dropdown via portal to escape overflow clipping */}
-      {menuOpen && createPortal(
-        <div
-          ref={menuRef}
-          className="fixed z-50 py-1 min-w-[160px] bg-surface border border-border"
-          style={{
-            top: menuPos.top,
-            left: menuPos.left,
-            borderRadius: 6,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          }}
-        >
-          <button
-            onClick={handleNewShellTab}
-            className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+      {menuOpen &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className="fixed z-50 py-1 min-w-[160px] bg-surface border border-border"
+            style={{
+              top: menuPos.top,
+              left: menuPos.left,
+              borderRadius: 6,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            }}
           >
-            <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
-            Terminal
-          </button>
+            <button
+              type="button"
+              onClick={handleNewShellTab}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+            >
+              <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
+              Terminal
+            </button>
 
-          {PLUGINS.length > 0 && (
-            <>
-              <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
-              {PLUGINS.map((plugin) => {
-                const available = pluginAvailability[plugin.id] ?? true
-                const isGsd = plugin.id === 'gsd'
+            {PLUGINS.length > 0 && (
+              <>
+                <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
+                {PLUGINS.map((plugin) => {
+                  const available = pluginAvailability[plugin.id] ?? true
+                  const isGsd = plugin.id === 'gsd'
 
-                if (!available) {
-                  // Show disabled state with tooltip when plugin is unavailable
+                  if (!available) {
+                    // Show disabled state with tooltip when plugin is unavailable
+                    return (
+                      <button
+                        type="button"
+                        key={plugin.id}
+                        disabled
+                        title={
+                          isGsd
+                            ? 'No .planning/ directory found — run GSD Init to set up'
+                            : `${plugin.name} is not available for this project`
+                        }
+                        className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-foreground opacity-40 cursor-not-allowed"
+                      >
+                        <plugin.icon size={14} />
+                        {plugin.name}
+                      </button>
+                    )
+                  }
+
+                  // Available plugin — open or focus its tab
                   return (
                     <button
+                      type="button"
                       key={plugin.id}
-                      disabled
-                      title={isGsd ? 'No .planning/ directory found — run GSD Init to set up' : `${plugin.name} is not available for this project`}
-                      className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-foreground opacity-40 cursor-not-allowed"
+                      onClick={() => handleOpenPlugin(plugin)}
+                      className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
                     >
                       <plugin.icon size={14} />
                       {plugin.name}
                     </button>
                   )
-                }
+                })}
 
-                // Available plugin — open or focus its tab
-                return (
+                {/* GSD Init option — shows when GSD is unavailable (no .planning/) */}
+                {PLUGINS.some((p) => p.id === 'gsd' && !(pluginAvailability.gsd ?? true)) && (
                   <button
-                    key={plugin.id}
-                    onClick={() => handleOpenPlugin(plugin)}
+                    type="button"
+                    onClick={handleGsdInit}
                     className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+                    title="Initialize GSD in this project"
                   >
-                    <plugin.icon size={14} />
-                    {plugin.name}
+                    <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
+                    GSD Init
                   </button>
-                )
-              })}
-
-              {/* GSD Init option — shows when GSD is unavailable (no .planning/) */}
-              {PLUGINS.some((p) => p.id === 'gsd' && !(pluginAvailability['gsd'] ?? true)) && (
-                <button
-                  onClick={handleGsdInit}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
-                  title="Initialize GSD in this project"
-                >
-                  <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
-                  GSD Init
-                </button>
-              )}
-            </>
-          )}
-        </div>,
-        document.body
-      )}
+                )}
+              </>
+            )}
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

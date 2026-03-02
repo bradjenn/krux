@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback } from 'react'
 import { Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { clearProjectHistory, persistMessage } from '@/lib/chatDb'
 import { useChatHistory } from './chatStore'
-import { useChatStream } from './useChatStream'
-import { persistMessage, clearProjectHistory } from '@/lib/chatDb'
-import MessageList from './MessageList'
 import InputBar from './InputBar'
+import MessageList from './MessageList'
+import { useChatStream } from './useChatStream'
 
 interface ChatPanelProps {
   projectId: string
@@ -13,13 +13,22 @@ interface ChatPanelProps {
 
 export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
   const messages = useChatHistory(projectId)
-  const { streamingContent, status, lastError, sendMessage, stop, setStreamingContent, resetStream, resetSession } =
-    useChatStream(projectPath)
+  const {
+    streamingContent,
+    status,
+    lastError,
+    sendMessage,
+    stop,
+    setStreamingContent,
+    resetStream,
+    resetSession,
+  } = useChatStream(projectPath)
   const [error, setError] = useState<string | null>(null)
   const [scrollTrigger, setScrollTrigger] = useState(0)
   const isStreaming = status === 'streaming'
 
   // When stream completes (done), persist assistant message
+  // biome-ignore lint/correctness/useExhaustiveDependencies: streamingContent is intentionally read only on status change to avoid persisting on every streaming chunk
   useEffect(() => {
     if (status === 'done' && streamingContent) {
       persistMessage({
@@ -31,9 +40,10 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
         resetStream()
       })
     }
-  }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, projectId, resetStream])
 
   // When stream is aborted, persist any partial content
+  // biome-ignore lint/correctness/useExhaustiveDependencies: streamingContent is intentionally read only on status change to avoid persisting on every streaming chunk
   useEffect(() => {
     if (status === 'aborted' && streamingContent) {
       persistMessage({
@@ -47,15 +57,17 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
     } else if (status === 'aborted') {
       resetStream()
     }
-  }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, projectId, resetStream])
 
   // When stream errors, show inline error with details from stderr
   useEffect(() => {
     if (status === 'error') {
-      setError(lastError || 'Failed to get a response. Check that Claude CLI is working and try again.')
+      setError(
+        lastError || 'Failed to get a response. Check that Claude CLI is working and try again.',
+      )
       resetStream()
     }
-  }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, lastError, resetStream])
 
   const handleSend = useCallback(
     async (userMessage: string) => {
@@ -128,6 +140,7 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
         <div className="max-w-[700px] mx-auto w-full flex items-center justify-between">
           <span className="text-sm font-medium text-foreground">Chat</span>
           <button
+            type="button"
             onClick={handleClear}
             className="flex items-center gap-1.5 text-dim hover:text-destructive text-xs transition-colors"
             title="Clear conversation"

@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { chatDb } from '../../lib/chatDb'
 import type { ChatMessage } from '../../lib/chatDb'
+import { chatDb } from '../../lib/chatDb'
 
 /**
  * Reactive hook that returns messages for a project, sorted by timestamp.
@@ -8,8 +8,7 @@ import type { ChatMessage } from '../../lib/chatDb'
  */
 export function useChatHistory(projectId: string): ChatMessage[] | undefined {
   return useLiveQuery(
-    () =>
-      chatDb.messages.where('projectId').equals(projectId).sortBy('timestamp'),
-    [projectId]
+    () => chatDb.messages.where('projectId').equals(projectId).sortBy('timestamp'),
+    [projectId],
   )
 }

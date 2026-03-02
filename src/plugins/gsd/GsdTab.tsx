@@ -1,15 +1,20 @@
-import { useState, useEffect } from 'react'
-import { LayoutDashboard, FileText, Play } from 'lucide-react'
+import { FileText, LayoutDashboard, Play } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { parseRoadmap } from './parser'
 import { onAppEvent } from '@/plugins/events'
-import OverviewTab from './OverviewTab'
 import DocumentsTab from './DocumentsTab'
 import ExecutionTab from './ExecutionTab'
+import OverviewTab from './OverviewTab'
+import { parseRoadmap } from './parser'
 
 type GsdView = 'overview' | 'documents' | 'execution'
 
-const NAV_ITEMS: { id: GsdView; label: string; icon: typeof LayoutDashboard; requiresPhases: boolean }[] = [
+const NAV_ITEMS: {
+  id: GsdView
+  label: string
+  icon: typeof LayoutDashboard
+  requiresPhases: boolean
+}[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, requiresPhases: false },
   { id: 'documents', label: 'Documents', icon: FileText, requiresPhases: false },
   { id: 'execution', label: 'Execute', icon: Play, requiresPhases: true },
@@ -47,6 +52,7 @@ export default function GsdTab({ projectId, projectPath }: GsdTabProps) {
         <nav className="flex flex-col gap-0.5 px-1.5">
           {visibleItems.map(({ id, label, icon: Icon }) => (
             <button
+              type="button"
               key={id}
               onClick={() => setActiveView(id)}
               className={cn(

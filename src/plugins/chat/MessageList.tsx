@@ -1,8 +1,8 @@
-import { useRef, useEffect, useState, useCallback } from 'react'
 import { MessageCircle } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ChatMessage } from '@/lib/chatDb'
 import MessageBubble from './MessageBubble'
 import ThinkingIndicator from './ThinkingIndicator'
-import type { ChatMessage } from '@/lib/chatDb'
 
 interface MessageListProps {
   messages: ChatMessage[]
@@ -62,6 +62,7 @@ export default function MessageList({
   }, [scrollTrigger, scrollToBottom])
 
   // Auto-scroll when messages or streaming content changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length and streamingContent are intentional trigger dependencies to scroll on new content
   useEffect(() => {
     if (nearBottomRef.current) {
       scrollToBottom()
@@ -72,11 +73,7 @@ export default function MessageList({
 
   return (
     <div className="relative flex-1 min-h-0">
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="h-full overflow-y-auto"
-      >
+      <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto">
         <div className="max-w-[700px] mx-auto w-full px-4 py-4">
           {isEmpty ? (
             /* Empty state */
@@ -86,6 +83,7 @@ export default function MessageList({
               <div className="flex flex-wrap gap-2 justify-center mt-2">
                 {SUGGESTED_PROMPTS.map((prompt) => (
                   <button
+                    type="button"
                     key={prompt}
                     onClick={() => onSuggestedPrompt(prompt)}
                     className="border border-border rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary/30 cursor-pointer transition-colors"
@@ -110,15 +108,18 @@ export default function MessageList({
               {/* Live streaming message (not in messages array) */}
               {isStreaming && streamingContent && (
                 <MessageBubble
-                  message={{ projectId: '', role: 'assistant', content: streamingContent, timestamp: Date.now() }}
+                  message={{
+                    projectId: '',
+                    role: 'assistant',
+                    content: streamingContent,
+                    timestamp: Date.now(),
+                  }}
                   isStreaming={true}
                   isLastAssistant={true}
                 />
               )}
               {/* Thinking indicator while waiting for first token */}
-              {isStreaming && !streamingContent && (
-                <ThinkingIndicator />
-              )}
+              {isStreaming && !streamingContent && <ThinkingIndicator />}
             </>
           )}
         </div>
@@ -128,6 +129,7 @@ export default function MessageList({
       {showJumpToBottom && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
           <button
+            type="button"
             onClick={scrollToBottom}
             className="bg-surface border border-border text-xs text-muted-foreground hover:text-foreground rounded-full px-3 py-1 transition-colors shadow-sm"
           >

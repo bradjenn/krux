@@ -1,5 +1,5 @@
-import { useRef, useEffect, useCallback } from 'react'
 import { Send, Square } from 'lucide-react'
+import { useCallback, useEffect, useRef } from 'react'
 
 interface InputBarProps {
   onSend: (text: string) => void
@@ -28,7 +28,7 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
     el.style.height = 'auto'
     const maxHeight = 150
     const newHeight = Math.min(el.scrollHeight, maxHeight)
-    el.style.height = newHeight + 'px'
+    el.style.height = `${newHeight}px`
     el.style.overflow = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
   }, [])
 
@@ -70,6 +70,7 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
         />
         {isStreaming ? (
           <button
+            type="button"
             onClick={onStop}
             className="flex-shrink-0 w-8 h-8 mb-[13px] flex items-center justify-center rounded bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors"
             title="Stop generation (Esc)"
@@ -78,6 +79,7 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
           </button>
         ) : (
           <button
+            type="button"
             onClick={handleSend}
             disabled={disabled}
             className="flex-shrink-0 w-8 h-8 mb-[13px] flex items-center justify-center rounded bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
