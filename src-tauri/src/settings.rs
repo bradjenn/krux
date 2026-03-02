@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::State;
+use tauri_plugin_dialog::DialogExt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -18,6 +19,8 @@ pub struct Settings {
     pub scrollback: u32,
     #[serde(default = "default_font_family")]
     pub font_family: String,
+    #[serde(default)]
+    pub background_image: Option<String>,
 }
 
 fn default_line_height() -> f32 {
@@ -48,6 +51,7 @@ impl Default for Settings {
             cursor_blink: default_true(),
             scrollback: default_scrollback(),
             font_family: default_font_family(),
+            background_image: None,
         }
     }
 }
@@ -88,4 +92,15 @@ pub fn save_settings(state: State<'_, SettingsState>, settings: Settings) -> Res
     fs::write(&tmp, &data).map_err(|e| format!("Write error: {}", e))?;
     fs::rename(&tmp, &path).map_err(|e| format!("Rename error: {}", e))?;
     Ok(())
+}
+
+#[tauri::command]
+pub fn pick_wallpaper(app: tauri::AppHandle) -> Option<String> {
+    let file = app
+        .dialog()
+        .file()
+        .add_filter("Images", &["jpg", "jpeg", "png", "gif", "webp", "bmp"])
+        .blocking_pick_file();
+    file.and_then(|f| f.into_path().ok())
+        .map(|p| p.to_string_lossy().to_string())
 }

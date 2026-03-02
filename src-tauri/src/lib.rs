@@ -16,6 +16,7 @@ fn get_env_var(name: String) -> Option<String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(chat::ChatState::new())
         .manage(pty::PtyState::new())
         .manage(projects::ProjectState::new())
@@ -168,6 +169,7 @@ pub fn run() {
             projects::discover_projects,
             settings::load_settings,
             settings::save_settings,
+            settings::pick_wallpaper,
             fs::read_file,
             fs::read_dir_tree,
             fs::path_exists,
