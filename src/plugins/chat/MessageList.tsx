@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { MessageCircle } from 'lucide-react'
 import MessageBubble from './MessageBubble'
+import ThinkingIndicator from './ThinkingIndicator'
 import type { ChatMessage } from '@/lib/chatDb'
 
 interface MessageListProps {
@@ -104,16 +105,9 @@ export default function MessageList({
                   isLastAssistant={true}
                 />
               )}
-              {/* Show spinner when streaming but no content yet */}
+              {/* Thinking indicator while waiting for first token */}
               {isStreaming && !streamingContent && (
-                <div className="py-3">
-                  <div className="text-dim text-[10px] uppercase tracking-wider font-medium mb-1">Claude</div>
-                  <div className="flex gap-1 items-center">
-                    <span className="w-1.5 h-1.5 bg-text-dim rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 bg-text-dim rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 bg-text-dim rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
+                <ThinkingIndicator />
               )}
             </>
           )}
