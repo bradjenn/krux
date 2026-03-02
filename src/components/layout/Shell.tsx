@@ -15,6 +15,7 @@ import Sidebar from './Sidebar'
 import TabBar from './TabBar'
 import WallpaperSwitcher from './WallpaperSwitcher'
 import StartScreen from './StartScreen'
+import UpdateChecker from '../UpdateChecker'
 
 interface Settings {
   theme: string
@@ -319,8 +320,9 @@ export default function Shell() {
   }, [])
 
   return (
-    <div className="flex h-full w-full relative">
-      {/* Drag region for frameless window — invisible overlay at top */}
+    <div className="flex flex-col h-full w-full">
+      <UpdateChecker />
+      <div className="flex flex-1 min-h-0 relative">
       {hideTitlebar && (
         <div
           data-tauri-drag-region=""
@@ -430,6 +432,7 @@ export default function Shell() {
         isOpen={wallpaperSwitcherOpen}
         onClose={() => setWallpaperSwitcherOpen(false)}
       />
+      </div>
     </div>
   )
 }

@@ -75,11 +75,7 @@ pub struct SettingsState {
 impl SettingsState {
     pub fn new() -> Self {
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-        let config_dir = home.join(".archon");
-        let old_dir = home.join(".cc-manager");
-        if !config_dir.exists() && old_dir.exists() {
-            fs::rename(&old_dir, &config_dir).ok();
-        }
+        let config_dir = home.join(".krux");
         fs::create_dir_all(&config_dir).ok();
         Self { config_dir }
     }

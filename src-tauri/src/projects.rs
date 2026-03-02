@@ -41,11 +41,7 @@ pub struct ProjectState {
 impl ProjectState {
     pub fn new() -> Self {
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-        let config_dir = home.join(".archon");
-        let old_dir = home.join(".cc-manager");
-        if !config_dir.exists() && old_dir.exists() {
-            fs::rename(&old_dir, &config_dir).ok();
-        }
+        let config_dir = home.join(".krux");
         fs::create_dir_all(&config_dir).ok();
         Self { config_dir }
     }
@@ -66,8 +62,8 @@ impl ProjectState {
     fn save_projects(&self, projects: &[Project]) -> Result<(), String> {
         let path = self.projects_path();
         let tmp = path.with_extension("json.tmp");
-        let data =
-            serde_json::to_string_pretty(projects).map_err(|e| format!("Serialize error: {}", e))?;
+        let data = serde_json::to_string_pretty(projects)
+            .map_err(|e| format!("Serialize error: {}", e))?;
         fs::write(&tmp, &data).map_err(|e| format!("Write error: {}", e))?;
         fs::rename(&tmp, &path).map_err(|e| format!("Rename error: {}", e))?;
         Ok(())
@@ -93,9 +89,8 @@ pub fn add_project(
         return Err("Project with this path already exists".to_string());
     }
 
-    let color = color.unwrap_or_else(|| {
-        PROJECT_COLORS[projects.len() % PROJECT_COLORS.len()].to_string()
-    });
+    let color =
+        color.unwrap_or_else(|| PROJECT_COLORS[projects.len() % PROJECT_COLORS.len()].to_string());
 
     let project = Project {
         id: Uuid::new_v4().to_string()[..8].to_string(),
@@ -191,9 +186,7 @@ pub fn discover_projects(
             }
 
             // Check for project markers
-            let has_marker = PROJECT_MARKERS
-                .iter()
-                .any(|m| path.join(m).exists());
+            let has_marker = PROJECT_MARKERS.iter().any(|m| path.join(m).exists());
 
             if has_marker {
                 discovered.push(DiscoveredProject {

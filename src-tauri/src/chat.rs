@@ -54,7 +54,10 @@ fn resolve_claude_path() -> Result<String, String> {
 
 /// Get cached claude path, or resolve and cache it.
 fn get_claude_path(state: &ChatState) -> Result<String, String> {
-    let mut cached = state.claude_path.lock().map_err(|_| "Lock poisoned".to_string())?;
+    let mut cached = state
+        .claude_path
+        .lock()
+        .map_err(|_| "Lock poisoned".to_string())?;
     if let Some(ref path) = *cached {
         return Ok(path.clone());
     }
@@ -99,7 +102,9 @@ pub fn start_claude_chat(
 
     cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
 
-    let mut child = cmd.spawn().map_err(|e| format!("Failed to spawn claude: {}", e))?;
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Failed to spawn claude: {}", e))?;
 
     let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
     let stderr = child.stderr.take().ok_or("Failed to get stderr")?;
@@ -167,7 +172,10 @@ pub fn start_claude_chat(
 
 #[tauri::command]
 pub fn abort_claude_chat(state: State<'_, ChatState>, chat_id: String) -> Result<(), String> {
-    let mut procs = state.processes.lock().map_err(|_| "Lock poisoned".to_string())?;
+    let mut procs = state
+        .processes
+        .lock()
+        .map_err(|_| "Lock poisoned".to_string())?;
     if let Some(mut child) = procs.remove(&chat_id) {
         child.kill().map_err(|e| format!("Kill failed: {}", e))?;
     }
@@ -176,7 +184,10 @@ pub fn abort_claude_chat(state: State<'_, ChatState>, chat_id: String) -> Result
 
 #[tauri::command]
 pub fn cleanup_claude_chat(state: State<'_, ChatState>, chat_id: String) -> Result<(), String> {
-    let mut procs = state.processes.lock().map_err(|_| "Lock poisoned".to_string())?;
+    let mut procs = state
+        .processes
+        .lock()
+        .map_err(|_| "Lock poisoned".to_string())?;
     procs.remove(&chat_id);
     Ok(())
 }

@@ -20,6 +20,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(chat::ChatState::new())
         .manage(pty::PtyState::new())
         .manage(projects::ProjectState::new())
@@ -28,7 +29,7 @@ pub fn run() {
             // App menu
             let settings_item =
                 MenuItem::with_id(app, "settings", "Settings...", true, Some("CmdOrCtrl+,"))?;
-            let app_menu = SubmenuBuilder::new(app, "Archon")
+            let app_menu = SubmenuBuilder::new(app, "Krux")
                 .about(None)
                 .separator()
                 .item(&settings_item)

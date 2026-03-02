@@ -76,7 +76,6 @@ export default function Sidebar({ visible, onAddProject }: SidebarProps) {
               )}
               style={{
                 padding: '8px 12px 8px 10px',
-                background: 'none',
               }}
             >
               <span

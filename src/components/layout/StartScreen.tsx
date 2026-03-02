@@ -1,5 +1,6 @@
+import { getVersion } from '@tauri-apps/api/app'
 import { exit } from '@tauri-apps/plugin-process'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
 
@@ -24,6 +25,11 @@ export default function StartScreen({
   backgroundOpacity,
 }: StartScreenProps) {
   const { projects, lastActiveProjectId, setActiveProject, setActiveView } = useAppStore()
+  const [appVersion, setAppVersion] = useState('…')
+
+  useEffect(() => {
+    getVersion().then((v) => setAppVersion(v))
+  }, [])
 
   const lastProjectValid =
     lastActiveProjectId != null && projects.some((p) => p.id === lastActiveProjectId)
@@ -78,18 +84,36 @@ export default function StartScreen({
       }
     >
       <div className="flex flex-col items-center gap-6" style={{ minWidth: 280 }}>
-        {/* ASCII art logo */}
-        <pre
-          className="text-secondary leading-none text-center"
-          style={{ fontSize: 14 }}
-        >
-{`  █████╗ ██████╗  ██████╗██╗  ██╗ ██████╗ ███╗   ██╗
- ██╔══██╗██╔══██╗██╔════╝██║  ██║██╔═══██╗████╗  ██║
- ███████║██████╔╝██║     ███████║██║   ██║██╔██╗ ██║
- ██╔══██║██╔══██╗██║     ██╔══██║██║   ██║██║╚██╗██║
- ██║  ██║██║  ██║╚██████╗██║  ██║╚██████╔╝██║ ╚████║
- ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝`}
-        </pre>
+        {/* ASCII art logo — rendered as a character grid like a terminal */}
+        {(() => {
+          const art = [
+            '██╗  ██╗██████╗ ██╗   ██╗██╗  ██╗',
+            '██║ ██╔╝██╔══██╗██║   ██║╚██╗██╔╝',
+            '█████╔╝ ██████╔╝██║   ██║ ╚███╔╝ ',
+            '██╔═██╗ ██╔══██╗██║   ██║ ██╔██╗ ',
+            '██║  ██╗██║  ██║╚██████╔╝██╔╝ ██╗',
+            '╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝',
+          ]
+          const cols = Math.max(...art.map((r) => [...r].length))
+          return (
+            <div
+              className="text-secondary"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${cols}, 1ch)`,
+                fontSize: 14,
+                lineHeight: 1,
+              }}
+            >
+              {art.flatMap((row, y) => {
+                const chars = [...row]
+                return Array.from({ length: cols }, (_, x) => (
+                  <span key={`${y}-${x}`}>{chars[x] ?? ' '}</span>
+                ))
+              })}
+            </div>
+          )
+        })()}
 
         {/* Divider */}
         <div className="w-full h-px bg-border" />
@@ -112,7 +136,7 @@ export default function StartScreen({
 
         {/* Footer */}
         <div className="text-xs text-dim text-center pt-2">
-          v0.1.0 &middot; {projects.length} project{projects.length !== 1 ? 's' : ''}
+          v{appVersion} &middot; {projects.length} project{projects.length !== 1 ? 's' : ''}
         </div>
       </div>
     </div>

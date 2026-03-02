@@ -278,7 +278,7 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
                       />
                       {(settings?.hide_titlebar ?? false) !==
                         useAppStore.getState().hideTitlebar && (
-                        <span className="text-xs text-yellow-500">Restart Archon to apply</span>
+                        <span className="text-xs text-yellow-500">Restart Krux to apply</span>
                       )}
                     </div>
                   </SettingRow>

@@ -87,10 +87,7 @@ pub fn create_terminal(
         loop {
             match reader.read(&mut buf) {
                 Ok(0) => {
-                    let _ = app.emit(
-                        "terminal:exit",
-                        serde_json::json!({ "terminal_id": tid }),
-                    );
+                    let _ = app.emit("terminal:exit", serde_json::json!({ "terminal_id": tid }));
                     break;
                 }
                 Ok(n) => {
@@ -183,9 +180,7 @@ pub fn resize_terminal(
         .lock()
         .map_err(|_| "Lock poisoned".to_string())?;
 
-    let entry = terminals
-        .get(&terminal_id)
-        .ok_or("Terminal not found")?;
+    let entry = terminals.get(&terminal_id).ok_or("Terminal not found")?;
 
     entry
         .master
