@@ -82,6 +82,7 @@ pub fn start_claude_chat(
 
     let mut cmd = Command::new(&claude_path);
     cmd.arg("-p")
+        .arg("--verbose")
         .arg("--output-format")
         .arg("stream-json")
         .arg("--include-partial-messages")
