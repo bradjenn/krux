@@ -15,6 +15,7 @@ fn get_env_var(name: String) -> Option<String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(chat::ChatState::new())
@@ -40,8 +41,13 @@ pub fn run() {
                 .build()?;
 
             // File menu
-            let new_terminal =
-                MenuItem::with_id(app, "new-terminal", "New Terminal", true, Some("CmdOrCtrl+T"))?;
+            let new_terminal = MenuItem::with_id(
+                app,
+                "new-terminal",
+                "New Terminal",
+                true,
+                Some("CmdOrCtrl+T"),
+            )?;
             let close_tab =
                 MenuItem::with_id(app, "close-tab", "Close Tab", true, Some("CmdOrCtrl+W"))?;
             let add_project =
@@ -138,13 +144,8 @@ pub fn run() {
             )?;
             let open_gsd =
                 MenuItem::with_id(app, "open-gsd", "GSD Workflow", true, Some("CmdOrCtrl+G"))?;
-            let open_chat = MenuItem::with_id(
-                app,
-                "open-chat",
-                "Chat",
-                true,
-                Some("CmdOrCtrl+Shift+C"),
-            )?;
+            let open_chat =
+                MenuItem::with_id(app, "open-chat", "Chat", true, Some("CmdOrCtrl+Shift+C"))?;
             let view_menu = SubmenuBuilder::new(app, "View")
                 .item(&toggle_sidebar)
                 .separator()
@@ -233,8 +234,7 @@ pub fn run() {
 
                                     // Hide traffic light buttons
                                     for i in 0u64..3u64 {
-                                        let btn: id =
-                                            msg_send![ns_window, standardWindowButton: i];
+                                        let btn: id = msg_send![ns_window, standardWindowButton: i];
                                         if !btn.is_null() {
                                             let _: () = msg_send![btn, setHidden: YES];
                                         }
@@ -258,8 +258,9 @@ pub fn run() {
             match id {
                 "settings" | "new-terminal" | "close-tab" | "add-project" | "toggle-sidebar"
                 | "open-gsd" | "open-chat" | "font-increase" | "font-decrease" | "font-reset"
-                | "change-wallpaper" | "opacity-increase" | "opacity-decrease" | "blur-increase" | "blur-decrease"
-                | "prev-tab" | "next-tab" | "project-switcher" => {
+                | "change-wallpaper" | "opacity-increase" | "opacity-decrease"
+                | "blur-increase" | "blur-decrease" | "prev-tab" | "next-tab"
+                | "project-switcher" => {
                     let _ = app.emit("menu-action", id);
                 }
                 _ => {}
