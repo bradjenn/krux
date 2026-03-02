@@ -5,7 +5,7 @@ mod pty;
 mod settings;
 
 use tauri::menu::{MenuBuilder, MenuItem, PredefinedMenuItem, SubmenuBuilder};
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
 #[tauri::command]
 fn get_env_var(name: String) -> Option<String> {
@@ -192,6 +192,64 @@ pub fn run() {
                 .build()?;
 
             app.set_menu(menu)?;
+
+            // Apply hide-titlebar setting
+            let settings_state = app.state::<settings::SettingsState>();
+            let s = settings_state.load();
+            if s.hide_titlebar {
+                if let Some(window) = app.get_webview_window("main") {
+                    #[cfg(target_os = "macos")]
+                    {
+                        window
+                            .with_webview(|webview| {
+                                #[allow(deprecated, unexpected_cfgs)]
+                                unsafe {
+                                    use cocoa::appkit::{
+                                        NSView, NSWindow, NSWindowStyleMask,
+                                        NSWindowTitleVisibility,
+                                    };
+                                    use cocoa::base::{id, YES};
+                                    use objc::{msg_send, sel, sel_impl};
+
+                                    let ns_window = webview.ns_window() as id;
+
+                                    // Keep titled (preserves rounded corners + shadow)
+                                    // but make content fill the full window
+                                    let mut style_mask = ns_window.styleMask();
+                                    style_mask |=
+                                        NSWindowStyleMask::NSFullSizeContentViewWindowMask;
+                                    style_mask |= NSWindowStyleMask::NSTitledWindowMask;
+                                    ns_window.setStyleMask_(style_mask);
+
+                                    // Make the titlebar invisible
+                                    ns_window.setTitlebarAppearsTransparent_(YES);
+                                    ns_window.setTitleVisibility_(
+                                        NSWindowTitleVisibility::NSWindowTitleHidden,
+                                    );
+
+                                    // Enable layer on content view for proper rendering
+                                    let content_view = ns_window.contentView();
+                                    content_view.setWantsLayer(YES);
+
+                                    // Hide traffic light buttons
+                                    for i in 0u64..3u64 {
+                                        let btn: id =
+                                            msg_send![ns_window, standardWindowButton: i];
+                                        if !btn.is_null() {
+                                            let _: () = msg_send![btn, setHidden: YES];
+                                        }
+                                    }
+                                }
+                            })
+                            .map_err(|e| e.to_string())?;
+                    }
+
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        window.set_decorations(false)?;
+                    }
+                }
+            }
 
             Ok(())
         })

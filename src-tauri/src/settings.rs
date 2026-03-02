@@ -25,6 +25,8 @@ pub struct Settings {
     pub background_opacity: f32,
     #[serde(default)]
     pub background_blur: u8,
+    #[serde(default)]
+    pub hide_titlebar: bool,
 }
 
 fn default_line_height() -> f32 {
@@ -61,6 +63,7 @@ impl Default for Settings {
             background_image: None,
             background_opacity: default_background_opacity(),
             background_blur: 0,
+            hide_titlebar: false,
         }
     }
 }
@@ -83,6 +86,15 @@ impl SettingsState {
 
     fn settings_path(&self) -> PathBuf {
         self.config_dir.join("settings.json")
+    }
+
+    pub fn load(&self) -> Settings {
+        let path = self.settings_path();
+        if !path.exists() {
+            return Settings::default();
+        }
+        let data = std::fs::read_to_string(&path).unwrap_or_default();
+        serde_json::from_str(&data).unwrap_or_default()
     }
 }
 

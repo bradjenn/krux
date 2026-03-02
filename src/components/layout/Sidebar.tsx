@@ -11,7 +11,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ visible, onAddProject }: SidebarProps) {
-  const { projects, activeProjectId, setProjects, setActiveProject, tabs } = useAppStore()
+  const { projects, activeProjectId, setProjects, setActiveProject, tabs, hideTitlebar } = useAppStore()
 
   useEffect(() => {
     invoke<Project[]>('list_projects').then(setProjects)
@@ -39,7 +39,10 @@ export default function Sidebar({ visible, onAddProject }: SidebarProps) {
       }}
     >
       {/* Sidebar header */}
-      <div className="shrink-0 flex items-center justify-between px-4 pt-3 pb-2">
+      <div
+        className="shrink-0 flex items-center justify-between px-4 pt-3 pb-2"
+        {...(hideTitlebar ? { 'data-tauri-drag-region': '' } : {})}
+      >
         <span className="text-foreground font-semibold" style={{ fontSize: 15 }}>
           Projects
         </span>

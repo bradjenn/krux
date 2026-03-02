@@ -19,6 +19,7 @@ interface Settings {
   background_image: string | null
   background_opacity: number
   background_blur: number
+  hide_titlebar: boolean
 }
 
 type Section = 'appearance' | 'terminal' | 'shortcuts'
@@ -228,6 +229,20 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
                   >
                     Custom...
                   </button>
+                </div>
+              </SettingRow>
+
+              <SettingRow label="Hide titlebar" description="Remove the native window titlebar for a cleaner look">
+                <div className="flex items-center gap-3">
+                  <Toggle
+                    checked={settings?.hide_titlebar ?? false}
+                    onChange={(v) => {
+                      updateSetting('hide_titlebar', v)
+                    }}
+                  />
+                  {(settings?.hide_titlebar ?? false) !== useAppStore.getState().hideTitlebar && (
+                    <span className="text-xs text-yellow-500">Restart Archon to apply</span>
+                  )}
                 </div>
               </SettingRow>
 

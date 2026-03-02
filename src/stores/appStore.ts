@@ -57,6 +57,8 @@ interface AppState {
   setBackgroundOpacity: (opacity: number) => void
   backgroundBlur: number
   setBackgroundBlur: (blur: number) => void
+  hideTitlebar: boolean
+  setHideTitlebar: (hide: boolean) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -136,4 +138,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   setBackgroundOpacity: (backgroundOpacity) => set({ backgroundOpacity }),
   backgroundBlur: 0,
   setBackgroundBlur: (backgroundBlur) => set({ backgroundBlur }),
+  hideTitlebar: false,
+  setHideTitlebar: (hideTitlebar) => set({ hideTitlebar }),
 }))

@@ -29,6 +29,7 @@ export default function Shell() {
     backgroundImage,
     backgroundOpacity,
     backgroundBlur,
+    hideTitlebar,
   } = useAppStore()
 
   const [sidebarVisible, setSidebarVisible] = useState(true)
@@ -75,6 +76,7 @@ export default function Shell() {
       background_image: string | null
       background_opacity: number
       background_blur: number
+      hide_titlebar: boolean
     }>('load_settings').then((s) => {
       setTheme(s.theme)
       applyTheme(s.theme)
@@ -88,6 +90,7 @@ export default function Shell() {
       store.setBackgroundImage(s.background_image ?? null)
       store.setBackgroundOpacity(s.background_opacity)
       store.setBackgroundBlur(s.background_blur)
+      store.setHideTitlebar(s.hide_titlebar)
     })
   }, [])
 
@@ -314,7 +317,16 @@ export default function Shell() {
   }, [])
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full relative">
+      {/* Drag region for frameless window — invisible overlay at top */}
+      {hideTitlebar && (
+        <div
+          data-tauri-drag-region=""
+          className="absolute top-0 left-0 right-0 z-50"
+          style={{ height: 12 }}
+        />
+      )}
+
         <Sidebar visible={sidebarVisible} onAddProject={() => setDiscoverOpen(true)} />
 
         <div className="flex flex-col flex-1 min-w-0">

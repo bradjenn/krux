@@ -13,7 +13,7 @@ interface TabBarProps {
 }
 
 export default function TabBar({ onCloseTab }: TabBarProps) {
-  const { tabs, activeTabId, activeProjectId, projects, addTab, setActiveTab } =
+  const { tabs, activeTabId, activeProjectId, projects, addTab, setActiveTab, hideTitlebar } =
     useAppStore()
 
   const [menuOpen, setMenuOpen] = useState(false)
@@ -138,6 +138,7 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
         height: 36,
         scrollbarWidth: 'none',
       }}
+      {...(hideTitlebar ? { 'data-tauri-drag-region': '' } : {})}
     >
       {projectTabs.map((tab, index) => {
         const isActive = activeTabId === tab.id
