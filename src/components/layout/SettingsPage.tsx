@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { useAppStore } from '@/stores/appStore'
 import { THEME_PRESETS, applyTheme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
+import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
 
 interface Settings {
   theme: string
@@ -15,6 +16,7 @@ interface Settings {
   cursor_blink: boolean
   scrollback: number
   font_family: string
+  background_image: string | null
 }
 
 type Section = 'appearance' | 'terminal'
@@ -31,7 +33,7 @@ interface SettingsPageProps {
 export default function SettingsPage({ onClose }: SettingsPageProps) {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [activeSection, setActiveSection] = useState<Section>('appearance')
-  const { theme, setTheme, setFontSize, setLineHeight, setCursorStyle, setCursorBlink, setScrollback, setFontFamily } = useAppStore()
+  const { theme, setTheme, setFontSize, setLineHeight, setCursorStyle, setCursorBlink, setScrollback, setFontFamily, backgroundImage, setBackgroundImage } = useAppStore()
 
   useEffect(() => {
     invoke<Settings>('load_settings').then(setSettings)
@@ -46,6 +48,16 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
     setTheme(themeId)
     applyTheme(themeId)
     if (settings) save({ ...settings, theme: themeId })
+  }
+
+  const handleWallpaperChange = (value: string | null) => {
+    setBackgroundImage(value)
+    if (settings) save({ ...settings, background_image: value })
+  }
+
+  const handlePickCustomWallpaper = async () => {
+    const path = await invoke<string | null>('pick_wallpaper')
+    if (path) handleWallpaperChange(path)
   }
 
   const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
@@ -117,6 +129,57 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
                       <span>{preset.name}</span>
                     </button>
                   ))}
+                </div>
+              </SettingRow>
+
+              <SettingRow label="Background image" description="Show a wallpaper behind the content area">
+                <div className="grid grid-cols-4 gap-2">
+                  {/* None option */}
+                  <button
+                    onClick={() => handleWallpaperChange(null)}
+                    className={cn(
+                      "flex items-center justify-center h-16 rounded-md text-xs border transition-all duration-150 cursor-pointer",
+                      !backgroundImage
+                        ? "border-primary bg-primary/[0.06] text-foreground"
+                        : "border-border bg-surface text-muted-foreground hover:border-dim"
+                    )}
+                  >
+                    None
+                  </button>
+                  {/* Preset thumbnails */}
+                  {WALLPAPER_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      onClick={() => handleWallpaperChange(preset.id)}
+                      className={cn(
+                        "relative h-16 rounded-md overflow-hidden border transition-all duration-150 cursor-pointer",
+                        backgroundImage === preset.id
+                          ? "border-primary ring-1 ring-primary"
+                          : "border-border hover:border-dim"
+                      )}
+                    >
+                      <img
+                        src={`/wallpapers/${preset.file}`}
+                        alt={preset.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5">
+                        <span className="text-[10px] text-white/90">{preset.name}</span>
+                      </div>
+                    </button>
+                  ))}
+                  {/* Custom option */}
+                  <button
+                    onClick={handlePickCustomWallpaper}
+                    className={cn(
+                      "flex items-center justify-center h-16 rounded-md text-xs border border-dashed transition-all duration-150 cursor-pointer",
+                      backgroundImage && !backgroundImage.startsWith('preset:')
+                        ? "border-primary bg-primary/[0.06] text-foreground"
+                        : "border-border text-muted-foreground hover:border-dim"
+                    )}
+                  >
+                    Custom...
+                  </button>
                 </div>
               </SettingRow>
             </div>
