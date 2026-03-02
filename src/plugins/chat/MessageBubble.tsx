@@ -30,17 +30,17 @@ export default function MessageBubble({
 
   if (message.role === 'user') {
     return (
-      <div className="py-3">
-        <div className="text-dim text-[10px] uppercase tracking-wider font-medium mb-1">You</div>
-        <div className="text-foreground text-sm whitespace-pre-wrap">{message.content}</div>
+      <div className="py-2">
+        <div className="bg-white/[0.05] rounded-lg px-3.5 py-2.5 text-foreground text-sm whitespace-pre-wrap inline-block max-w-full">
+          {message.content}
+        </div>
       </div>
     )
   }
 
   // Assistant message
   return (
-    <div className="group py-3">
-      <div className="text-dim text-[10px] uppercase tracking-wider font-medium mb-1">Claude</div>
+    <div className="group py-2">
       <div className="text-foreground text-sm">
         <Streamdown plugins={{ code }} isAnimating={isStreaming && isLastAssistant} shikiTheme={['github-dark', 'github-dark']}>
           {message.content}
@@ -51,7 +51,7 @@ export default function MessageBubble({
       </div>
       {/* Action buttons — visible on hover */}
       {!isStreaming && (
-        <div className="flex gap-1 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleCopy}
             className="flex items-center gap-1 text-dim hover:text-foreground text-xs px-1.5 py-0.5 rounded transition-colors"

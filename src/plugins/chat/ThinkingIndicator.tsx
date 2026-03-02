@@ -86,10 +86,7 @@ export default function ThinkingIndicator() {
   const verb = THINKING_VERBS[verbIndex]
 
   return (
-    <div className="py-3">
-      <div className="text-dim text-[10px] uppercase tracking-wider font-medium mb-1.5">
-        Claude
-      </div>
+    <div className="py-2">
       <div className="flex items-center gap-2">
         <div className="flex gap-0.5 items-center">
           <span
