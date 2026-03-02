@@ -8,6 +8,7 @@ interface MessageListProps {
   messages: ChatMessage[]
   streamingContent: string
   isStreaming: boolean
+  scrollTrigger: number
   onCopy: (content: string) => void
   onRetry: (messageIndex: number) => void
   onSuggestedPrompt: (prompt: string) => void
@@ -23,6 +24,7 @@ export default function MessageList({
   messages,
   streamingContent,
   isStreaming,
+  scrollTrigger,
   onCopy,
   onRetry,
   onSuggestedPrompt,
@@ -50,6 +52,14 @@ export default function MessageList({
     nearBottomRef.current = near
     setShowJumpToBottom(!near)
   }, [isNearBottom])
+
+  // Force scroll when user sends a message (regardless of scroll position)
+  useEffect(() => {
+    if (scrollTrigger > 0) {
+      nearBottomRef.current = true
+      scrollToBottom()
+    }
+  }, [scrollTrigger, scrollToBottom])
 
   // Auto-scroll when messages or streaming content changes
   useEffect(() => {

@@ -94,6 +94,41 @@ pub fn run() {
                 true,
                 Some("CmdOrCtrl+0"),
             )?;
+            let change_wallpaper = MenuItem::with_id(
+                app,
+                "change-wallpaper",
+                "Change Wallpaper",
+                true,
+                Some("CmdOrCtrl+Shift+B"),
+            )?;
+            let opacity_increase = MenuItem::with_id(
+                app,
+                "opacity-increase",
+                "Increase Background Opacity",
+                true,
+                Some("CmdOrCtrl+Shift+="),
+            )?;
+            let opacity_decrease = MenuItem::with_id(
+                app,
+                "opacity-decrease",
+                "Decrease Background Opacity",
+                true,
+                Some("CmdOrCtrl+Shift+-"),
+            )?;
+            let blur_increase = MenuItem::with_id(
+                app,
+                "blur-increase",
+                "Increase Background Blur",
+                true,
+                Some("CmdOrCtrl+Alt+="),
+            )?;
+            let blur_decrease = MenuItem::with_id(
+                app,
+                "blur-decrease",
+                "Decrease Background Blur",
+                true,
+                Some("CmdOrCtrl+Alt+-"),
+            )?;
             let toggle_sidebar = MenuItem::with_id(
                 app,
                 "toggle-sidebar",
@@ -116,6 +151,12 @@ pub fn run() {
                 .item(&font_increase)
                 .item(&font_decrease)
                 .item(&font_reset)
+                .separator()
+                .item(&change_wallpaper)
+                .item(&opacity_increase)
+                .item(&opacity_decrease)
+                .item(&blur_increase)
+                .item(&blur_decrease)
                 .separator()
                 .item(&open_gsd)
                 .item(&open_chat)
@@ -159,6 +200,7 @@ pub fn run() {
             match id {
                 "settings" | "new-terminal" | "close-tab" | "add-project" | "toggle-sidebar"
                 | "open-gsd" | "open-chat" | "font-increase" | "font-decrease" | "font-reset"
+                | "change-wallpaper" | "opacity-increase" | "opacity-decrease" | "blur-increase" | "blur-decrease"
                 | "prev-tab" | "next-tab" | "project-switcher" => {
                     let _ = app.emit("menu-action", id);
                 }

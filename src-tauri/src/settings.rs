@@ -21,6 +21,10 @@ pub struct Settings {
     pub font_family: String,
     #[serde(default)]
     pub background_image: Option<String>,
+    #[serde(default = "default_background_opacity")]
+    pub background_opacity: f32,
+    #[serde(default)]
+    pub background_blur: u8,
 }
 
 fn default_line_height() -> f32 {
@@ -38,6 +42,9 @@ fn default_scrollback() -> u32 {
 fn default_font_family() -> String {
     "MesloLGS Nerd Font".to_string()
 }
+fn default_background_opacity() -> f32 {
+    0.85
+}
 
 impl Default for Settings {
     fn default() -> Self {
@@ -52,6 +59,8 @@ impl Default for Settings {
             scrollback: default_scrollback(),
             font_family: default_font_family(),
             background_image: None,
+            background_opacity: default_background_opacity(),
+            background_blur: 0,
         }
     }
 }

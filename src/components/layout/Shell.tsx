@@ -14,6 +14,7 @@ import SettingsPage from './SettingsPage'
 import DiscoverDialog from './DiscoverDialog'
 import ProjectSwitcher from './ProjectSwitcher'
 import XTerminal from '@/components/terminal/XTerminal'
+import WallpaperSwitcher from './WallpaperSwitcher'
 
 export default function Shell() {
   const {
@@ -27,11 +28,14 @@ export default function Shell() {
     setTheme,
     getProjectTabs,
     backgroundImage,
+    backgroundOpacity,
+    backgroundBlur,
   } = useAppStore()
 
   const [sidebarVisible, setSidebarVisible] = useState(true)
   const [discoverOpen, setDiscoverOpen] = useState(false)
   const [switcherOpen, setSwitcherOpen] = useState(false)
+  const [wallpaperSwitcherOpen, setWallpaperSwitcherOpen] = useState(false)
 
   const activeProject = projects.find((p) => p.id === activeProjectId)
 
@@ -70,6 +74,8 @@ export default function Shell() {
       scrollback: number
       font_family: string
       background_image: string | null
+      background_opacity: number
+      background_blur: number
     }>('load_settings').then((s) => {
       setTheme(s.theme)
       applyTheme(s.theme)
@@ -81,6 +87,8 @@ export default function Shell() {
       store.setScrollback(s.scrollback)
       store.setFontFamily(s.font_family)
       store.setBackgroundImage(s.background_image ?? null)
+      store.setBackgroundOpacity(s.background_opacity)
+      store.setBackgroundBlur(s.background_blur)
     })
   }, [])
 
@@ -113,6 +121,10 @@ export default function Shell() {
       switch (event.payload) {
         case 'settings':
           setActiveView('settings')
+          break
+
+        case 'change-wallpaper':
+          setWallpaperSwitcherOpen(true)
           break
 
         case 'new-terminal':
@@ -171,6 +183,50 @@ export default function Shell() {
           store.setFontSize(14)
           invoke('load_settings').then((s: any) => {
             invoke('save_settings', { settings: { ...s, font_size: 14 } })
+          })
+          break
+        }
+
+        case 'opacity-increase': {
+          const store = useAppStore.getState()
+          if (!store.backgroundImage) break
+          const newOpacity = Math.min(1, Math.round((store.backgroundOpacity + 0.05) * 100) / 100)
+          store.setBackgroundOpacity(newOpacity)
+          invoke('load_settings').then((s: any) => {
+            invoke('save_settings', { settings: { ...s, background_opacity: newOpacity } })
+          })
+          break
+        }
+
+        case 'opacity-decrease': {
+          const store = useAppStore.getState()
+          if (!store.backgroundImage) break
+          const newOpacity = Math.max(0.1, Math.round((store.backgroundOpacity - 0.05) * 100) / 100)
+          store.setBackgroundOpacity(newOpacity)
+          invoke('load_settings').then((s: any) => {
+            invoke('save_settings', { settings: { ...s, background_opacity: newOpacity } })
+          })
+          break
+        }
+
+        case 'blur-increase': {
+          const store = useAppStore.getState()
+          if (!store.backgroundImage) break
+          const newBlur = Math.min(32, store.backgroundBlur + 2)
+          store.setBackgroundBlur(newBlur)
+          invoke('load_settings').then((s: any) => {
+            invoke('save_settings', { settings: { ...s, background_blur: newBlur } })
+          })
+          break
+        }
+
+        case 'blur-decrease': {
+          const store = useAppStore.getState()
+          if (!store.backgroundImage) break
+          const newBlur = Math.max(0, store.backgroundBlur - 2)
+          store.setBackgroundBlur(newBlur)
+          invoke('load_settings').then((s: any) => {
+            invoke('save_settings', { settings: { ...s, background_blur: newBlur } })
           })
           break
         }
@@ -271,12 +327,13 @@ export default function Shell() {
           <TabBar onCloseTab={handleCloseTab} />
 
           {/* Tab content area */}
-          <div className="flex-1 min-h-0 relative">
+          <div className="flex-1 min-h-0 relative overflow-hidden">
             {wallpaperUrl && (
               <img
                 src={wallpaperUrl}
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+                style={backgroundBlur > 0 ? { filter: `blur(${backgroundBlur}px)`, transform: 'scale(1.1)' } : undefined}
               />
             )}
             {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
@@ -316,8 +373,13 @@ export default function Shell() {
                     className={cn(
                       "absolute inset-0 overflow-auto transition-opacity duration-100",
                       activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
-                      wallpaperUrl ? "z-10 bg-background/75" : "bg-background"
+                      wallpaperUrl ? "z-10" : "bg-background"
                     )}
+                    style={wallpaperUrl ? {
+                      background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+                      '--color-background': 'transparent',
+                      '--color-surface': 'color-mix(in srgb, var(--bg2) 50%, transparent)',
+                    } as React.CSSProperties : undefined}
                   >
                     <TabComponent
                       projectId={tab.projectId}
@@ -331,6 +393,7 @@ export default function Shell() {
             {!activeProjectId && (
               <div
                 className={cn("flex flex-col items-center justify-center h-full gap-4 text-dim", wallpaperUrl && "relative z-10")}
+                style={wallpaperUrl ? { background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)` } : undefined}
               >
                 <div
                   className="flex items-center justify-center"
@@ -360,6 +423,7 @@ export default function Shell() {
       {/* Modals */}
       <DiscoverDialog isOpen={discoverOpen} onClose={() => setDiscoverOpen(false)} />
       <ProjectSwitcher isOpen={switcherOpen} onClose={() => setSwitcherOpen(false)} />
+      <WallpaperSwitcher isOpen={wallpaperSwitcherOpen} onClose={() => setWallpaperSwitcherOpen(false)} />
     </div>
   )
 }

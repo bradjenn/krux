@@ -16,6 +16,7 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
   const { streamingContent, status, lastError, sendMessage, stop, setStreamingContent, resetStream, resetSession } =
     useChatStream(projectPath)
   const [error, setError] = useState<string | null>(null)
+  const [scrollTrigger, setScrollTrigger] = useState(0)
   const isStreaming = status === 'streaming'
 
   // When stream completes (done), persist assistant message
@@ -68,6 +69,7 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
         content: userMessage,
         timestamp: Date.now(),
       })
+      setScrollTrigger((prev) => prev + 1)
 
       // Build history from current persisted messages
       const currentMessages = messages ?? []
@@ -152,6 +154,7 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
           messages={messages}
           streamingContent={streamingContent}
           isStreaming={isStreaming}
+          scrollTrigger={scrollTrigger}
           onCopy={handleCopy}
           onRetry={handleRetry}
           onSuggestedPrompt={handleSuggestedPrompt}

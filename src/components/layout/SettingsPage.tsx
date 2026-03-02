@@ -17,6 +17,8 @@ interface Settings {
   scrollback: number
   font_family: string
   background_image: string | null
+  background_opacity: number
+  background_blur: number
 }
 
 type Section = 'appearance' | 'terminal'
@@ -33,7 +35,7 @@ interface SettingsPageProps {
 export default function SettingsPage({ onClose }: SettingsPageProps) {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [activeSection, setActiveSection] = useState<Section>('appearance')
-  const { theme, setTheme, setFontSize, setLineHeight, setCursorStyle, setCursorBlink, setScrollback, setFontFamily, backgroundImage, setBackgroundImage } = useAppStore()
+  const { theme, setTheme, setFontSize, setLineHeight, setCursorStyle, setCursorBlink, setScrollback, setFontFamily, backgroundImage, setBackgroundImage, backgroundOpacity, setBackgroundOpacity, backgroundBlur, setBackgroundBlur } = useAppStore()
 
   useEffect(() => {
     invoke<Settings>('load_settings').then(setSettings)
@@ -182,6 +184,52 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
                   </button>
                 </div>
               </SettingRow>
+
+              {backgroundImage && (
+                <>
+                <SettingRow label="Background opacity" description="How translucent the terminal overlay is (lower = more wallpaper visible)">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={0.1}
+                      max={1}
+                      step={0.05}
+                      value={settings?.background_opacity ?? backgroundOpacity}
+                      onChange={(e) => {
+                        const val = Number(e.target.value)
+                        updateSetting('background_opacity', val)
+                        setBackgroundOpacity(val)
+                      }}
+                      className="w-48 accent-primary"
+                    />
+                    <span className="text-xs text-muted-foreground w-10 tabular-nums">
+                      {Math.round((settings?.background_opacity ?? backgroundOpacity) * 100)}%
+                    </span>
+                  </div>
+                </SettingRow>
+
+                <SettingRow label="Background blur" description="Blur the wallpaper image behind the terminal">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={0}
+                      max={32}
+                      step={1}
+                      value={settings?.background_blur ?? backgroundBlur}
+                      onChange={(e) => {
+                        const val = Number(e.target.value)
+                        updateSetting('background_blur', val)
+                        setBackgroundBlur(val)
+                      }}
+                      className="w-48 accent-primary"
+                    />
+                    <span className="text-xs text-muted-foreground w-10 tabular-nums">
+                      {settings?.background_blur ?? backgroundBlur}px
+                    </span>
+                  </div>
+                </SettingRow>
+                </>
+              )}
             </div>
           )}
 

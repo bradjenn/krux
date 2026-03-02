@@ -53,6 +53,10 @@ interface AppState {
   setFontFamily: (family: string) => void
   backgroundImage: string | null
   setBackgroundImage: (img: string | null) => void
+  backgroundOpacity: number
+  setBackgroundOpacity: (opacity: number) => void
+  backgroundBlur: number
+  setBackgroundBlur: (blur: number) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -128,4 +132,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setFontFamily: (fontFamily) => set({ fontFamily }),
   backgroundImage: null,
   setBackgroundImage: (backgroundImage) => set({ backgroundImage }),
+  backgroundOpacity: 0.85,
+  setBackgroundOpacity: (backgroundOpacity) => set({ backgroundOpacity }),
+  backgroundBlur: 0,
+  setBackgroundBlur: (backgroundBlur) => set({ backgroundBlur }),
 }))

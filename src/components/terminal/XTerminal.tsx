@@ -13,12 +13,21 @@ import {
 import { useAppStore } from '../../stores/appStore'
 import { getTerminalTheme, hexToRgba } from '../../lib/themes'
 
-const WALLPAPER_BG_ALPHA = 0.75
-
+/**
+ * When wallpaper is active, make xterm's own background fully transparent
+ * so only the container div's overlay is visible. This prevents double-compositing
+ * where the container rgba + canvas rgba stack to produce a darker terminal area.
+ */
 function getTranslucentTheme(themeId: string, hasWallpaper: boolean) {
   const base = getTerminalTheme(themeId)
   if (!hasWallpaper) return base
-  return { ...base, background: hexToRgba(base.background ?? '#000000', WALLPAPER_BG_ALPHA) }
+  return { ...base, background: '#00000000' }
+}
+
+/** The single uniform overlay color for the container div when wallpaper is active. */
+function getOverlayBg(themeId: string, alpha: number): string {
+  const base = getTerminalTheme(themeId)
+  return hexToRgba(base.background ?? '#000000', alpha)
 }
 
 interface XTerminalProps {
@@ -40,7 +49,10 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   const cursorBlink = useAppStore((s) => s.cursorBlink)
   const fontFamily = useAppStore((s) => s.fontFamily)
   const backgroundImage = useAppStore((s) => s.backgroundImage)
-  const termTheme = getTranslucentTheme(theme, !!backgroundImage)
+  const backgroundOpacity = useAppStore((s) => s.backgroundOpacity)
+  const hasWallpaper = !!backgroundImage
+  const termTheme = getTranslucentTheme(theme, hasWallpaper)
+  const containerBg = hasWallpaper ? getOverlayBg(theme, backgroundOpacity) : termTheme.background
 
   // Subscribe to PTY output → write to xterm
   useTerminalOutput(terminalId, (data) => {
@@ -66,14 +78,14 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   useEffect(() => {
     const term = terminalRef.current
     if (!term) return
-    term.options.theme = getTranslucentTheme(theme, !!backgroundImage)
+    term.options.theme = getTranslucentTheme(theme, hasWallpaper)
     term.options.fontSize = fontSize
     term.options.lineHeight = lineHeight
     term.options.cursorStyle = cursorStyle
     term.options.cursorBlink = cursorBlink
     term.options.fontFamily = `"${fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`
     fitAddonRef.current?.fit()
-  }, [theme, fontSize, lineHeight, cursorStyle, cursorBlink, fontFamily, backgroundImage])
+  }, [theme, fontSize, lineHeight, cursorStyle, cursorBlink, fontFamily, backgroundImage, backgroundOpacity])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -152,10 +164,10 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   return (
     <div
       ref={containerRef}
-      className={`h-full w-full${backgroundImage ? ' terminal-transparent' : ''}`}
+      className={`h-full w-full${hasWallpaper ? ' terminal-transparent' : ''}`}
       style={{
         padding: '8px 8px 4px 8px',
-        background: termTheme.background,
+        background: containerBg,
       }}
     />
   )
