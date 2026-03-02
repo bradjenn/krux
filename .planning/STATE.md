@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Standalone App + Plugin Architecture
-status: unknown
-stopped_at: Phase 4 context updated
-last_updated: "2026-03-02T08:25:29.638Z"
+status: in_progress
+stopped_at: "Completed 04-plugin-system-app-shell/04-01-PLAN.md"
+last_updated: "2026-03-02T08:44:12Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 4 of 7 (Plugin System + App Shell) — v2.0 first phase
-Plan: — (not started)
-Status: Ready to plan
-Last activity: 2026-03-01 — v2.0 roadmap created, ready for Phase 4 planning
+Plan: 01 complete (04-01-PLAN.md)
+Status: In progress — Phase 4 Plan 01 complete
+Last activity: 2026-03-02 — Plugin API cleanup, event bus, sidebar simplification, auto-open behavior
 
-Progress (v2.0): [░░░░░░░░░░] 0%
+Progress (v2.0): [##░░░░░░░░] ~12%
 
 ## Accumulated Context
 
@@ -45,10 +45,13 @@ Recent decisions affecting current work:
 - Compile-time plugin registration — no dynamic loading, plugin array is a hardcoded TS import
 - `streamdown@2.3.0` for streaming markdown in chat — `react-markdown` stays in DocViewer
 - `dexie` + `dexie-react-hooks` for chat history — avoids localStorage 5MB quota failure
+- Sidebar is project-list-only: PluginSidebar removed, PLUGINS import removed from Sidebar
+- Auto-open logic lives in Shell.tsx useEffect (not appStore) to keep store side-effect free
+- GSD Init terminal action preserved in dropdown when GSD unavailable (no .planning/)
 
 ### Pending Todos
 
-None yet.
+- GsdSidebar.tsx is dead code (unreferenced) — can be deleted in cleanup phase
 
 ### Blockers/Concerns
 
@@ -58,6 +61,6 @@ None yet.
 
 ## Session Continuity
 
-**Last session:** 2026-03-02T08:25:29.637Z
-**Stopped At:** Phase 4 context updated
-**Resume file:** .planning/phases/04-plugin-system-app-shell/04-CONTEXT.md
+**Last session:** 2026-03-02T08:44:12Z
+**Stopped At:** Completed 04-plugin-system-app-shell/04-01-PLAN.md
+**Resume file:** .planning/phases/04-plugin-system-app-shell/04-01-SUMMARY.md

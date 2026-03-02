@@ -77,7 +77,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Plugin infrastructure: PluginDefinition/ViewDefinition types, view registry Map, mitt event bus, appStore currentView state, WsEvent consolidation to shared types, namespace dispatch in useWebSocket, two-zone Sidebar (ProjectStrip + PluginZone)
+- [x] 04-01-PLAN.md — Plugin API cleanup: simplified PluginDefinition (isAvailable, autoOpen, no sidebarSection), mitt event bus, project-list-only sidebar, tab dropdown disabled state, auto-open GSD tab on project select
 - [ ] 04-02-PLAN.md — GSD plugin definition: three views (Overview, Documents, Execute) as plugin-contributed views, headerSlot with contextual back buttons, shell-only App.tsx via view registry, FileTree navigation wiring
 
 #### Phase 5: Chat Interface
@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Backend Foundation | v1.0 | 2/2 | Complete | 2026-03-01 |
 | 2. Frontend + Document Viewer | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 3. Agent SDK + Streaming | v1.0 | 2/2 | Complete | 2026-03-01 |
-| 4. Plugin System + App Shell | v2.0 | 0/2 | Not started | - |
+| 4. Plugin System + App Shell | v2.0 | 1/2 | In progress | - |
 | 5. Chat Interface | v2.0 | 0/2 | Not started | - |
 | 6. GSD Slash Commands | v2.0 | 0/1 | Not started | - |
 | 7. Phase Dashboard | v2.0 | 0/2 | Not started | - |

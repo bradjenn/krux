@@ -9,12 +9,12 @@ Requirements for milestone v2.0: Standalone App + Plugin Architecture.
 
 ### Plugin System
 
-- [ ] **PLUG-01**: App provides a typed PluginDefinition interface for compile-time plugin registration
-- [ ] **PLUG-02**: Plugins provide UI via tab types rendered in the main content area; the tab dropdown and auto-open system surface plugin tabs to users
-- [ ] **PLUG-03**: Plugins manage sub-views internally within their tab component; the app shell does not own plugin navigation
-- [ ] **PLUG-04**: App shell restructured — project management and layout are app-owned; all GSD features are behind the plugin boundary
+- [x] **PLUG-01**: App provides a typed PluginDefinition interface for compile-time plugin registration
+- [x] **PLUG-02**: Plugins provide UI via tab types rendered in the main content area; the tab dropdown and auto-open system surface plugin tabs to users
+- [x] **PLUG-03**: Plugins manage sub-views internally within their tab component; the app shell does not own plugin navigation
+- [x] **PLUG-04**: App shell restructured — project management and layout are app-owned; all GSD features are behind the plugin boundary
 - [ ] **PLUG-05**: GSD plugin wraps existing features (doc viewer, execution panel, file watcher) as plugin-provided views
-- [ ] **PLUG-06**: Plugins can subscribe to app lifecycle events (project:switched, file:changed, execution:started)
+- [x] **PLUG-06**: Plugins can subscribe to app lifecycle events (project:switched, file:changed, execution:started)
 
 ### Chat Interface
 
@@ -102,12 +102,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLUG-01 | Phase 4 | Pending |
-| PLUG-02 | Phase 4 | Pending |
-| PLUG-03 | Phase 4 | Pending |
-| PLUG-04 | Phase 4 | Pending |
+| PLUG-01 | Phase 4 | Complete |
+| PLUG-02 | Phase 4 | Complete |
+| PLUG-03 | Phase 4 | Complete |
+| PLUG-04 | Phase 4 | Complete |
 | PLUG-05 | Phase 4 | Pending |
-| PLUG-06 | Phase 4 | Pending |
+| PLUG-06 | Phase 4 | Complete |
 | CHAT-01 | Phase 5 | Pending |
 | CHAT-02 | Phase 5 | Pending |
 | CHAT-03 | Phase 5 | Pending |
