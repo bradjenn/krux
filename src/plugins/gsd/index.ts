@@ -8,7 +8,6 @@ export const gsdPlugin: PluginDefinition = {
   name: 'GSD Workflow',
   icon: Rocket,
   defaultTabType: 'gsd:main',
-  autoOpen: true,
   tabTypes: [
     {
       id: 'gsd:main',
