@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Standalone App + Plugin Architecture
 status: in-progress
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-02T12:05:00Z"
+stopped_at: Checkpoint — 05-02-PLAN.md Task 3 (human-verify)
+last_updated: "2026-03-02T12:09:26Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 5 of 7 (Chat Interface)
-Plan: 01 complete (05-01-PLAN.md) — data layer and plugin registration done
-Status: Phase 5 in progress — Plan 01 complete, Plan 02 (Chat UI) remaining
-Last activity: 2026-03-02 — Chat data layer, streaming hook, Dexie DB, plugin registration
+Plan: 02 at checkpoint — 05-02-PLAN.md tasks 1&2 complete, awaiting human verification (Task 3)
+Status: Phase 5 in progress — Plan 02 UI built, awaiting verification before phase complete
+Last activity: 2026-03-02 — Chat UI components, ChatTab wired, open-chat handler in Shell
 
-Progress (v2.0): [#####░░░░░] ~40%
+Progress (v2.0): [######░░░░] ~55%
 
 ## Accumulated Context
 
@@ -55,6 +55,9 @@ Recent decisions affecting current work:
 - Streaming status tracked in statusRef (local hook ref) — avoids unnecessary re-renders during token streaming
 - Last 20 messages sent to Claude API for context window (not all 50 stored — balances context vs cost)
 - Chat plugin isAvailable always returns true — no project structure detection needed
+- Status-only useEffect dependencies for stream persistence — avoids double-persist race condition
+- Streaming message shown as virtual MessageBubble (not added to messages array until persisted after done/aborted)
+- nearBottomRef tracks scroll position without re-renders — auto-scroll only fires when user was near bottom
 
 ### Pending Todos
 
@@ -66,6 +69,6 @@ None — streamdown + Tailwind v4 @source directive integration verified working
 
 ## Session Continuity
 
-**Last session:** 2026-03-02T12:05:00Z
-**Stopped At:** Completed 05-01-PLAN.md
-**Resume file:** .planning/phases/05-chat-interface/05-01-SUMMARY.md
+**Last session:** 2026-03-02T12:09:26Z
+**Stopped At:** Checkpoint — 05-02-PLAN.md Task 3 (human-verify: verify complete chat experience)
+**Resume file:** .planning/phases/05-chat-interface/05-02-SUMMARY.md

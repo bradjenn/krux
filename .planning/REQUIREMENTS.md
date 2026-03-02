@@ -18,11 +18,11 @@ Requirements for milestone v2.0: Standalone App + Plugin Architecture.
 
 ### Chat Interface
 
-- [ ] **CHAT-01**: User can send messages to Claude through a chat interface
-- [ ] **CHAT-02**: User sees Claude's response streamed in real-time (token by token)
-- [ ] **CHAT-03**: User can resume previous chat sessions across browser sessions
+- [x] **CHAT-01**: User can send messages to Claude through a chat interface
+- [x] **CHAT-02**: User sees Claude's response streamed in real-time (token by token)
+- [x] **CHAT-03**: User can resume previous chat sessions across browser sessions
 - [ ] **CHAT-04**: User can invoke GSD slash commands from the chat input
-- [ ] **CHAT-05**: Streaming markdown renders correctly mid-stream (no flash of raw syntax)
+- [x] **CHAT-05**: Streaming markdown renders correctly mid-stream (no flash of raw syntax)
 <!-- CHAT-02, CHAT-03, CHAT-05 data layer complete in Phase 5 Plan 01 — UI in Plan 02 -->
 - [ ] **CHAT-08**: User sees slash command autocomplete when typing "/" in the chat input
 - [ ] **CHAT-09**: GSD command output renders visually distinct from conversational messages
@@ -109,10 +109,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLUG-04 | Phase 4 | Complete |
 | PLUG-05 | Phase 4 | Complete |
 | PLUG-06 | Phase 4 | Complete |
-| CHAT-01 | Phase 5 | Pending |
-| CHAT-02 | Phase 5 | Pending |
-| CHAT-03 | Phase 5 | Pending |
-| CHAT-05 | Phase 5 | Pending |
+| CHAT-01 | Phase 5 | Complete |
+| CHAT-02 | Phase 5 | Complete |
+| CHAT-03 | Phase 5 | Complete |
+| CHAT-05 | Phase 5 | Complete |
 | CHAT-04 | Phase 6 | Pending |
 | CHAT-08 | Phase 6 | Pending |
 | CHAT-09 | Phase 6 | Pending |
