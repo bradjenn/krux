@@ -57,7 +57,7 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
 
   return (
     <div className="border-t border-border flex-shrink-0">
-      <div className="max-w-[700px] mx-auto w-full flex items-end gap-2 pr-3 pb-3">
+      <div className="max-w-[700px] mx-auto w-full flex items-end gap-2 pr-3">
         <textarea
           ref={textareaRef}
           rows={1}
@@ -71,7 +71,7 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
         {isStreaming ? (
           <button
             onClick={onStop}
-            className="flex-shrink-0 w-8 h-8 mb-0.5 flex items-center justify-center rounded bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors"
+            className="flex-shrink-0 w-8 h-8 mb-3 flex items-center justify-center rounded bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors"
             title="Stop generation (Esc)"
           >
             <Square size={14} />
@@ -80,7 +80,7 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
           <button
             onClick={handleSend}
             disabled={disabled}
-            className="flex-shrink-0 w-8 h-8 mb-0.5 flex items-center justify-center rounded bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex-shrink-0 w-8 h-8 mb-3 flex items-center justify-center rounded bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title="Send message (Enter)"
           >
             <Send size={14} />
