@@ -6,6 +6,11 @@ mod settings;
 use tauri::menu::{MenuBuilder, MenuItem, PredefinedMenuItem, SubmenuBuilder};
 use tauri::Emitter;
 
+#[tauri::command]
+fn get_env_var(name: String) -> Option<String> {
+    std::env::var(name).ok()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -87,6 +92,13 @@ pub fn run() {
             )?;
             let open_gsd =
                 MenuItem::with_id(app, "open-gsd", "GSD Workflow", true, Some("CmdOrCtrl+G"))?;
+            let open_chat = MenuItem::with_id(
+                app,
+                "open-chat",
+                "Chat",
+                true,
+                Some("CmdOrCtrl+Shift+C"),
+            )?;
             let view_menu = SubmenuBuilder::new(app, "View")
                 .item(&toggle_sidebar)
                 .separator()
@@ -95,6 +107,7 @@ pub fn run() {
                 .item(&font_reset)
                 .separator()
                 .item(&open_gsd)
+                .item(&open_chat)
                 .build()?;
 
             // Window menu
@@ -117,7 +130,7 @@ pub fn run() {
             let id = event.id().0.as_str();
             match id {
                 "settings" | "new-terminal" | "close-tab" | "add-project" | "toggle-sidebar"
-                | "open-gsd" | "font-increase" | "font-decrease" | "font-reset" => {
+                | "open-gsd" | "open-chat" | "font-increase" | "font-decrease" | "font-reset" => {
                     let _ = app.emit("menu-action", id);
                 }
                 _ => {}
@@ -139,6 +152,7 @@ pub fn run() {
             fs::read_dir_tree,
             fs::path_exists,
             fs::list_dir,
+            get_env_var,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
