@@ -40,6 +40,12 @@ export function useChatStream(projectPath: string) {
   const unlistenDoneRef = useRef<UnlistenFn | null>(null)
   const streamContentRef = useRef('')
 
+  // Session tracking: first message uses --session-id, subsequent use --resume
+  const sessionRef = useRef<{ id: string; started: boolean }>({
+    id: crypto.randomUUID(),
+    started: false,
+  })
+
   const cleanup = useCallback(() => {
     unlistenDataRef.current?.()
     unlistenDoneRef.current?.()
@@ -114,14 +120,17 @@ export function useChatStream(projectPath: string) {
         unlistenDataRef.current = dataUnlisten
         unlistenDoneRef.current = doneUnlisten
 
-        // Start the Claude CLI process
+        // Start the Claude CLI process with session tracking
+        const session = sessionRef.current
         await startClaudeChat(
           chatId,
           userMessage,
           projectPath,
-          'no-session', // session management not used with --no-session-persistence
-          false,
+          session.id,
+          session.started,
         )
+        // Mark session as started after first successful spawn
+        session.started = true
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Failed to start Claude'
@@ -146,6 +155,11 @@ export function useChatStream(projectPath: string) {
     streamContentRef.current = ''
   }, [])
 
+  // Reset session (new conversation) — call on "Clear"
+  const resetSession = useCallback(() => {
+    sessionRef.current = { id: crypto.randomUUID(), started: false }
+  }, [])
+
   return {
     streamingContent,
     status,
@@ -153,5 +167,6 @@ export function useChatStream(projectPath: string) {
     stop,
     setStreamingContent,
     resetStream,
+    resetSession,
   }
 }

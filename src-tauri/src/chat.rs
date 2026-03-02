@@ -71,7 +71,6 @@ pub fn start_claude_chat(
         .arg("--output-format")
         .arg("stream-json")
         .arg("--include-partial-messages")
-        .arg("--no-session-persistence")
         .current_dir(&project_path)
         .env_remove("CLAUDECODE");
 

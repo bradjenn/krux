@@ -13,7 +13,7 @@ interface ChatPanelProps {
 
 export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
   const messages = useChatHistory(projectId)
-  const { streamingContent, status, sendMessage, stop, setStreamingContent, resetStream } =
+  const { streamingContent, status, sendMessage, stop, setStreamingContent, resetStream, resetSession } =
     useChatStream(projectPath)
   const [error, setError] = useState<string | null>(null)
   const isStreaming = status === 'streaming'
@@ -108,8 +108,9 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
     await clearProjectHistory(projectId)
     setStreamingContent('')
     resetStream()
+    resetSession()
     setError(null)
-  }, [projectId, setStreamingContent, resetStream])
+  }, [projectId, setStreamingContent, resetStream, resetSession])
 
   const handleSuggestedPrompt = useCallback(
     (prompt: string) => {
