@@ -77,8 +77,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [x] 04-01-PLAN.md — Plugin API cleanup: simplified PluginDefinition (isAvailable, autoOpen, no sidebarSection), mitt event bus, project-list-only sidebar, tab dropdown disabled state, auto-open GSD tab on project select
-- [ ] 04-02-PLAN.md — GSD plugin definition: three views (Overview, Documents, Execute) as plugin-contributed views, headerSlot with contextual back buttons, shell-only App.tsx via view registry, FileTree navigation wiring
+- [x] 04-01-PLAN.md — Plugin API cleanup: simplified PluginDefinition (isAvailable, no sidebarSection), mitt event bus, project-list-only sidebar, tab dropdown disabled state
+- [x] 04-02-PLAN.md — GSD plugin polish: event bus wiring (execution:started auto-switch), Overview quick-action Execute buttons on phase cards, GsdSidebar.tsx dead code deleted, auto-open removed per user feedback
 
 #### Phase 5: Chat Interface
 **Goal**: Users can have a real-time conversation with Claude in the browser, see responses stream token by token with correctly rendered markdown, and resume previous sessions after a page reload
@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Backend Foundation | v1.0 | 2/2 | Complete | 2026-03-01 |
 | 2. Frontend + Document Viewer | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 3. Agent SDK + Streaming | v1.0 | 2/2 | Complete | 2026-03-01 |
-| 4. Plugin System + App Shell | 2/2 | Complete   | 2026-03-02 | - |
+| 4. Plugin System + App Shell | v2.0 | 2/2 | Complete | 2026-03-02 |
 | 5. Chat Interface | v2.0 | 0/2 | Not started | - |
 | 6. GSD Slash Commands | v2.0 | 0/1 | Not started | - |
 | 7. Phase Dashboard | v2.0 | 0/2 | Not started | - |

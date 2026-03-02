@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Standalone App + Plugin Architecture
 status: in_progress
-stopped_at: "Completed 04-plugin-system-app-shell/04-02-PLAN.md (checkpoint: human-verify)"
-last_updated: "2026-03-02T08:48:31Z"
+stopped_at: "Completed 04-plugin-system-app-shell/04-02-PLAN.md"
+last_updated: "2026-03-02T09:20:00Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 4 of 7 (Plugin System + App Shell) — v2.0 first phase
-Plan: 02 complete (04-02-PLAN.md) — awaiting checkpoint:human-verify
-Status: In progress — Phase 4 Plan 02 automated tasks complete, checkpoint pending
-Last activity: 2026-03-02 — GSD event bus wiring, quick-action Execute buttons, GsdSidebar.tsx deleted
+Plan: 02 complete (04-02-PLAN.md) — approved and finalized
+Status: Phase 4 complete — all plans done, ready for Phase 5
+Last activity: 2026-03-02 — GSD event bus wiring, quick-action Execute buttons, GsdSidebar.tsx deleted, auto-open removed per user feedback
 
-Progress (v2.0): [##░░░░░░░░] ~12%
+Progress (v2.0): [####░░░░░░] ~25%
 
 ## Accumulated Context
 
@@ -50,10 +50,11 @@ Recent decisions affecting current work:
 - GSD Init terminal action preserved in dropdown when GSD unavailable (no .planning/)
 - GsdView type duplicated in OverviewTab (not imported from GsdTab) to keep OverviewTab self-contained
 - appEvents.emit('execution:started') fires after cmd.spawn() resolves — only when agent actually starts
+- autoOpen removed from PluginDefinition per user feedback — plugins open on demand via + dropdown only
 
 ### Pending Todos
 
-- GsdSidebar.tsx deleted in 04-02 (dead code cleanup complete)
+None.
 
 ### Blockers/Concerns
 
@@ -63,6 +64,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-**Last session:** 2026-03-02T08:48:31Z
-**Stopped At:** Completed 04-plugin-system-app-shell/04-02-PLAN.md (checkpoint: human-verify)
-**Resume file:** .planning/phases/04-plugin-system-app-shell/04-02-SUMMARY.md
+**Last session:** 2026-03-02T09:20:00Z
+**Stopped At:** Completed 04-plugin-system-app-shell/04-02-PLAN.md (Phase 4 complete)
+**Resume file:** .planning/ROADMAP.md — begin Phase 5 planning
