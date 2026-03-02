@@ -14,6 +14,7 @@ import SettingsPage from './SettingsPage'
 import Sidebar from './Sidebar'
 import TabBar from './TabBar'
 import WallpaperSwitcher from './WallpaperSwitcher'
+import StartScreen from './StartScreen'
 
 interface Settings {
   theme: string
@@ -405,34 +406,14 @@ export default function Shell() {
               )
             })}
 
-          {/* Empty state */}
+          {/* Start screen */}
           {!activeProjectId && (
-            <div
-              className={cn(
-                'flex flex-col items-center justify-center h-full gap-4 text-dim',
-                wallpaperUrl && 'relative z-10',
-              )}
-              style={
-                wallpaperUrl
-                  ? {
-                      background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
-                    }
-                  : undefined
-              }
-            >
-              <div
-                className="flex items-center justify-center"
-                style={{ fontSize: 28, opacity: 0.3, fontWeight: 300 }}
-              >
-                <span className="text-muted-foreground">&gt;_</span>
-              </div>
-              <div className="text-center">
-                <div className="text-base font-medium text-muted-foreground">Select a project</div>
-                <div className="text-xs mt-1">
-                  Choose a project from the sidebar to manage its Claude Code sessions
-                </div>
-              </div>
-            </div>
+            <StartScreen
+              onAddProject={() => setDiscoverOpen(true)}
+              onSwitchProject={() => setSwitcherOpen(true)}
+              wallpaperActive={!!wallpaperUrl}
+              backgroundOpacity={backgroundOpacity}
+            />
           )}
         </div>
       </div>
