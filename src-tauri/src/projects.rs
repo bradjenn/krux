@@ -41,7 +41,11 @@ pub struct ProjectState {
 impl ProjectState {
     pub fn new() -> Self {
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-        let config_dir = home.join(".cc-manager");
+        let config_dir = home.join(".archon");
+        let old_dir = home.join(".cc-manager");
+        if !config_dir.exists() && old_dir.exists() {
+            fs::rename(&old_dir, &config_dir).ok();
+        }
         fs::create_dir_all(&config_dir).ok();
         Self { config_dir }
     }

@@ -25,7 +25,7 @@ pub fn run() {
             // App menu
             let settings_item =
                 MenuItem::with_id(app, "settings", "Settings...", true, Some("CmdOrCtrl+,"))?;
-            let app_menu = SubmenuBuilder::new(app, "CC Manager")
+            let app_menu = SubmenuBuilder::new(app, "Archon")
                 .about(None)
                 .separator()
                 .item(&settings_item)

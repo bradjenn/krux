@@ -1,5 +1,5 @@
 [package]
-name = "cc-manager"
+name = "archon"
 version = "0.1.0"
 description = "A native terminal multiplexer with project management"
 authors = ["bradley"]
