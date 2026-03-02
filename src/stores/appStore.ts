@@ -51,6 +51,8 @@ interface AppState {
   setScrollback: (lines: number) => void
   fontFamily: string
   setFontFamily: (family: string) => void
+  backgroundImage: string | null
+  setBackgroundImage: (img: string | null) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -124,4 +126,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   setScrollback: (scrollback) => set({ scrollback }),
   fontFamily: 'MesloLGS Nerd Font',
   setFontFamily: (fontFamily) => set({ fontFamily }),
+  backgroundImage: null,
+  setBackgroundImage: (backgroundImage) => set({ backgroundImage }),
 }))

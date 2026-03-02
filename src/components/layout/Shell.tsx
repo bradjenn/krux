@@ -58,6 +58,7 @@ export default function Shell() {
       cursor_blink: boolean
       scrollback: number
       font_family: string
+      background_image: string | null
     }>('load_settings').then((s) => {
       setTheme(s.theme)
       applyTheme(s.theme)
@@ -68,6 +69,7 @@ export default function Shell() {
       store.setCursorBlink(s.cursor_blink)
       store.setScrollback(s.scrollback)
       store.setFontFamily(s.font_family)
+      store.setBackgroundImage(s.background_image ?? null)
     })
   }, [])
 
@@ -193,6 +195,19 @@ export default function Shell() {
             }
           }
           break
+
+        case 'prev-tab':
+        case 'next-tab': {
+          if (!activeProjectId) break
+          const projectTabs = getProjectTabs(activeProjectId)
+          if (projectTabs.length < 2) break
+          const currentIndex = projectTabs.findIndex((t) => t.id === activeTabId)
+          if (currentIndex === -1) break
+          const delta = event.payload === 'next-tab' ? 1 : -1
+          const nextIndex = (currentIndex + delta + projectTabs.length) % projectTabs.length
+          setActiveTab(projectTabs[nextIndex].id)
+          break
+        }
       }
     })
 
@@ -208,6 +223,19 @@ export default function Shell() {
         setDiscoverOpen(false)
         if (useAppStore.getState().activeView === 'settings') {
           useAppStore.getState().setActiveView('projects')
+        }
+      }
+
+      // Cmd+1-9: jump to tab N
+      const num = parseInt(e.key, 10)
+      if ((e.metaKey || e.ctrlKey) && num >= 1 && num <= 9) {
+        const { activeProjectId } = stateRef.current
+        if (!activeProjectId) return
+        const projectTabs = useAppStore.getState().getProjectTabs(activeProjectId)
+        const targetTab = projectTabs[num - 1]
+        if (targetTab) {
+          e.preventDefault()
+          useAppStore.getState().setActiveTab(targetTab.id)
         }
       }
     }
