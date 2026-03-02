@@ -139,8 +139,9 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
         scrollbarWidth: 'none',
       }}
     >
-      {projectTabs.map((tab) => {
+      {projectTabs.map((tab, index) => {
         const isActive = activeTabId === tab.id
+        const shortcutNum = index < 9 ? index + 1 : null
         return (
           <button
             key={tab.id}
@@ -157,6 +158,15 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
             }}
           >
             <span>{tab.label}</span>
+            {shortcutNum && (
+              <span
+                className={cn(
+                  "text-[10px] text-muted-foreground/50"
+                )}
+              >
+                ⌘{shortcutNum}
+              </span>
+            )}
             <span
               onClick={(e) => {
                 e.stopPropagation()
@@ -243,7 +253,7 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
               {PLUGINS.some((p) => p.id === 'gsd' && !(pluginAvailability['gsd'] ?? true)) && (
                 <button
                   onClick={handleGsdInit}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-dim hover:bg-white/[0.05] hover:text-foreground"
+                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
                   title="Initialize GSD in this project"
                 >
                   <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />

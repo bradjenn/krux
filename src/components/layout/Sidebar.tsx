@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete01Icon, Search01Icon } from '@hugeicons/core-free-icons'
+import { Delete01Icon } from '@hugeicons/core-free-icons'
 import { invoke } from '@tauri-apps/api/core'
 import { useAppStore, type Project } from '@/stores/appStore'
 import { cn } from '@/lib/utils'
@@ -11,30 +11,10 @@ interface SidebarProps {
 
 export default function Sidebar({ visible }: SidebarProps) {
   const { projects, activeProjectId, setProjects, setActiveProject, tabs } = useAppStore()
-  const [search, setSearch] = useState('')
-  const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     invoke<Project[]>('list_projects').then(setProjects)
   }, [setProjects])
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        searchRef.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
-
-  const filtered = projects.filter(
-    (p) =>
-      !search ||
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.path.toLowerCase().includes(search.toLowerCase()),
-  )
 
   const handleRemove = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
@@ -57,49 +37,9 @@ export default function Sidebar({ visible }: SidebarProps) {
         minWidth: visible ? 340 : 0,
       }}
     >
-      {/* Search */}
-      <div className="border-b border-border" style={{ padding: '12px 12px 10px' }}>
-        <div
-          className="flex items-center bg-background border border-border transition-[border-color,box-shadow] duration-150 focus-within:border-secondary focus-within:[box-shadow:0_0_8px_var(--accent2-glow)]"
-          style={{
-            gap: 10,
-            height: 38,
-            padding: '0 12px',
-            borderRadius: 6,
-          }}
-          onClick={() => searchRef.current?.focus()}
-        >
-          <HugeiconsIcon icon={Search01Icon} size={14} strokeWidth={1.5} className="shrink-0 text-dim" />
-          <input
-            ref={searchRef}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects..."
-            className="flex-1 bg-transparent text-foreground border-none outline-none min-w-0"
-            style={{
-              fontSize: 14,
-              fontFamily: 'inherit',
-            }}
-          />
-          {!search && (
-            <kbd
-              className="shrink-0 leading-none text-dim bg-white/[0.04] border border-border"
-              style={{
-                fontSize: 11,
-                fontFamily: 'inherit',
-                borderRadius: 3,
-                padding: '3px 6px',
-              }}
-            >
-              {'\u2318'}K
-            </kbd>
-          )}
-        </div>
-      </div>
-
       {/* Project list */}
       <div className="flex-1 overflow-y-auto py-1">
-        {filtered.map((project) => {
+        {projects.map((project) => {
           const isActive = activeProjectId === project.id
           const termCount = getTerminalCount(project.id)
 
@@ -158,12 +98,6 @@ export default function Sidebar({ visible }: SidebarProps) {
             </div>
           )
         })}
-
-        {filtered.length === 0 && projects.length > 0 && (
-          <div className="px-4 py-6 text-center text-xs text-dim">
-            No matching projects
-          </div>
-        )}
 
         {projects.length === 0 && (
           <div className="flex flex-col items-center justify-center flex-1 px-4 py-16 text-center">

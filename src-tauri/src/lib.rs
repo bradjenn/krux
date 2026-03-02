@@ -46,11 +46,19 @@ pub fn run() {
                 MenuItem::with_id(app, "close-tab", "Close Tab", true, Some("CmdOrCtrl+W"))?;
             let add_project =
                 MenuItem::with_id(app, "add-project", "Add Project...", true, None::<&str>)?;
+            let project_switcher = MenuItem::with_id(
+                app,
+                "project-switcher",
+                "Switch Project...",
+                true,
+                Some("CmdOrCtrl+K"),
+            )?;
             let file_menu = SubmenuBuilder::new(app, "File")
                 .item(&new_terminal)
                 .item(&close_tab)
                 .separator()
                 .item(&add_project)
+                .item(&project_switcher)
                 .build()?;
 
             // Edit menu
@@ -151,7 +159,7 @@ pub fn run() {
             match id {
                 "settings" | "new-terminal" | "close-tab" | "add-project" | "toggle-sidebar"
                 | "open-gsd" | "open-chat" | "font-increase" | "font-decrease" | "font-reset"
-                | "prev-tab" | "next-tab" => {
+                | "prev-tab" | "next-tab" | "project-switcher" => {
                     let _ = app.emit("menu-action", id);
                 }
                 _ => {}
