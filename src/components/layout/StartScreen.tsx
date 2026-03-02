@@ -78,17 +78,30 @@ export default function StartScreen({
       }
     >
       <div className="flex flex-col items-center gap-6" style={{ minWidth: 280 }}>
-        {/* Logo */}
-        <img
-          src="/logo.svg"
-          alt="Archon"
-          className="pointer-events-none"
-          style={{
-            width: 120,
-            height: 120,
-            filter: 'drop-shadow(0 0 24px var(--accent2))',
-          }}
-        />
+        {/* Logo + wordmark */}
+        <div className="flex items-center gap-5">
+          <img
+            src="/logo.svg"
+            alt="Archon"
+            className="pointer-events-none"
+            style={{
+              width: 64,
+              height: 64,
+              filter: 'drop-shadow(0 0 24px var(--accent2))',
+            }}
+          />
+          <span
+            className="text-foreground"
+            style={{
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: 46,
+              fontWeight: 700,
+              letterSpacing: 2,
+            }}
+          >
+            Archon
+          </span>
+        </div>
 
         {/* Divider */}
         <div className="w-full h-px bg-border" />
