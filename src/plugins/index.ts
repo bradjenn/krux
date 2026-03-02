@@ -1,8 +1,9 @@
 import type { PluginDefinition } from './types'
 import { gsdPlugin } from './gsd'
+import { chatPlugin } from './chat'
 
 // All registered plugins
-export const PLUGINS: PluginDefinition[] = [gsdPlugin]
+export const PLUGINS: PluginDefinition[] = [gsdPlugin, chatPlugin]
 
 /** Get all tab types from all plugins */
 export function getAllPluginTabTypes() {
