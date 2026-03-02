@@ -65,7 +65,7 @@ export default function InputBar({ onSend, onStop, isStreaming, disabled }: Inpu
           onInput={resizeTextarea}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          className="bg-transparent text-foreground placeholder:text-dim focus:outline-none resize-none w-full text-sm leading-relaxed overflow-hidden px-4 pt-3 pb-2"
+          className="bg-transparent text-foreground placeholder:text-dim focus:outline-none resize-none w-full text-sm leading-relaxed overflow-hidden px-4 py-3"
           style={{ height: 'auto', minHeight: '44px' }}
         />
         {isStreaming ? (
