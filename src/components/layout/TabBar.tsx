@@ -10,9 +10,11 @@ import { useAppStore } from '@/stores/appStore'
 
 interface TabBarProps {
   onCloseTab: (id: string) => void
+  wallpaperActive?: boolean
+  backgroundOpacity?: number
 }
 
-export default function TabBar({ onCloseTab }: TabBarProps) {
+export default function TabBar({ onCloseTab, wallpaperActive, backgroundOpacity = 0.8 }: TabBarProps) {
   const { tabs, activeTabId, activeProjectId, projects, addTab, setActiveTab, hideTitlebar } =
     useAppStore()
 
@@ -137,10 +139,18 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
 
   return (
     <div
-      className="flex items-stretch shrink-0 select-none overflow-x-auto bg-surface border-b border-border"
+      className={cn(
+        'flex items-stretch shrink-0 select-none overflow-x-auto border-b border-border relative z-[1]',
+        !wallpaperActive && 'bg-surface',
+      )}
       style={{
         height: 36,
         scrollbarWidth: 'none',
+        ...(wallpaperActive
+          ? {
+              background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+            }
+          : {}),
       }}
       {...(hideTitlebar ? { 'data-tauri-drag-region': '' } : {})}
     >

@@ -323,6 +323,19 @@ export default function Shell() {
     <div className="flex flex-col h-full w-full">
       <UpdateChecker />
       <div className="flex flex-1 min-h-0 relative">
+      {/* Wallpaper covers entire shell including sidebar and tab bar */}
+      {wallpaperUrl && (
+        <img
+          src={wallpaperUrl}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+          style={
+            backgroundBlur > 0
+              ? { filter: `blur(${backgroundBlur}px)`, transform: 'scale(1.1)' }
+              : undefined
+          }
+        />
+      )}
       {hideTitlebar && (
         <div
           data-tauri-drag-region=""
@@ -331,25 +344,13 @@ export default function Shell() {
         />
       )}
 
-      <Sidebar visible={sidebarVisible} onAddProject={() => setDiscoverOpen(true)} />
+      <Sidebar visible={sidebarVisible} onAddProject={() => setDiscoverOpen(true)} wallpaperActive={!!wallpaperUrl} backgroundOpacity={backgroundOpacity} />
 
       <div className="flex flex-col flex-1 min-w-0">
-        <TabBar onCloseTab={handleCloseTab} />
+        <TabBar onCloseTab={handleCloseTab} wallpaperActive={!!wallpaperUrl} backgroundOpacity={backgroundOpacity} />
 
         {/* Tab content area */}
         <div className="flex-1 min-h-0 relative overflow-hidden">
-          {wallpaperUrl && (
-            <img
-              src={wallpaperUrl}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
-              style={
-                backgroundBlur > 0
-                  ? { filter: `blur(${backgroundBlur}px)`, transform: 'scale(1.1)' }
-                  : undefined
-              }
-            />
-          )}
           {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
           {tabs
             .filter((t) => t.type === 'shell' && t.terminalId)

@@ -8,9 +8,11 @@ import { type Project, useAppStore } from '@/stores/appStore'
 interface SidebarProps {
   visible: boolean
   onAddProject: () => void
+  wallpaperActive?: boolean
+  backgroundOpacity?: number
 }
 
-export default function Sidebar({ visible, onAddProject }: SidebarProps) {
+export default function Sidebar({ visible, onAddProject, wallpaperActive, backgroundOpacity = 0.8 }: SidebarProps) {
   const { projects, activeProjectId, setProjects, setActiveProject, tabs, hideTitlebar } =
     useAppStore()
 
@@ -31,12 +33,18 @@ export default function Sidebar({ visible, onAddProject }: SidebarProps) {
   return (
     <div
       className={cn(
-        'flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out bg-surface',
+        'flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out relative z-[1]',
+        !wallpaperActive && 'bg-surface',
         visible && 'border-r border-border',
       )}
       style={{
         width: visible ? 340 : 0,
         minWidth: visible ? 340 : 0,
+        ...(wallpaperActive
+          ? {
+              background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+            }
+          : {}),
       }}
     >
       {/* Sidebar header */}
