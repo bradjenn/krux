@@ -151,16 +151,12 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
 
   return (
     <div
-      className="h-full w-full"
+      ref={containerRef}
+      className={`h-full w-full${backgroundImage ? ' terminal-transparent' : ''}`}
       style={{
         padding: '8px 8px 4px 8px',
         background: termTheme.background,
       }}
-    >
-      <div
-        ref={containerRef}
-        className={`h-full w-full${backgroundImage ? ' terminal-transparent' : ''}`}
-      />
-    </div>
+    />
   )
 }
