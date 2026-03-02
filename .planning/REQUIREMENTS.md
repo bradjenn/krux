@@ -23,6 +23,7 @@ Requirements for milestone v2.0: Standalone App + Plugin Architecture.
 - [ ] **CHAT-03**: User can resume previous chat sessions across browser sessions
 - [ ] **CHAT-04**: User can invoke GSD slash commands from the chat input
 - [ ] **CHAT-05**: Streaming markdown renders correctly mid-stream (no flash of raw syntax)
+<!-- CHAT-02, CHAT-03, CHAT-05 data layer complete in Phase 5 Plan 01 — UI in Plan 02 -->
 - [ ] **CHAT-08**: User sees slash command autocomplete when typing "/" in the chat input
 - [ ] **CHAT-09**: GSD command output renders visually distinct from conversational messages
 

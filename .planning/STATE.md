@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Standalone App + Plugin Architecture
-status: unknown
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-02T10:06:17.102Z"
+status: in-progress
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-02T12:05:00Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 11
+  completed_plans: 10
 ---
 
 # Project State
@@ -19,16 +19,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Users can manage development projects and run AI-powered workflows through a visual interface with a plugin architecture.
-**Current focus:** Phase 4 — Plugin System + App Shell
+**Current focus:** Phase 5 — Chat Interface
 
 ## Current Position
 
-Phase: 4 of 7 (Plugin System + App Shell) — v2.0 first phase
-Plan: 02 complete (04-02-PLAN.md) — approved and finalized
-Status: Phase 4 complete — all plans done, ready for Phase 5
-Last activity: 2026-03-02 — GSD event bus wiring, quick-action Execute buttons, GsdSidebar.tsx deleted, auto-open removed per user feedback
+Phase: 5 of 7 (Chat Interface)
+Plan: 01 complete (05-01-PLAN.md) — data layer and plugin registration done
+Status: Phase 5 in progress — Plan 01 complete, Plan 02 (Chat UI) remaining
+Last activity: 2026-03-02 — Chat data layer, streaming hook, Dexie DB, plugin registration
 
-Progress (v2.0): [####░░░░░░] ~25%
+Progress (v2.0): [#####░░░░░] ~40%
 
 ## Accumulated Context
 
@@ -51,6 +51,10 @@ Recent decisions affecting current work:
 - GsdView type duplicated in OverviewTab (not imported from GsdTab) to keep OverviewTab self-contained
 - appEvents.emit('execution:started') fires after cmd.spawn() resolves — only when agent actually starts
 - autoOpen removed from PluginDefinition per user feedback — plugins open on demand via + dropdown only
+- appendStreamingContent Zustand action used for rAF flush (not functional state updater — Zustand setX takes value not function)
+- Streaming status tracked in statusRef (local hook ref) — avoids unnecessary re-renders during token streaming
+- Last 20 messages sent to Claude API for context window (not all 50 stored — balances context vs cost)
+- Chat plugin isAvailable always returns true — no project structure detection needed
 
 ### Pending Todos
 
@@ -58,12 +62,10 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 4 is highest-risk: strangler-fig refactor must not break the working execution pipeline
-- WsEvent type duplication (shared/types/index.ts vs inline in useWebSocket.ts) must be fixed in Phase 4 before new namespaces are added
-- `streamdown@2.3.0` + Tailwind v4 `@source` directive integration unverified in this project — validate early in Phase 5
+None — streamdown + Tailwind v4 @source directive integration verified working. Build passes cleanly.
 
 ## Session Continuity
 
-**Last session:** 2026-03-02T10:06:17.100Z
-**Stopped At:** Phase 5 context gathered
-**Resume file:** .planning/phases/05-chat-interface/05-CONTEXT.md
+**Last session:** 2026-03-02T12:05:00Z
+**Stopped At:** Completed 05-01-PLAN.md
+**Resume file:** .planning/phases/05-chat-interface/05-01-SUMMARY.md

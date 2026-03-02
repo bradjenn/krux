@@ -92,7 +92,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Chat data layer: npm deps (Anthropic SDK, Streamdown, Dexie), Tailwind @source config, Rust get_env_var command, Dexie DB schema, Zustand chatStore, useChatStream hook with rAF buffer, chat plugin skeleton registration
+- [x] 05-01-PLAN.md — Chat data layer: npm deps (Anthropic SDK, Streamdown, Dexie), Tailwind @source config, Rust get_env_var command, Dexie DB schema, Zustand chatStore, useChatStream hook with rAF buffer, chat plugin skeleton registration
 - [ ] 05-02-PLAN.md — Chat UI: ChatPanel (centered 700px layout), MessageList (auto-scroll, jump-to-bottom), MessageBubble (Streamdown + code blocks), InputBar (auto-grow, Enter/Stop), ChatTab wiring, Cmd+Shift+C keyboard shortcut
 
 #### Phase 6: GSD Slash Commands
@@ -134,6 +134,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Frontend + Document Viewer | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 3. Agent SDK + Streaming | v1.0 | 2/2 | Complete | 2026-03-01 |
 | 4. Plugin System + App Shell | v2.0 | 2/2 | Complete | 2026-03-02 |
-| 5. Chat Interface | v2.0 | 0/2 | Not started | - |
+| 5. Chat Interface | v2.0 | 1/2 | In progress | - |
 | 6. GSD Slash Commands | v2.0 | 0/1 | Not started | - |
 | 7. Phase Dashboard | v2.0 | 0/2 | Not started | - |
