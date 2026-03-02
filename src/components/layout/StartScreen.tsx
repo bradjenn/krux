@@ -81,9 +81,9 @@ export default function StartScreen({
         {/* Logo + wordmark */}
         <div className="flex items-center gap-5">
           <img
-            src="/logo.svg"
+            src="/icon-1024.png"
             alt="Archon"
-            className="pointer-events-none"
+            className="pointer-events-none rounded-2xl"
             style={{
               width: 64,
               height: 64,
