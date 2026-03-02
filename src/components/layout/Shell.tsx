@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { invoke } from '@tauri-apps/api/core'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { invoke, convertFileSrc } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
 import { applyTheme } from '@/lib/themes'
+import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
 import { createTerminal, closeTerminal } from '@/hooks/useTauri'
 import { getAllPluginTabTypes } from '@/plugins'
 import Header from './Header'
@@ -11,6 +12,7 @@ import Sidebar from './Sidebar'
 import TabBar from './TabBar'
 import SettingsPage from './SettingsPage'
 import DiscoverDialog from './DiscoverDialog'
+import ProjectSwitcher from './ProjectSwitcher'
 import XTerminal from '@/components/terminal/XTerminal'
 
 export default function Shell() {
@@ -24,12 +26,21 @@ export default function Shell() {
     addTab,
     setTheme,
     getProjectTabs,
+    backgroundImage,
   } = useAppStore()
 
   const [sidebarVisible, setSidebarVisible] = useState(true)
   const [discoverOpen, setDiscoverOpen] = useState(false)
+  const [switcherOpen, setSwitcherOpen] = useState(false)
 
   const activeProject = projects.find((p) => p.id === activeProjectId)
+
+  const wallpaperUrl = useMemo(() => {
+    if (!backgroundImage) return null
+    const preset = WALLPAPER_PRESETS.find((p) => p.id === backgroundImage)
+    if (preset) return `/wallpapers/${preset.file}`
+    return convertFileSrc(backgroundImage)
+  }, [backgroundImage])
 
   // Refs for menu event handler (avoids stale closures in the once-registered listener)
   const stateRef = useRef({ activeProject, activeTabId, activeProjectId })
@@ -125,6 +136,10 @@ export default function Shell() {
 
         case 'add-project':
           setDiscoverOpen(true)
+          break
+
+        case 'project-switcher':
+          setSwitcherOpen((v) => !v)
           break
 
         case 'toggle-sidebar':
@@ -257,6 +272,13 @@ export default function Shell() {
 
           {/* Tab content area */}
           <div className="flex-1 min-h-0 relative">
+            {wallpaperUrl && (
+              <img
+                src={wallpaperUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+              />
+            )}
             {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
             {tabs
               .filter((t) => t.type === 'shell' && t.terminalId)
@@ -267,7 +289,8 @@ export default function Shell() {
                     key={tab.terminalId}
                     className={cn(
                       "absolute inset-0 transition-opacity duration-100",
-                      activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                      activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+                      wallpaperUrl && "z-10"
                     )}
                   >
                     <XTerminal
@@ -291,8 +314,9 @@ export default function Shell() {
                   <div
                     key={tab.id}
                     className={cn(
-                      "absolute inset-0 overflow-auto bg-background transition-opacity duration-100",
-                      activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                      "absolute inset-0 overflow-auto transition-opacity duration-100",
+                      activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+                      wallpaperUrl ? "z-10 bg-background/75" : "bg-background"
                     )}
                   >
                     <TabComponent
@@ -306,7 +330,7 @@ export default function Shell() {
             {/* Empty state */}
             {!activeProjectId && (
               <div
-                className="flex flex-col items-center justify-center h-full gap-4 text-dim"
+                className={cn("flex flex-col items-center justify-center h-full gap-4 text-dim", wallpaperUrl && "z-10")}
               >
                 <div
                   className="flex items-center justify-center"
@@ -335,6 +359,7 @@ export default function Shell() {
 
       {/* Modals */}
       <DiscoverDialog isOpen={discoverOpen} onClose={() => setDiscoverOpen(false)} />
+      <ProjectSwitcher isOpen={switcherOpen} onClose={() => setSwitcherOpen(false)} />
     </div>
   )
 }
