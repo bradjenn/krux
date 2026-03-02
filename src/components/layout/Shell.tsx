@@ -210,24 +210,28 @@ export default function Shell() {
 
           {/* Tab content area */}
           <div className="flex-1 min-h-0 relative">
-            {/* Render all shell tabs but only show active */}
+            {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
             {tabs
-              .filter((t) => t.type === 'shell' && t.terminalId && t.projectId === activeProjectId)
-              .map((tab) => (
-                <div
-                  key={tab.terminalId}
-                  className={cn(
-                    "absolute inset-0 transition-opacity duration-100",
-                    activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-                  )}
-                >
-                  <XTerminal
-                    projectPath={activeProject?.path ?? '~'}
-                    existingTerminalId={tab.terminalId!}
-                    onExit={() => handleCloseTab(tab.id)}
-                  />
-                </div>
-              ))}
+              .filter((t) => t.type === 'shell' && t.terminalId)
+              .map((tab) => {
+                const project = projects.find((p) => p.id === tab.projectId)
+                return (
+                  <div
+                    key={tab.terminalId}
+                    className={cn(
+                      "absolute inset-0 transition-opacity duration-100",
+                      activeTabId === tab.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                    )}
+                  >
+                    <XTerminal
+                      projectPath={project?.path ?? '~'}
+                      existingTerminalId={tab.terminalId!}
+                      isActive={activeTabId === tab.id}
+                      onExit={() => handleCloseTab(tab.id)}
+                    />
+                  </div>
+                )
+              })}
 
             {/* Render plugin tabs */}
             {tabs

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
-import { WebglAddon } from '@xterm/addon-webgl'
+// WebGL addon removed — canvas renderer handles Unicode glyphs (braille, spinners) better
+import { Unicode11Addon } from '@xterm/addon-unicode11'
 import '@xterm/xterm/css/xterm.css'
 import {
   writeTerminal,
@@ -15,10 +16,11 @@ import { getTerminalTheme } from '../../lib/themes'
 interface XTerminalProps {
   projectPath: string
   existingTerminalId: string
+  isActive?: boolean
   onExit?: () => void
 }
 
-export default function XTerminal({ existingTerminalId, onExit }: XTerminalProps) {
+export default function XTerminal({ existingTerminalId, isActive, onExit }: XTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
@@ -43,6 +45,16 @@ export default function XTerminal({ existingTerminalId, onExit }: XTerminalProps
   useTerminalExit(terminalId, () => {
     onExit?.()
   })
+
+  // Re-fit and focus when becoming visible
+  useEffect(() => {
+    if (isActive && terminalRef.current && fitAddonRef.current) {
+      requestAnimationFrame(() => {
+        fitAddonRef.current?.fit()
+        terminalRef.current?.focus()
+      })
+    }
+  }, [isActive])
 
   // Update xterm options when settings change
   useEffect(() => {
@@ -76,25 +88,24 @@ export default function XTerminal({ existingTerminalId, onExit }: XTerminalProps
     const fitAddon = new FitAddon()
     term.loadAddon(fitAddon)
 
-    term.open(containerRef.current)
+    // Unicode 11 support for proper rendering of braille, box-drawing, emoji, etc.
+    const unicodeAddon = new Unicode11Addon()
+    term.loadAddon(unicodeAddon)
+    term.unicode.activeVersion = '11'
 
-    // Try WebGL addon for GPU acceleration
-    try {
-      const webglAddon = new WebglAddon()
-      webglAddon.onContextLoss(() => webglAddon.dispose())
-      term.loadAddon(webglAddon)
-    } catch {
-      // Canvas fallback is fine
-    }
+    term.open(containerRef.current)
 
     terminalRef.current = term
     fitAddonRef.current = fitAddon
 
-    // Initial fit after a tick to ensure container has dimensions
+    // Fit immediately after open and send correct size to PTY
+    // This minimizes the time the PTY runs at the wrong 80x24 default
+    fitAddon.fit()
+    resizeTerminal(terminalId, term.cols, term.rows)
+
+    // Second fit on next frame to catch any layout shifts
     requestAnimationFrame(() => {
       fitAddon.fit()
-      // Send initial size to PTY
-      resizeTerminal(terminalId, term.cols, term.rows)
     })
 
     // Keystroke → PTY stdin

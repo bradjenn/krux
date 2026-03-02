@@ -82,10 +82,11 @@ pub fn create_terminal(
     // Spawn a background thread to read PTY output and emit events
     std::thread::spawn(move || {
         let mut buf = [0u8; 4096];
+        let mut leftover = Vec::new(); // incomplete UTF-8 bytes from previous read
+
         loop {
             match reader.read(&mut buf) {
                 Ok(0) => {
-                    // PTY closed
                     let _ = app.emit(
                         "terminal:exit",
                         serde_json::json!({ "terminal_id": tid }),
@@ -93,15 +94,40 @@ pub fn create_terminal(
                     break;
                 }
                 Ok(n) => {
-                    // Convert bytes to string (lossy — terminal output may have partial UTF-8)
-                    let data = String::from_utf8_lossy(&buf[..n]).to_string();
-                    let _ = app.emit(
-                        "terminal:output",
-                        TerminalOutput {
-                            terminal_id: tid.clone(),
-                            data,
-                        },
-                    );
+                    // Prepend any leftover bytes from the previous read
+                    let combined = if leftover.is_empty() {
+                        &buf[..n]
+                    } else {
+                        leftover.extend_from_slice(&buf[..n]);
+                        leftover.as_slice()
+                    };
+
+                    // Find the last valid UTF-8 boundary
+                    let valid_up_to = match std::str::from_utf8(combined) {
+                        Ok(_) => combined.len(),
+                        Err(e) => e.valid_up_to(),
+                    };
+
+                    // Emit the valid UTF-8 portion
+                    if valid_up_to > 0 {
+                        let data =
+                            unsafe { std::str::from_utf8_unchecked(&combined[..valid_up_to]) };
+                        let _ = app.emit(
+                            "terminal:output",
+                            TerminalOutput {
+                                terminal_id: tid.clone(),
+                                data: data.to_string(),
+                            },
+                        );
+                    }
+
+                    // Save any trailing incomplete UTF-8 bytes for next read
+                    let remainder = &combined[valid_up_to..];
+                    leftover = if remainder.is_empty() {
+                        Vec::new()
+                    } else {
+                        remainder.to_vec()
+                    };
                 }
                 Err(_) => break,
             }
