@@ -1,136 +1,154 @@
-import { useRef, useEffect, useCallback } from 'react'
-import Anthropic from '@anthropic-ai/sdk'
-import { useChatStore } from './chatStore'
+import { useRef, useCallback, useState, useEffect } from 'react'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
+import {
+  startClaudeChat,
+  abortClaudeChat,
+  cleanupClaudeChat,
+} from '@/hooks/useTauri'
 
 export type StreamStatus = 'idle' | 'streaming' | 'done' | 'error' | 'aborted'
 
-type MessageParam = {
-  role: 'user' | 'assistant'
-  content: string
+interface ChatOutputPayload {
+  chat_id: string
+  data: string
 }
 
-export function useChatStream(apiKey: string, projectPath: string) {
-  const { streamingContent, setStreamingContent, appendStreamingContent, setStreaming, setError, resetStream } =
-    useChatStore()
+interface ChatDonePayload {
+  chat_id: string
+}
 
-  // Track stream status separately (not in zustand — local to this hook instance)
-  const statusRef = useRef<StreamStatus>('idle')
-  const clientRef = useRef<Anthropic | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
-  const bufferRef = useRef<string>('')
-  const rafRef = useRef<number | null>(null)
+/**
+ * Extracts text content from a stream-json assistant message.
+ * The message.content array may contain text blocks, tool_use blocks, etc.
+ * We only extract text blocks for display.
+ */
+function extractText(
+  content: Array<{ type: string; text?: string }>,
+): string {
+  return content
+    .filter((b) => b.type === 'text' && b.text)
+    .map((b) => b.text!)
+    .join('')
+}
 
-  // Create the Anthropic client once when apiKey becomes available
+export function useChatStream(projectPath: string) {
+  const [streamingContent, setStreamingContent] = useState('')
+  const [status, setStatus] = useState<StreamStatus>('idle')
+
+  const chatIdRef = useRef<string | null>(null)
+  const unlistenDataRef = useRef<UnlistenFn | null>(null)
+  const unlistenDoneRef = useRef<UnlistenFn | null>(null)
+  const streamContentRef = useRef('')
+
+  const cleanup = useCallback(() => {
+    unlistenDataRef.current?.()
+    unlistenDoneRef.current?.()
+    unlistenDataRef.current = null
+    unlistenDoneRef.current = null
+  }, [])
+
+  // Abort and clean up on unmount
   useEffect(() => {
-    if (apiKey) {
-      clientRef.current = new Anthropic({
-        apiKey,
-        dangerouslyAllowBrowser: true,
-      })
-    }
     return () => {
-      // Cleanup: abort any in-flight stream and cancel pending rAF
-      if (abortRef.current) {
-        abortRef.current.abort()
-      }
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current)
-        rafRef.current = null
+      cleanup()
+      if (chatIdRef.current) {
+        abortClaudeChat(chatIdRef.current).catch(() => {})
       }
     }
-  }, [apiKey])
-
-  const flush = useCallback(() => {
-    if (bufferRef.current) {
-      const chunk = bufferRef.current
-      bufferRef.current = ''
-      appendStreamingContent(chunk)
-    }
-    rafRef.current = null
-  }, [appendStreamingContent])
-
-  const appendToken = useCallback(
-    (text: string) => {
-      bufferRef.current += text
-      if (rafRef.current === null) {
-        rafRef.current = requestAnimationFrame(flush)
-      }
-    },
-    [flush]
-  )
+  }, [cleanup])
 
   const sendMessage = useCallback(
-    async (history: MessageParam[], userMessage: string) => {
-      if (!clientRef.current) return
-
-      // Reset and set up for new stream
-      abortRef.current = new AbortController()
-      bufferRef.current = ''
-      statusRef.current = 'streaming'
+    async (
+      _history: Array<{ role: string; content: string }>,
+      userMessage: string,
+    ) => {
+      cleanup()
+      streamContentRef.current = ''
       setStreamingContent('')
-      setStreaming(true)
-      setError(null)
+      setStatus('streaming')
 
-      // Use last 20 messages for API context (not all 50 from storage)
-      const contextMessages = history.slice(-20)
-      const messages: MessageParam[] = [
-        ...contextMessages,
-        { role: 'user', content: userMessage },
-      ]
+      // Generate chat ID upfront so listeners can filter before process starts
+      const chatId = crypto.randomUUID()
+      chatIdRef.current = chatId
 
       try {
-        const stream = clientRef.current.messages.stream(
-          {
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 8096,
-            system: `You are a helpful assistant. The active project is at ${projectPath}.`,
-            messages,
+        // Set up event listeners BEFORE starting the process
+        const dataUnlisten = await listen<ChatOutputPayload>(
+          'claude:chat:data',
+          (event) => {
+            if (event.payload.chat_id !== chatId) return
+
+            try {
+              const parsed = JSON.parse(event.payload.data)
+
+              // Partial assistant messages contain cumulative content
+              if (parsed.type === 'assistant' && parsed.message?.content) {
+                const text = extractText(parsed.message.content)
+                if (text) {
+                  streamContentRef.current = text
+                  setStreamingContent(text)
+                }
+              }
+
+              // Result message contains the final complete text
+              if (parsed.type === 'result' && parsed.result) {
+                streamContentRef.current = parsed.result
+                setStreamingContent(parsed.result)
+              }
+            } catch {
+              // Ignore unparseable lines (e.g. system init messages)
+            }
           },
-          { signal: abortRef.current.signal }
         )
 
-        stream.on('text', appendToken)
+        const doneUnlisten = await listen<ChatDonePayload>(
+          'claude:chat:done',
+          (event) => {
+            if (event.payload.chat_id !== chatId) return
+            setStatus(streamContentRef.current ? 'done' : 'error')
+            cleanup()
+            cleanupClaudeChat(chatId).catch(() => {})
+          },
+        )
 
-        await stream.finalMessage()
+        unlistenDataRef.current = dataUnlisten
+        unlistenDoneRef.current = doneUnlisten
 
-        // Final flush of any remaining buffered tokens
-        if (bufferRef.current) {
-          const remaining = bufferRef.current
-          bufferRef.current = ''
-          appendStreamingContent(remaining)
-        }
-        if (rafRef.current !== null) {
-          cancelAnimationFrame(rafRef.current)
-          rafRef.current = null
-        }
-
-        statusRef.current = 'done'
-        setStreaming(false)
-      } catch (err: unknown) {
-        if (rafRef.current !== null) {
-          cancelAnimationFrame(rafRef.current)
-          rafRef.current = null
-        }
-        const error = err as { name?: string; message?: string }
-        if (error.name === 'AbortError') {
-          statusRef.current = 'aborted'
-        } else {
-          statusRef.current = 'error'
-          setError(error.message ?? 'Stream error')
-        }
-        setStreaming(false)
+        // Start the Claude CLI process
+        await startClaudeChat(
+          chatId,
+          userMessage,
+          projectPath,
+          'no-session', // session management not used with --no-session-persistence
+          false,
+        )
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to start Claude'
+        console.error('Claude chat error:', message)
+        setStatus('error')
       }
     },
-    [appendToken, appendStreamingContent, setStreamingContent, setStreaming, setError, projectPath]
+    [projectPath, cleanup],
   )
 
   const stop = useCallback(() => {
-    abortRef.current?.abort()
+    if (chatIdRef.current) {
+      abortClaudeChat(chatIdRef.current).catch(() => {})
+      setStatus('aborted')
+      cleanup()
+    }
+  }, [cleanup])
+
+  const resetStream = useCallback(() => {
+    setStreamingContent('')
+    setStatus('idle')
+    streamContentRef.current = ''
   }, [])
 
   return {
     streamingContent,
-    status: statusRef.current as StreamStatus,
+    status,
     sendMessage,
     stop,
     setStreamingContent,

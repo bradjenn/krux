@@ -1,3 +1,4 @@
+mod chat;
 mod fs;
 mod projects;
 mod pty;
@@ -15,6 +16,7 @@ fn get_env_var(name: String) -> Option<String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .manage(chat::ChatState::new())
         .manage(pty::PtyState::new())
         .manage(projects::ProjectState::new())
         .manage(settings::SettingsState::new())
@@ -111,9 +113,26 @@ pub fn run() {
                 .build()?;
 
             // Window menu
+            let prev_tab = MenuItem::with_id(
+                app,
+                "prev-tab",
+                "Show Previous Tab",
+                true,
+                Some("CmdOrCtrl+Shift+["),
+            )?;
+            let next_tab = MenuItem::with_id(
+                app,
+                "next-tab",
+                "Show Next Tab",
+                true,
+                Some("CmdOrCtrl+Shift+]"),
+            )?;
             let window_menu = SubmenuBuilder::new(app, "Window")
                 .minimize()
                 .item(&PredefinedMenuItem::maximize(app, None)?)
+                .separator()
+                .item(&prev_tab)
+                .item(&next_tab)
                 .separator()
                 .fullscreen()
                 .build()?;
@@ -130,7 +149,8 @@ pub fn run() {
             let id = event.id().0.as_str();
             match id {
                 "settings" | "new-terminal" | "close-tab" | "add-project" | "toggle-sidebar"
-                | "open-gsd" | "open-chat" | "font-increase" | "font-decrease" | "font-reset" => {
+                | "open-gsd" | "open-chat" | "font-increase" | "font-decrease" | "font-reset"
+                | "prev-tab" | "next-tab" => {
                     let _ = app.emit("menu-action", id);
                 }
                 _ => {}
@@ -153,6 +173,10 @@ pub fn run() {
             fs::path_exists,
             fs::list_dir,
             get_env_var,
+            chat::check_claude_cli,
+            chat::start_claude_chat,
+            chat::abort_claude_chat,
+            chat::cleanup_claude_chat,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

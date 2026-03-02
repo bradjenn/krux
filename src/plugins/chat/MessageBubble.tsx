@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Copy, RotateCcw } from 'lucide-react'
-import Streamdown from 'streamdown'
+import { Streamdown } from 'streamdown'
 import { code } from '@streamdown/code'
 import type { ChatMessage } from '@/lib/chatDb'
 

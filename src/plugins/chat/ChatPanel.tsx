@@ -9,13 +9,12 @@ import InputBar from './InputBar'
 interface ChatPanelProps {
   projectId: string
   projectPath: string
-  apiKey: string
 }
 
-export default function ChatPanel({ projectId, projectPath, apiKey }: ChatPanelProps) {
+export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
   const messages = useChatHistory(projectId)
   const { streamingContent, status, sendMessage, stop, setStreamingContent, resetStream } =
-    useChatStream(apiKey, projectPath)
+    useChatStream(projectPath)
   const [error, setError] = useState<string | null>(null)
   const isStreaming = status === 'streaming'
 
@@ -52,7 +51,7 @@ export default function ChatPanel({ projectId, projectPath, apiKey }: ChatPanelP
   // When stream errors, show inline error
   useEffect(() => {
     if (status === 'error') {
-      setError('Failed to get a response. Check your API key and try again.')
+      setError('Failed to get a response. Check that Claude CLI is working and try again.')
       resetStream()
     }
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -83,12 +82,10 @@ export default function ChatPanel({ projectId, projectPath, apiKey }: ChatPanelP
   const handleRetry = useCallback(
     (messageIndex: number) => {
       const currentMessages = messages ?? []
-      // If retrying an assistant message, find the preceding user message
       const msg = currentMessages[messageIndex]
       if (!msg) return
 
       if (msg.role === 'assistant') {
-        // Find the user message before this assistant response
         const userMsg = currentMessages
           .slice(0, messageIndex)
           .reverse()

@@ -35,6 +35,36 @@ export async function closeTerminal(terminalId: string): Promise<void> {
   return invoke('close_terminal', { terminalId })
 }
 
+// --- Chat IPC wrappers ---
+
+export async function checkClaudeCli(): Promise<boolean> {
+  return invoke<boolean>('check_claude_cli')
+}
+
+export async function startClaudeChat(
+  chatId: string,
+  message: string,
+  projectPath: string,
+  sessionId: string,
+  isResume: boolean,
+): Promise<void> {
+  return invoke('start_claude_chat', {
+    chatId,
+    message,
+    projectPath,
+    sessionId,
+    isResume,
+  })
+}
+
+export async function abortClaudeChat(chatId: string): Promise<void> {
+  return invoke('abort_claude_chat', { chatId })
+}
+
+export async function cleanupClaudeChat(chatId: string): Promise<void> {
+  return invoke('cleanup_claude_chat', { chatId })
+}
+
 // --- Hooks ---
 
 interface TerminalOutputPayload {

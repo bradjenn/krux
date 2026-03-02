@@ -11,7 +11,6 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@hugeicons/core-free-icons": "^3.3.0",
     "@hugeicons/react": "^1.1.5",
