@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
 import { applyTheme } from '@/lib/themes'
 import { createTerminal, closeTerminal } from '@/hooks/useTauri'
-import { getAllPluginTabTypes } from '@/plugins'
+import { getAllPluginTabTypes, PLUGINS } from '@/plugins'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import TabBar from './TabBar'
@@ -89,6 +89,36 @@ export default function Shell() {
       })
     })
   }, [activeProjectId, projects, projectTabs.length])
+
+  // Auto-open plugin tabs when a project is selected (e.g. GSD tab if .planning/ exists)
+  useEffect(() => {
+    if (!activeProjectId) return
+    const project = projects.find((p) => p.id === activeProjectId)
+    if (!project) return
+
+    PLUGINS.filter((p) => p.autoOpen).forEach(async (plugin) => {
+      const available = plugin.isAvailable ? await plugin.isAvailable(project.path) : true
+      if (!available) return
+
+      const tabType = plugin.defaultTabType || plugin.tabTypes[0]?.id
+      if (!tabType) return
+
+      const { tabs, addTab, setActiveTab } = useAppStore.getState()
+      const existing = tabs.find((t) => t.type === tabType && t.projectId === activeProjectId)
+      if (existing) {
+        // Focus existing tab instead of creating a duplicate
+        setActiveTab(existing.id)
+        return
+      }
+
+      addTab({
+        id: crypto.randomUUID(),
+        type: tabType,
+        label: plugin.name,
+        projectId: activeProjectId,
+      })
+    })
+  }, [activeProjectId])
 
   // Native menu event listener
   useEffect(() => {

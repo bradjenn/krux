@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/appStore'
 import { createTerminal, writeTerminal } from '@/hooks/useTauri'
 import { PLUGINS } from '@/plugins'
+import type { PluginDefinition } from '@/plugins/types'
 
 interface TabBarProps {
   onCloseTab: (id: string) => void
@@ -17,11 +18,38 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
+  const [pluginAvailability, setPluginAvailability] = useState<Record<string, boolean>>({})
   const menuRef = useRef<HTMLDivElement>(null)
   const plusBtnRef = useRef<HTMLButtonElement>(null)
 
   const projectTabs = tabs.filter((t) => t.projectId === activeProjectId)
   const activeProject = projects.find((p) => p.id === activeProjectId)
+
+  // Check plugin availability whenever the active project changes
+  useEffect(() => {
+    if (!activeProject) {
+      setPluginAvailability({})
+      return
+    }
+
+    const checkAvailability = async () => {
+      const results: Record<string, boolean> = {}
+      for (const plugin of PLUGINS) {
+        if (plugin.isAvailable) {
+          try {
+            results[plugin.id] = await plugin.isAvailable(activeProject.path)
+          } catch {
+            results[plugin.id] = false
+          }
+        } else {
+          results[plugin.id] = true
+        }
+      }
+      setPluginAvailability(results)
+    }
+
+    checkAvailability()
+  }, [activeProject?.id, activeProject?.path])
 
   // Close menu on click outside
   useEffect(() => {
@@ -52,7 +80,28 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
     setMenuOpen(false)
   }
 
-  const handleStartGsd = async () => {
+  // Generic handler to open or focus a plugin tab from the dropdown
+  const handleOpenPlugin = (plugin: PluginDefinition) => {
+    if (!activeProject) return
+    const tabType = plugin.defaultTabType || plugin.tabTypes[0]?.id
+    if (!tabType) return
+
+    const existing = tabs.find((t) => t.type === tabType && t.projectId === activeProject.id)
+    if (existing) {
+      setActiveTab(existing.id)
+    } else {
+      addTab({
+        id: crypto.randomUUID(),
+        type: tabType,
+        label: plugin.name,
+        projectId: activeProject.id,
+      })
+    }
+    setMenuOpen(false)
+  }
+
+  // Legacy GSD init handler — runs claude "/gsd:new-project" in a terminal
+  const handleGsdInit = async () => {
     if (!activeProject) return
     const terminalId = await createTerminal(activeProject.path, 80, 24)
     addTab({
@@ -158,16 +207,49 @@ export default function TabBar({ onCloseTab }: TabBarProps) {
           {PLUGINS.length > 0 && (
             <>
               <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
-              {PLUGINS.map((plugin) => (
+              {PLUGINS.map((plugin) => {
+                const available = pluginAvailability[plugin.id] ?? true
+                const isGsd = plugin.id === 'gsd'
+
+                if (!available) {
+                  // Show disabled state with tooltip when plugin is unavailable
+                  return (
+                    <button
+                      key={plugin.id}
+                      disabled
+                      title={isGsd ? 'No .planning/ directory found — run GSD Init to set up' : `${plugin.name} is not available for this project`}
+                      className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-foreground opacity-40 cursor-not-allowed"
+                    >
+                      <plugin.icon size={14} />
+                      {plugin.name}
+                    </button>
+                  )
+                }
+
+                // Available plugin — open or focus its tab
+                return (
+                  <button
+                    key={plugin.id}
+                    onClick={() => handleOpenPlugin(plugin)}
+                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+                  >
+                    <plugin.icon size={14} />
+                    {plugin.name}
+                  </button>
+                )
+              })}
+
+              {/* GSD Init option — shows when GSD is unavailable (no .planning/) */}
+              {PLUGINS.some((p) => p.id === 'gsd' && !(pluginAvailability['gsd'] ?? true)) && (
                 <button
-                  key={plugin.id}
-                  onClick={handleStartGsd}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+                  onClick={handleGsdInit}
+                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-dim hover:bg-white/[0.05] hover:text-foreground"
+                  title="Initialize GSD in this project"
                 >
-                  <plugin.icon size={14} />
-                  {plugin.name}
+                  <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
+                  GSD Init
                 </button>
-              ))}
+              )}
             </>
           )}
         </div>,
