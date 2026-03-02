@@ -474,13 +474,20 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
 }
 
 /**
- * Convert hex color to rgba string for glow effects.
+ * Convert hex color to rgba string.
  */
-function hexToGlow(hex: string, alpha: number): string {
+export function hexToRgba(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+/**
+ * Convert hex color to rgba string for glow effects.
+ */
+function hexToGlow(hex: string, alpha: number): string {
+  return hexToRgba(hex, alpha)
 }
 
 /**
