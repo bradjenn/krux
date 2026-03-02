@@ -1,15 +1,16 @@
 import { useEffect } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete01Icon } from '@hugeicons/core-free-icons'
+import { Delete01Icon, NoteAddIcon } from '@hugeicons/core-free-icons'
 import { invoke } from '@tauri-apps/api/core'
 import { useAppStore, type Project } from '@/stores/appStore'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
   visible: boolean
+  onAddProject: () => void
 }
 
-export default function Sidebar({ visible }: SidebarProps) {
+export default function Sidebar({ visible, onAddProject }: SidebarProps) {
   const { projects, activeProjectId, setProjects, setActiveProject, tabs } = useAppStore()
 
   useEffect(() => {
@@ -37,6 +38,20 @@ export default function Sidebar({ visible }: SidebarProps) {
         minWidth: visible ? 340 : 0,
       }}
     >
+      {/* Sidebar header */}
+      <div className="shrink-0 flex items-center justify-between px-4 pt-3 pb-2">
+        <span className="text-foreground font-semibold" style={{ fontSize: 15 }}>
+          Projects
+        </span>
+        <button
+          onClick={onAddProject}
+          className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors duration-100 cursor-pointer"
+          title="Add project"
+        >
+          <HugeiconsIcon icon={NoteAddIcon} size={18} strokeWidth={1.5} />
+        </button>
+      </div>
+
       {/* Project list */}
       <div className="flex-1 overflow-y-auto py-1">
         {projects.map((project) => {
@@ -118,7 +133,7 @@ export default function Sidebar({ visible }: SidebarProps) {
               No projects yet
             </div>
             <div className="mt-1 text-xs text-dim">
-              Click &quot;New Project&quot; to get started
+              Tap the icon above to add one
             </div>
           </div>
         )}

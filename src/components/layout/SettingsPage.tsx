@@ -21,11 +21,56 @@ interface Settings {
   background_blur: number
 }
 
-type Section = 'appearance' | 'terminal'
+type Section = 'appearance' | 'terminal' | 'shortcuts'
 
 const NAV_ITEMS: { id: Section; label: string }[] = [
   { id: 'appearance', label: 'Appearance' },
   { id: 'terminal', label: 'Terminal' },
+  { id: 'shortcuts', label: 'Keyboard Shortcuts' },
+]
+
+const IS_MAC = navigator.platform.toUpperCase().includes('MAC')
+const MOD = IS_MAC ? '\u2318' : 'Ctrl+'
+
+const SHORTCUT_GROUPS: { label: string; shortcuts: { action: string; keys: string }[] }[] = [
+  {
+    label: 'General',
+    shortcuts: [
+      { action: 'Settings', keys: `${MOD},` },
+      { action: 'Toggle Sidebar', keys: `${MOD}B` },
+      { action: 'Switch Project', keys: `${MOD}K` },
+    ],
+  },
+  {
+    label: 'Tabs',
+    shortcuts: [
+      { action: 'New Terminal', keys: `${MOD}T` },
+      { action: 'Close Tab', keys: `${MOD}W` },
+      { action: 'Previous Tab', keys: `${MOD}${IS_MAC ? '\u21E7' : 'Shift+'}[` },
+      { action: 'Next Tab', keys: `${MOD}${IS_MAC ? '\u21E7' : 'Shift+'}]` },
+      { action: 'Jump to Tab 1–9', keys: `${MOD}1 – ${MOD}9` },
+    ],
+  },
+  {
+    label: 'View',
+    shortcuts: [
+      { action: 'Increase Font Size', keys: `${MOD}=` },
+      { action: 'Decrease Font Size', keys: `${MOD}-` },
+      { action: 'Reset Font Size', keys: `${MOD}0` },
+      { action: 'Change Wallpaper', keys: `${MOD}${IS_MAC ? '\u21E7' : 'Shift+'}B` },
+      { action: 'Increase Opacity', keys: `${MOD}${IS_MAC ? '\u21E7' : 'Shift+'}=` },
+      { action: 'Decrease Opacity', keys: `${MOD}${IS_MAC ? '\u21E7' : 'Shift+'}-` },
+      { action: 'Increase Blur', keys: `${MOD}${IS_MAC ? '\u2325' : 'Alt+'}=` },
+      { action: 'Decrease Blur', keys: `${MOD}${IS_MAC ? '\u2325' : 'Alt+'}-` },
+    ],
+  },
+  {
+    label: 'Plugins',
+    shortcuts: [
+      { action: 'GSD Workflow', keys: `${MOD}G` },
+      { action: 'Chat', keys: `${MOD}${IS_MAC ? '\u21E7' : 'Shift+'}C` },
+    ],
+  },
 ]
 
 interface SettingsPageProps {
@@ -70,42 +115,43 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Header */}
+      {/* Header — centered */}
       <div className="flex justify-center pt-8 pb-4">
         <div className="w-full max-w-5xl px-8">
-        <button
-          onClick={onClose}
-          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-100 cursor-pointer"
-        >
-          <ChevronLeft size={18} />
-          <span className="text-lg font-semibold text-foreground">Settings</span>
-        </button>
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-100 cursor-pointer"
+          >
+            <ChevronLeft size={18} />
+            <span className="text-lg font-semibold text-foreground">Settings</span>
+          </button>
         </div>
       </div>
 
-      {/* Body: sidebar + content, centered */}
-      <div className="flex flex-1 min-h-0 justify-center pb-8">
-        <div className="flex w-full max-w-5xl px-8">
-        {/* Sidebar nav */}
-        <nav className="w-44 shrink-0 pr-6 pt-2">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveSection(item.id)}
-              className={cn(
-                "block w-full text-left px-3 py-1.5 rounded-md text-[13px] transition-colors duration-100 cursor-pointer",
-                activeSection === item.id
-                  ? "bg-white/[0.06] text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+      {/* Body — full-width scroll container so scrollbar sits at screen edge */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex justify-center pb-8">
+          <div className="flex w-full max-w-5xl px-8">
+            {/* Nav — sticky so it stays visible while content scrolls */}
+            <nav className="shrink-0 pr-8 pt-2 sticky top-0 self-start whitespace-nowrap">
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={cn(
+                    "block w-full text-left px-3 py-1.5 rounded-md text-[13px] transition-colors duration-100 cursor-pointer",
+                    activeSection === item.id
+                      ? "bg-white/[0.06] text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto border-l border-border pl-8 pt-2">
+            {/* Content — border on left, padding inside */}
+            <div className="flex-1 border-l border-border pl-8 pt-2">
           {activeSection === 'appearance' && (
             <div className="space-y-6">
               <h2 className="text-sm font-medium text-foreground">Appearance</h2>
@@ -336,7 +382,43 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
               </SettingRow>
             </div>
           )}
-        </div>
+
+          {activeSection === 'shortcuts' && (
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-sm font-medium text-foreground">Keyboard Shortcuts</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  All available keyboard shortcuts
+                </p>
+              </div>
+
+              {SHORTCUT_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <div className="text-[11px] uppercase tracking-widest text-dim mb-3">
+                    {group.label}
+                  </div>
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    {group.shortcuts.map((shortcut, i) => (
+                      <div
+                        key={shortcut.action}
+                        className={cn(
+                          "flex items-center justify-between px-4 py-2.5",
+                          i !== group.shortcuts.length - 1 && "border-b border-border"
+                        )}
+                      >
+                        <span className="text-[13px] text-foreground">{shortcut.action}</span>
+                        <kbd className="px-2 py-0.5 rounded bg-white/[0.06] border border-border text-[12px] text-muted-foreground font-mono tabular-nums">
+                          {shortcut.keys}
+                        </kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

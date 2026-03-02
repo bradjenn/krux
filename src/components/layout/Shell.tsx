@@ -7,7 +7,6 @@ import { applyTheme } from '@/lib/themes'
 import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
 import { createTerminal, closeTerminal } from '@/hooks/useTauri'
 import { getAllPluginTabTypes } from '@/plugins'
-import Header from './Header'
 import Sidebar from './Sidebar'
 import TabBar from './TabBar'
 import SettingsPage from './SettingsPage'
@@ -315,13 +314,8 @@ export default function Shell() {
   }, [])
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <Header
-        onAddProject={() => setDiscoverOpen(true)}
-      />
-
-      <div className="flex flex-1 min-h-0">
-        <Sidebar visible={sidebarVisible} />
+    <div className="flex h-full w-full">
+        <Sidebar visible={sidebarVisible} onAddProject={() => setDiscoverOpen(true)} />
 
         <div className="flex flex-col flex-1 min-w-0">
           <TabBar onCloseTab={handleCloseTab} />
@@ -413,7 +407,6 @@ export default function Shell() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Settings overlay */}
       {activeView === 'settings' && (
