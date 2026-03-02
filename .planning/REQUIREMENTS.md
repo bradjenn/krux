@@ -10,8 +10,8 @@ Requirements for milestone v2.0: Standalone App + Plugin Architecture.
 ### Plugin System
 
 - [ ] **PLUG-01**: App provides a typed PluginDefinition interface for compile-time plugin registration
-- [ ] **PLUG-02**: Plugins can inject UI components into named layout slots (sidebar, main content)
-- [ ] **PLUG-03**: Plugins can register navigable views with the app router
+- [ ] **PLUG-02**: Plugins provide UI via tab types rendered in the main content area; the tab dropdown and auto-open system surface plugin tabs to users
+- [ ] **PLUG-03**: Plugins manage sub-views internally within their tab component; the app shell does not own plugin navigation
 - [ ] **PLUG-04**: App shell restructured — project management and layout are app-owned; all GSD features are behind the plugin boundary
 - [ ] **PLUG-05**: GSD plugin wraps existing features (doc viewer, execution panel, file watcher) as plugin-provided views
 - [ ] **PLUG-06**: Plugins can subscribe to app lifecycle events (project:switched, file:changed, execution:started)
@@ -130,4 +130,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 after v2.0 roadmap creation*
+*Last updated: 2026-03-02 — PLUG-02 and PLUG-03 redefined to match tab-provider architecture (Phase 4 planning)*
