@@ -13,6 +13,14 @@ import {
 import { useAppStore } from '../../stores/appStore'
 import { getTerminalTheme, hexToRgba } from '../../lib/themes'
 
+const WALLPAPER_BG_ALPHA = 0.75
+
+function getTranslucentTheme(themeId: string, hasWallpaper: boolean) {
+  const base = getTerminalTheme(themeId)
+  if (!hasWallpaper) return base
+  return { ...base, background: hexToRgba(base.background ?? '#000000', WALLPAPER_BG_ALPHA) }
+}
+
 interface XTerminalProps {
   projectPath: string
   existingTerminalId: string
@@ -32,10 +40,7 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   const cursorBlink = useAppStore((s) => s.cursorBlink)
   const fontFamily = useAppStore((s) => s.fontFamily)
   const backgroundImage = useAppStore((s) => s.backgroundImage)
-  const baseTermTheme = getTerminalTheme(theme)
-  const termTheme = backgroundImage
-    ? { ...baseTermTheme, background: hexToRgba(baseTermTheme.background ?? '#000000', 0.75) }
-    : baseTermTheme
+  const termTheme = getTranslucentTheme(theme, !!backgroundImage)
 
   // Subscribe to PTY output → write to xterm
   useTerminalOutput(terminalId, (data) => {
@@ -61,10 +66,7 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   useEffect(() => {
     const term = terminalRef.current
     if (!term) return
-    const baseTheme = getTerminalTheme(theme)
-    term.options.theme = backgroundImage
-      ? { ...baseTheme, background: hexToRgba(baseTheme.background ?? '#000000', 0.75) }
-      : baseTheme
+    term.options.theme = getTranslucentTheme(theme, !!backgroundImage)
     term.options.fontSize = fontSize
     term.options.lineHeight = lineHeight
     term.options.cursorStyle = cursorStyle
@@ -79,9 +81,8 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     const s = useAppStore.getState()
 
     const term = new Terminal({
-      theme: s.backgroundImage
-        ? { ...getTerminalTheme(s.theme), background: hexToRgba(getTerminalTheme(s.theme).background ?? '#000000', 0.75) }
-        : getTerminalTheme(s.theme),
+      allowTransparency: true,
+      theme: getTranslucentTheme(s.theme, !!s.backgroundImage),
       fontFamily: `"${s.fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`,
       fontSize: s.fontSize,
       lineHeight: s.lineHeight,

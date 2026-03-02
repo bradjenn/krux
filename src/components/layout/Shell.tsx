@@ -330,7 +330,7 @@ export default function Shell() {
             {/* Empty state */}
             {!activeProjectId && (
               <div
-                className={cn("flex flex-col items-center justify-center h-full gap-4 text-dim", wallpaperUrl && "z-10")}
+                className={cn("flex flex-col items-center justify-center h-full gap-4 text-dim", wallpaperUrl && "relative z-10")}
               >
                 <div
                   className="flex items-center justify-center"
