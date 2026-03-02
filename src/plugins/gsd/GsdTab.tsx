@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { LayoutDashboard, FileText, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { parseRoadmap } from './parser'
+import { onAppEvent } from '@/plugins/events'
 import OverviewTab from './OverviewTab'
 import DocumentsTab from './DocumentsTab'
 import ExecutionTab from './ExecutionTab'
@@ -26,6 +27,13 @@ export default function GsdTab({ projectId, projectPath }: GsdTabProps) {
   useEffect(() => {
     parseRoadmap(projectPath).then((phases) => setHasPhases(phases.length > 0))
   }, [projectPath])
+
+  // Auto-switch to Execute view when an execution starts via event bus
+  useEffect(() => {
+    return onAppEvent('execution:started', () => {
+      setActiveView('execution')
+    })
+  }, [])
 
   const visibleItems = NAV_ITEMS.filter((item) => !item.requiresPhases || hasPhases)
 
@@ -59,7 +67,11 @@ export default function GsdTab({ projectId, projectPath }: GsdTabProps) {
       <div className="flex-1 min-w-0 min-h-0 flex flex-col">
         {activeView === 'overview' && (
           <div className="flex-1 overflow-auto">
-            <OverviewTab projectId={projectId} projectPath={projectPath} />
+            <OverviewTab
+              projectId={projectId}
+              projectPath={projectPath}
+              onNavigate={setActiveView}
+            />
           </div>
         )}
         {activeView === 'documents' && (

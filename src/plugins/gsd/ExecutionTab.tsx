@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Play, Square, ChevronDown, RotateCcw } from 'lucide-react'
 import { Command } from '@tauri-apps/plugin-shell'
 import { parseRoadmap, type Phase } from './parser'
+import { appEvents } from '@/plugins/events'
 import { cn } from '@/lib/utils'
 import {
   Select,
@@ -97,6 +98,10 @@ export default function ExecutionTab({ projectPath }: ExecutionTabProps) {
       const child = await cmd.spawn()
       childRef.current = child
       setStatus('running')
+      appEvents.emit('execution:started', {
+        sessionId: child.pid?.toString() ?? crypto.randomUUID(),
+        phaseId: selectedPhase,
+      })
     } catch (err) {
       setLines((prev) => [...prev, `Failed to start: ${String(err)}`])
       setStatus('error')

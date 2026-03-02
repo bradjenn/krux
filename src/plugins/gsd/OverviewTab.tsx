@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import { CheckCircle2, Circle, Rocket } from 'lucide-react'
+import { CheckCircle2, Circle, Play, Rocket } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import { createTerminal, writeTerminal } from '@/hooks/useTauri'
 import {
@@ -38,7 +38,9 @@ function getStatusBadgeClasses(status: Phase['disk_status']): { className: strin
   }
 }
 
-function PhaseCard({ phase }: { phase: Phase }) {
+type GsdView = 'overview' | 'documents' | 'execution'
+
+function PhaseCard({ phase, onNavigate }: { phase: Phase; onNavigate?: (view: GsdView) => void }) {
   return (
     <div className="p-4 rounded-lg border transition-colors duration-150 bg-surface border-border">
       {/* Phase header */}
@@ -82,12 +84,23 @@ function PhaseCard({ phase }: { phase: Phase }) {
             {phase.summary_count} complete
           </span>
         </div>
-        <span
-          className={`text-xs px-2 py-0.5 font-medium ${getStatusBadgeClasses(phase.disk_status).className}`}
-          style={getStatusBadgeClasses(phase.disk_status).style}
-        >
-          {phase.disk_status.replace('_', ' ')}
-        </span>
+        <div className="flex items-center gap-2">
+          {phase.disk_status !== 'complete' && onNavigate && (
+            <button
+              onClick={() => onNavigate('execution')}
+              className="flex items-center gap-1 text-xs px-2 py-1 rounded font-medium transition-colors duration-100 bg-primary/[0.08] text-primary hover:bg-primary/[0.15]"
+            >
+              <Play size={10} />
+              Execute
+            </button>
+          )}
+          <span
+            className={`text-xs px-2 py-0.5 font-medium ${getStatusBadgeClasses(phase.disk_status).className}`}
+            style={getStatusBadgeClasses(phase.disk_status).style}
+          >
+            {phase.disk_status.replace('_', ' ')}
+          </span>
+        </div>
       </div>
     </div>
   )
@@ -96,9 +109,10 @@ function PhaseCard({ phase }: { phase: Phase }) {
 interface OverviewTabProps {
   projectId: string
   projectPath: string
+  onNavigate?: (view: GsdView) => void
 }
 
-export default function OverviewTab({ projectId, projectPath }: OverviewTabProps) {
+export default function OverviewTab({ projectId, projectPath, onNavigate }: OverviewTabProps) {
   const { addTab } = useAppStore()
   const [phases, setPhases] = useState<Phase[]>([])
   const [state, setState] = useState<ProjectState>({ phase: null, plan: null, status: null, progress: null })
@@ -245,7 +259,7 @@ export default function OverviewTab({ projectId, projectPath }: OverviewTabProps
       ) : (
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
           {phases.map((phase) => (
-            <PhaseCard key={phase.number} phase={phase} />
+            <PhaseCard key={phase.number} phase={phase} onNavigate={onNavigate} />
           ))}
         </div>
       )}
