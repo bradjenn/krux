@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Standalone App + Plugin Architecture
 status: in_progress
-stopped_at: "Completed 04-plugin-system-app-shell/04-01-PLAN.md"
-last_updated: "2026-03-02T08:44:12Z"
+stopped_at: "Completed 04-plugin-system-app-shell/04-02-PLAN.md (checkpoint: human-verify)"
+last_updated: "2026-03-02T08:48:31Z"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 4 of 7 (Plugin System + App Shell) — v2.0 first phase
-Plan: 01 complete (04-01-PLAN.md)
-Status: In progress — Phase 4 Plan 01 complete
-Last activity: 2026-03-02 — Plugin API cleanup, event bus, sidebar simplification, auto-open behavior
+Plan: 02 complete (04-02-PLAN.md) — awaiting checkpoint:human-verify
+Status: In progress — Phase 4 Plan 02 automated tasks complete, checkpoint pending
+Last activity: 2026-03-02 — GSD event bus wiring, quick-action Execute buttons, GsdSidebar.tsx deleted
 
 Progress (v2.0): [##░░░░░░░░] ~12%
 
@@ -48,10 +48,12 @@ Recent decisions affecting current work:
 - Sidebar is project-list-only: PluginSidebar removed, PLUGINS import removed from Sidebar
 - Auto-open logic lives in Shell.tsx useEffect (not appStore) to keep store side-effect free
 - GSD Init terminal action preserved in dropdown when GSD unavailable (no .planning/)
+- GsdView type duplicated in OverviewTab (not imported from GsdTab) to keep OverviewTab self-contained
+- appEvents.emit('execution:started') fires after cmd.spawn() resolves — only when agent actually starts
 
 ### Pending Todos
 
-- GsdSidebar.tsx is dead code (unreferenced) — can be deleted in cleanup phase
+- GsdSidebar.tsx deleted in 04-02 (dead code cleanup complete)
 
 ### Blockers/Concerns
 
@@ -61,6 +63,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-**Last session:** 2026-03-02T08:44:12Z
-**Stopped At:** Completed 04-plugin-system-app-shell/04-01-PLAN.md
-**Resume file:** .planning/phases/04-plugin-system-app-shell/04-01-SUMMARY.md
+**Last session:** 2026-03-02T08:48:31Z
+**Stopped At:** Completed 04-plugin-system-app-shell/04-02-PLAN.md (checkpoint: human-verify)
+**Resume file:** .planning/phases/04-plugin-system-app-shell/04-02-SUMMARY.md

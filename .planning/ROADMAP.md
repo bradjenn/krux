@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Backend Foundation | v1.0 | 2/2 | Complete | 2026-03-01 |
 | 2. Frontend + Document Viewer | v1.0 | 3/3 | Complete | 2026-03-01 |
 | 3. Agent SDK + Streaming | v1.0 | 2/2 | Complete | 2026-03-01 |
-| 4. Plugin System + App Shell | v2.0 | 1/2 | In progress | - |
+| 4. Plugin System + App Shell | 2/2 | Complete   | 2026-03-02 | - |
 | 5. Chat Interface | v2.0 | 0/2 | Not started | - |
 | 6. GSD Slash Commands | v2.0 | 0/1 | Not started | - |
 | 7. Phase Dashboard | v2.0 | 0/2 | Not started | - |
