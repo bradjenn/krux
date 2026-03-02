@@ -89,11 +89,11 @@ Plans:
   2. Streaming markdown renders correctly mid-stream — no flash of raw syntax or broken code blocks at any point during the stream
   3. User closes and reopens the browser, navigates to the chat view, and sees their previous message history intact
   4. User can send a follow-up message and Claude responds with awareness of the prior conversation
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Chat backend: routes/chat.ts (session CRUD, message POST, SSE stream, cancel), chatRunner.ts (SSE-streamed agent turns, resume flag), chatSessionRegistry.ts
-- [ ] 05-02-PLAN.md — Chat frontend: ChatPanel.tsx, MessageList.tsx, MessageBubble.tsx (streamdown), InputBar.tsx, useChatStream.ts (EventSource + rAF), chatStore.ts (Zustand + Dexie, 50-message cap), GSD plugin registration
+- [ ] 05-01-PLAN.md — Chat data layer: npm deps (Anthropic SDK, Streamdown, Dexie), Tailwind @source config, Rust get_env_var command, Dexie DB schema, Zustand chatStore, useChatStream hook with rAF buffer, chat plugin skeleton registration
+- [ ] 05-02-PLAN.md — Chat UI: ChatPanel (centered 700px layout), MessageList (auto-scroll, jump-to-bottom), MessageBubble (Streamdown + code blocks), InputBar (auto-grow, Enter/Stop), ChatTab wiring, Cmd+Shift+C keyboard shortcut
 
 #### Phase 6: GSD Slash Commands
 **Goal**: Users can invoke GSD workflows directly from the chat input with autocomplete and see command output rendered distinctly from conversational messages
