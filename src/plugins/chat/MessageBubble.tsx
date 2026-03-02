@@ -31,7 +31,7 @@ export default function MessageBubble({
   if (message.role === 'user') {
     return (
       <div className="py-2">
-        <div className="bg-white/[0.05] rounded-lg px-3.5 py-2.5 text-foreground text-sm whitespace-pre-wrap inline-block max-w-full">
+        <div className="bg-white/[0.08] border border-white/[0.06] rounded-lg px-3.5 py-2.5 text-foreground text-sm whitespace-pre-wrap inline-block max-w-full">
           {message.content}
         </div>
       </div>
