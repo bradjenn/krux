@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
 import { useAppStore } from '@/stores/appStore'
@@ -16,38 +16,48 @@ type WallpaperOption =
   | { type: 'preset'; id: string; name: string; file: string }
   | { type: 'custom' }
 
+// Static — WALLPAPER_PRESETS never changes at runtime
+const ALL_OPTIONS: WallpaperOption[] = [
+  { type: 'none' },
+  ...WALLPAPER_PRESETS.map((p) => ({
+    type: 'preset' as const,
+    id: p.id,
+    name: p.name,
+    file: p.file,
+  })),
+  { type: 'custom' },
+]
+
 export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcherProps) {
-  const { backgroundImage, setBackgroundImage } = useAppStore()
+  // Use selectors to avoid re-rendering on unrelated store changes
+  const backgroundImage = useAppStore((s) => s.backgroundImage)
+  const setBackgroundImage = useAppStore((s) => s.setBackgroundImage)
+
   const [search, setSearch] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [originalWallpaper, setOriginalWallpaper] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
+  const skipPreviewRef = useRef(false)
 
-  // Build the options list: None + filtered presets + Custom
-  const allOptions: WallpaperOption[] = [
-    { type: 'none' },
-    ...WALLPAPER_PRESETS.map((p) => ({
-      type: 'preset' as const,
-      id: p.id,
-      name: p.name,
-      file: p.file,
-    })),
-    { type: 'custom' },
-  ]
-
-  const filtered: WallpaperOption[] = search
-    ? allOptions.filter((o) => {
-        if (o.type === 'none') return 'none'.includes(search.toLowerCase())
-        if (o.type === 'custom') return 'custom'.includes(search.toLowerCase())
-        return o.name.toLowerCase().includes(search.toLowerCase())
-      })
-    : allOptions
+  // Memoize filtered list — only recompute when search changes
+  const filtered = useMemo<WallpaperOption[]>(
+    () =>
+      search
+        ? ALL_OPTIONS.filter((o) => {
+            if (o.type === 'none') return 'none'.includes(search.toLowerCase())
+            if (o.type === 'custom') return 'custom'.includes(search.toLowerCase())
+            return o.name.toLowerCase().includes(search.toLowerCase())
+          })
+        : ALL_OPTIONS,
+    [search],
+  )
 
   // Stash original wallpaper on open, reset state
   // biome-ignore lint/correctness/useExhaustiveDependencies: backgroundImage and findCurrentIndex are intentionally excluded — this effect must only run when isOpen transitions to true, not when the preview changes the wallpaper
   useEffect(() => {
     if (isOpen) {
+      skipPreviewRef.current = true
       setOriginalWallpaper(backgroundImage)
       setSearch('')
       setSelectedIndex(findCurrentIndex())
@@ -89,6 +99,10 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
   )
 
   useEffect(() => {
+    if (skipPreviewRef.current) {
+      skipPreviewRef.current = false
+      return
+    }
     if (isOpen && filtered[selectedIndex]?.type !== 'custom') {
       applyPreview(selectedIndex)
     }

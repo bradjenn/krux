@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 mod chat;
 mod fs;
 mod projects;
