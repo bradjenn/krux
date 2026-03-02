@@ -175,6 +175,24 @@ export default function Shell() {
             }
           }
           break
+
+        case 'open-chat':
+          if (activeProjectId) {
+            const existing = tabs.find(
+              (t) => t.type === 'chat:main' && t.projectId === activeProjectId,
+            )
+            if (existing) {
+              setActiveTab(existing.id)
+            } else {
+              addTab({
+                id: crypto.randomUUID(),
+                type: 'chat:main',
+                label: 'Chat',
+                projectId: activeProjectId,
+              })
+            }
+          }
+          break
       }
     })
 

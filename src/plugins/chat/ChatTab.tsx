@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { Key } from 'lucide-react'
+import ChatPanel from './ChatPanel'
 
 interface ChatTabProps {
   projectId: string
   projectPath: string
 }
 
-export default function ChatTab({ projectId: _projectId, projectPath: _projectPath }: ChatTabProps) {
+export default function ChatTab({ projectId, projectPath }: ChatTabProps) {
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -25,12 +26,16 @@ export default function ChatTab({ projectId: _projectId, projectPath: _projectPa
   }, [])
 
   if (!loaded) {
-    return null
+    return (
+      <div className="h-full w-full flex flex-col bg-background items-center justify-center">
+        <div className="text-dim text-sm">Loading...</div>
+      </div>
+    )
   }
 
   if (!apiKey) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+      <div className="h-full w-full flex flex-col bg-background items-center justify-center gap-3 text-muted-foreground">
         <Key size={32} className="text-dim" />
         <p className="text-sm text-center max-w-xs">
           Set <code className="text-foreground font-mono">ANTHROPIC_API_KEY</code> in your shell
@@ -41,8 +46,8 @@ export default function ChatTab({ projectId: _projectId, projectPath: _projectPa
   }
 
   return (
-    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-      Chat ready — UI coming in Plan 02
+    <div className="h-full w-full flex flex-col bg-background">
+      <ChatPanel projectId={projectId} projectPath={projectPath} apiKey={apiKey} />
     </div>
   )
 }
