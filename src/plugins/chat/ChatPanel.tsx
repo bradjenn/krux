@@ -13,7 +13,7 @@ interface ChatPanelProps {
 
 export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
   const messages = useChatHistory(projectId)
-  const { streamingContent, status, sendMessage, stop, setStreamingContent, resetStream, resetSession } =
+  const { streamingContent, status, lastError, sendMessage, stop, setStreamingContent, resetStream, resetSession } =
     useChatStream(projectPath)
   const [error, setError] = useState<string | null>(null)
   const isStreaming = status === 'streaming'
@@ -48,10 +48,10 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
     }
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // When stream errors, show inline error
+  // When stream errors, show inline error with details from stderr
   useEffect(() => {
     if (status === 'error') {
-      setError('Failed to get a response. Check that Claude CLI is working and try again.')
+      setError(lastError || 'Failed to get a response. Check that Claude CLI is working and try again.')
       resetStream()
     }
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps

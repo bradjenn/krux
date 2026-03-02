@@ -15,6 +15,7 @@ interface ChatOutputPayload {
 
 interface ChatDonePayload {
   chat_id: string
+  error: string | null
 }
 
 /**
@@ -34,6 +35,7 @@ function extractText(
 export function useChatStream(projectPath: string) {
   const [streamingContent, setStreamingContent] = useState('')
   const [status, setStatus] = useState<StreamStatus>('idle')
+  const [lastError, setLastError] = useState<string | null>(null)
 
   const chatIdRef = useRef<string | null>(null)
   const unlistenDataRef = useRef<UnlistenFn | null>(null)
@@ -72,6 +74,7 @@ export function useChatStream(projectPath: string) {
       streamContentRef.current = ''
       setStreamingContent('')
       setStatus('streaming')
+      setLastError(null)
 
       // Generate chat ID upfront so listeners can filter before process starts
       const chatId = crypto.randomUUID()
@@ -111,7 +114,12 @@ export function useChatStream(projectPath: string) {
           'claude:chat:done',
           (event) => {
             if (event.payload.chat_id !== chatId) return
-            setStatus(streamContentRef.current ? 'done' : 'error')
+            if (streamContentRef.current) {
+              setStatus('done')
+            } else {
+              setStatus('error')
+              setLastError(event.payload.error || 'Claude exited with no output')
+            }
             cleanup()
             cleanupClaudeChat(chatId).catch(() => {})
           },
@@ -163,6 +171,7 @@ export function useChatStream(projectPath: string) {
   return {
     streamingContent,
     status,
+    lastError,
     sendMessage,
     stop,
     setStreamingContent,

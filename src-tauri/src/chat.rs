@@ -7,12 +7,14 @@ use tauri::{AppHandle, Emitter, State};
 
 pub struct ChatState {
     processes: Mutex<HashMap<String, Child>>,
+    claude_path: Mutex<Option<String>>,
 }
 
 impl ChatState {
     pub fn new() -> Self {
         Self {
             processes: Mutex::new(HashMap::new()),
+            claude_path: Mutex::new(None),
         }
     }
 }
@@ -26,11 +28,12 @@ struct ChatOutputPayload {
 #[derive(Clone, Serialize)]
 struct ChatDonePayload {
     chat_id: String,
+    error: Option<String>,
 }
 
 /// Resolve the claude binary path through the user's login shell.
 /// This handles PATH correctly even when the app is launched from the Dock.
-fn resolve_claude() -> Result<String, String> {
+fn resolve_claude_path() -> Result<String, String> {
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
     let output = Command::new(&shell)
         .args(["-lc", "command -v claude"])
@@ -49,9 +52,20 @@ fn resolve_claude() -> Result<String, String> {
     Err("Claude CLI not found. Install from https://claude.ai/download".to_string())
 }
 
+/// Get cached claude path, or resolve and cache it.
+fn get_claude_path(state: &ChatState) -> Result<String, String> {
+    let mut cached = state.claude_path.lock().map_err(|_| "Lock poisoned".to_string())?;
+    if let Some(ref path) = *cached {
+        return Ok(path.clone());
+    }
+    let path = resolve_claude_path()?;
+    *cached = Some(path.clone());
+    Ok(path)
+}
+
 #[tauri::command]
-pub fn check_claude_cli() -> Result<bool, String> {
-    Ok(resolve_claude().is_ok())
+pub fn check_claude_cli(state: State<'_, ChatState>) -> Result<bool, String> {
+    Ok(get_claude_path(&state).is_ok())
 }
 
 #[tauri::command]
@@ -64,7 +78,7 @@ pub fn start_claude_chat(
     session_id: String,
     is_resume: bool,
 ) -> Result<(), String> {
-    let claude_path = resolve_claude()?;
+    let claude_path = get_claude_path(&state)?;
 
     let mut cmd = Command::new(&claude_path);
     cmd.arg("-p")
@@ -87,6 +101,7 @@ pub fn start_claude_chat(
     let mut child = cmd.spawn().map_err(|e| format!("Failed to spawn claude: {}", e))?;
 
     let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
+    let stderr = child.stderr.take().ok_or("Failed to get stderr")?;
 
     // Store process for abort capability
     state
@@ -95,9 +110,23 @@ pub fn start_claude_chat(
         .map_err(|_| "Lock poisoned".to_string())?
         .insert(chat_id.clone(), child);
 
-    // Background thread reads stdout line-by-line, emits events to frontend
     let chat_id_for_thread = chat_id.clone();
     std::thread::spawn(move || {
+        // Spawn a separate thread to collect stderr
+        let stderr_handle = std::thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            let mut err_lines = Vec::new();
+            for line in reader.lines() {
+                if let Ok(l) = line {
+                    if !l.is_empty() {
+                        err_lines.push(l);
+                    }
+                }
+            }
+            err_lines.join("\n")
+        });
+
+        // Read stdout line-by-line, emit events to frontend
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
             match line {
@@ -115,10 +144,19 @@ pub fn start_claude_chat(
             }
         }
 
+        // Collect stderr after stdout is done
+        let stderr_output = stderr_handle.join().unwrap_or_default();
+        let error = if stderr_output.is_empty() {
+            None
+        } else {
+            Some(stderr_output)
+        };
+
         let _ = app.emit(
             "claude:chat:done",
             ChatDonePayload {
                 chat_id: chat_id_for_thread,
+                error,
             },
         );
     });
