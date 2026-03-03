@@ -114,6 +114,25 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
 
     term.open(containerRef.current)
 
+    // Intercept keys based on keyboard mode — synchronous, reads store directly
+    term.attachCustomKeyEventHandler((e) => {
+      if (e.type !== 'keydown') return true
+      const state = useAppStore.getState()
+      const mode = state.keyboardMode
+
+      if (mode === 'terminal') {
+        // Only intercept Ctrl+A to enter prefix mode
+        if (e.ctrlKey && e.key === 'a') {
+          state.setKeyboardMode('prefix')
+          return false
+        }
+        return true
+      }
+
+      // In prefix or sidebar mode, suppress all keys from reaching PTY
+      return false
+    })
+
     terminalRef.current = term
     fitAddonRef.current = fitAddon
 
@@ -151,7 +170,20 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     // Focus terminal
     term.focus()
 
+    // Restore focus when keyboard mode returns to 'terminal' and this terminal is active
+    const unsubMode = useAppStore.subscribe((state, prev) => {
+      if (prev.keyboardMode !== 'terminal' && state.keyboardMode === 'terminal') {
+        if (state.activeTabId) {
+          const activeTab = state.tabs.find((t) => t.id === state.activeTabId)
+          if (activeTab?.terminalId === terminalId) {
+            requestAnimationFrame(() => term.focus())
+          }
+        }
+      }
+    })
+
     return () => {
+      unsubMode()
       resizeObserver.disconnect()
       dataDisposable.dispose()
       resizeDisposable.dispose()

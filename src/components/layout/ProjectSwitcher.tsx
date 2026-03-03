@@ -103,8 +103,7 @@ export default function ProjectSwitcher({ isOpen, onClose }: ProjectSwitcherProp
       {/* Modal */}
       <div
         role="dialog"
-        className="relative w-full max-w-md bg-surface border border-border overflow-hidden"
-        style={{ borderRadius: 10, boxShadow: '0 16px 48px rgba(0,0,0,0.4)' }}
+        className="relative w-full max-w-md tui-panel overflow-hidden"
         onKeyDown={handleKeyDown}
       >
         {/* Search input */}
@@ -176,10 +175,7 @@ export default function ProjectSwitcher({ isOpen, onClose }: ProjectSwitcherProp
         </div>
 
         {/* Footer hint */}
-        <div
-          className="border-t border-border flex items-center gap-4 text-dim"
-          style={{ padding: '8px 16px', fontSize: 11 }}
-        >
+        <div className="tui-panel-footer">
           <span>
             <kbd className="text-muted-foreground">↑↓</kbd> navigate
           </span>

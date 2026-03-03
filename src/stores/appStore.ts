@@ -1,5 +1,15 @@
 import { create } from 'zustand'
+import type { KeyboardMode } from '@/lib/keybindings'
 import { appEvents } from '@/plugins/events'
+
+export type NotificationSeverity = 'info' | 'warn' | 'error' | 'success'
+
+export interface Notification {
+  id: string
+  message: string
+  severity: NotificationSeverity
+  createdAt: number
+}
 
 export interface Project {
   id: string
@@ -60,6 +70,21 @@ interface AppState {
   setBackgroundBlur: (blur: number) => void
   hideTitlebar: boolean
   setHideTitlebar: (hide: boolean) => void
+
+  // Keyboard mode (vim-style navigation)
+  keyboardMode: KeyboardMode
+  setKeyboardMode: (mode: KeyboardMode) => void
+  prefixTimeoutId: ReturnType<typeof setTimeout> | null
+  setPrefixTimeoutId: (id: ReturnType<typeof setTimeout> | null) => void
+
+  // Sidebar vim navigation
+  sidebarSelectedIndex: number
+  setSidebarSelectedIndex: (index: number) => void
+
+  // Notifications
+  notifications: Notification[]
+  addNotification: (message: string, severity?: NotificationSeverity) => void
+  dismissNotification: (id: string) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -142,4 +167,28 @@ export const useAppStore = create<AppState>((set, get) => ({
   setBackgroundBlur: (backgroundBlur) => set({ backgroundBlur }),
   hideTitlebar: false,
   setHideTitlebar: (hideTitlebar) => set({ hideTitlebar }),
+
+  // Keyboard mode
+  keyboardMode: 'terminal',
+  setKeyboardMode: (keyboardMode) => set({ keyboardMode }),
+  prefixTimeoutId: null,
+  setPrefixTimeoutId: (prefixTimeoutId) => set({ prefixTimeoutId }),
+
+  // Sidebar vim navigation
+  sidebarSelectedIndex: 0,
+  setSidebarSelectedIndex: (sidebarSelectedIndex) => set({ sidebarSelectedIndex }),
+
+  // Notifications
+  notifications: [],
+  addNotification: (message, severity = 'info') =>
+    set((state) => ({
+      notifications: [
+        ...state.notifications,
+        { id: crypto.randomUUID(), message, severity, createdAt: Date.now() },
+      ],
+    })),
+  dismissNotification: (id) =>
+    set((state) => ({
+      notifications: state.notifications.filter((n) => n.id !== id),
+    })),
 }))

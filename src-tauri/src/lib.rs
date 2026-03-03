@@ -279,6 +279,7 @@ pub fn run() {
             projects::remove_project,
             projects::reorder_projects,
             projects::discover_projects,
+            projects::get_git_branch,
             settings::load_settings,
             settings::save_settings,
             settings::pick_wallpaper,

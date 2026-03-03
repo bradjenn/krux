@@ -2,20 +2,24 @@ import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import XTerminal from '@/components/terminal/XTerminal'
+import { useKeyboardMode } from '@/hooks/useKeyboardMode'
 import { closeTerminal, createTerminal } from '@/hooks/useTauri'
 import { applyTheme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
 import { getAllPluginTabTypes } from '@/plugins'
 import { useAppStore } from '@/stores/appStore'
+import UpdateChecker from '../UpdateChecker'
 import DiscoverDialog from './DiscoverDialog'
+import Notifications from './Notifications'
 import ProjectSwitcher from './ProjectSwitcher'
 import SettingsPage from './SettingsPage'
 import Sidebar from './Sidebar'
+import StartScreen from './StartScreen'
+import StatusLine from './StatusLine'
 import TabBar from './TabBar'
 import WallpaperSwitcher from './WallpaperSwitcher'
-import StartScreen from './StartScreen'
-import UpdateChecker from '../UpdateChecker'
+import WhichKey from './WhichKey'
 
 interface Settings {
   theme: string
@@ -78,6 +82,118 @@ export default function Shell() {
     },
     [tabs, closeTab],
   )
+
+  // ── Keyboard mode actions (Ctrl+A prefix chords) ──
+  const openNewTerminal = useCallback(() => {
+    const { activeProject } = stateRef.current
+    if (!activeProject) return
+    const count = useAppStore
+      .getState()
+      .getProjectTabs(activeProject.id)
+      .filter((t) => t.type === 'shell').length
+    createTerminal(activeProject.path, 80, 24).then((terminalId) => {
+      useAppStore.getState().addTab({
+        id: crypto.randomUUID(),
+        type: 'shell',
+        label: `Terminal ${count + 1}`,
+        projectId: activeProject.id,
+        terminalId,
+      })
+      useAppStore.getState().addNotification('Terminal created', 'success')
+    })
+  }, [])
+
+  const closeActiveTab = useCallback(() => {
+    const { activeTabId } = stateRef.current
+    if (activeTabId) handleCloseTab(activeTabId)
+  }, [handleCloseTab])
+
+  const nextTab = useCallback(() => {
+    const { activeProjectId, activeTabId } = stateRef.current
+    if (!activeProjectId) return
+    const projectTabs = useAppStore.getState().getProjectTabs(activeProjectId)
+    if (projectTabs.length < 2) return
+    const currentIndex = projectTabs.findIndex((t) => t.id === activeTabId)
+    if (currentIndex === -1) return
+    useAppStore.getState().setActiveTab(projectTabs[(currentIndex + 1) % projectTabs.length].id)
+  }, [])
+
+  const prevTab = useCallback(() => {
+    const { activeProjectId, activeTabId } = stateRef.current
+    if (!activeProjectId) return
+    const projectTabs = useAppStore.getState().getProjectTabs(activeProjectId)
+    if (projectTabs.length < 2) return
+    const currentIndex = projectTabs.findIndex((t) => t.id === activeTabId)
+    if (currentIndex === -1) return
+    useAppStore
+      .getState()
+      .setActiveTab(projectTabs[(currentIndex - 1 + projectTabs.length) % projectTabs.length].id)
+  }, [])
+
+  const jumpToTab = useCallback((n: number) => {
+    const { activeProjectId } = stateRef.current
+    if (!activeProjectId) return
+    const projectTabs = useAppStore.getState().getProjectTabs(activeProjectId)
+    const target = projectTabs[n - 1]
+    if (target) useAppStore.getState().setActiveTab(target.id)
+  }, [])
+
+  const openGsd = useCallback(() => {
+    const { activeProjectId } = stateRef.current
+    if (!activeProjectId) return
+    const { tabs, addTab, setActiveTab } = useAppStore.getState()
+    const existing = tabs.find((t) => t.type === 'gsd:main' && t.projectId === activeProjectId)
+    if (existing) {
+      setActiveTab(existing.id)
+    } else {
+      addTab({
+        id: crypto.randomUUID(),
+        type: 'gsd:main',
+        label: 'GSD',
+        projectId: activeProjectId,
+      })
+    }
+  }, [])
+
+  const openChat = useCallback(() => {
+    const { activeProjectId } = stateRef.current
+    if (!activeProjectId) return
+    const { tabs, addTab, setActiveTab } = useAppStore.getState()
+    const existing = tabs.find((t) => t.type === 'chat:main' && t.projectId === activeProjectId)
+    if (existing) {
+      setActiveTab(existing.id)
+    } else {
+      addTab({
+        id: crypto.randomUUID(),
+        type: 'chat:main',
+        label: 'Chat',
+        projectId: activeProjectId,
+      })
+    }
+  }, [])
+
+  const focusSidebar = useCallback(() => {
+    setSidebarVisible(true)
+  }, [])
+
+  const focusTerminal = useCallback(() => {
+    // Focus restore is handled by XTerminal's store subscription
+  }, [])
+
+  useKeyboardMode({
+    openProjectSwitcher: () => setSwitcherOpen(true),
+    openWallpaperSwitcher: () => setWallpaperSwitcherOpen(true),
+    openSettings: () => useAppStore.getState().setActiveView('settings'),
+    openGsd,
+    openChat,
+    newTerminal: openNewTerminal,
+    closeTab: closeActiveTab,
+    nextTab,
+    prevTab,
+    jumpToTab,
+    focusSidebar,
+    focusTerminal,
+  })
 
   // Load saved settings on startup
   useEffect(() => {
@@ -323,117 +439,136 @@ export default function Shell() {
     <div className="flex flex-col h-full w-full">
       <UpdateChecker />
       <div className="flex flex-1 min-h-0 relative">
-      {/* Wallpaper covers entire shell including sidebar and tab bar */}
-      {wallpaperUrl && (
-        <img
-          src={wallpaperUrl}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
-          style={
-            backgroundBlur > 0
-              ? { filter: `blur(${backgroundBlur}px)`, transform: 'scale(1.1)' }
-              : undefined
-          }
+        {/* Wallpaper covers entire shell including sidebar and tab bar */}
+        {wallpaperUrl && (
+          <img
+            src={wallpaperUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+            style={
+              backgroundBlur > 0
+                ? { filter: `blur(${backgroundBlur}px)`, transform: 'scale(1.1)' }
+                : undefined
+            }
+          />
+        )}
+        {hideTitlebar && (
+          <div
+            data-tauri-drag-region=""
+            className="absolute top-0 left-0 right-0 z-50"
+            style={{ height: 12 }}
+          />
+        )}
+
+        <Sidebar
+          visible={sidebarVisible}
+          onAddProject={() => setDiscoverOpen(true)}
+          wallpaperActive={!!wallpaperUrl}
+          backgroundOpacity={backgroundOpacity}
         />
-      )}
-      {hideTitlebar && (
-        <div
-          data-tauri-drag-region=""
-          className="absolute top-0 left-0 right-0 z-50"
-          style={{ height: 12 }}
-        />
-      )}
 
-      <Sidebar visible={sidebarVisible} onAddProject={() => setDiscoverOpen(true)} wallpaperActive={!!wallpaperUrl} backgroundOpacity={backgroundOpacity} />
+        <div className="flex flex-col flex-1 min-w-0">
+          <TabBar
+            onCloseTab={handleCloseTab}
+            wallpaperActive={!!wallpaperUrl}
+            backgroundOpacity={backgroundOpacity}
+          />
 
-      <div className="flex flex-col flex-1 min-w-0">
-        <TabBar onCloseTab={handleCloseTab} wallpaperActive={!!wallpaperUrl} backgroundOpacity={backgroundOpacity} />
+          {/* Tab content area */}
+          <div className="flex-1 min-h-0 relative overflow-hidden">
+            {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
+            {tabs
+              .filter((t) => t.type === 'shell' && t.terminalId)
+              .map((tab) => {
+                const project = projects.find((p) => p.id === tab.projectId)
+                return (
+                  <div
+                    key={tab.terminalId}
+                    className={cn(
+                      'absolute inset-0 transition-opacity duration-100',
+                      activeTabId === tab.id
+                        ? 'opacity-100 pointer-events-auto'
+                        : 'opacity-0 pointer-events-none',
+                      wallpaperUrl && 'z-10',
+                    )}
+                  >
+                    <XTerminal
+                      projectPath={project?.path ?? '~'}
+                      existingTerminalId={tab.terminalId!}
+                      isActive={activeTabId === tab.id}
+                      onExit={() => handleCloseTab(tab.id)}
+                    />
+                  </div>
+                )
+              })}
 
-        {/* Tab content area */}
-        <div className="flex-1 min-h-0 relative overflow-hidden">
-          {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
-          {tabs
-            .filter((t) => t.type === 'shell' && t.terminalId)
-            .map((tab) => {
-              const project = projects.find((p) => p.id === tab.projectId)
-              return (
-                <div
-                  key={tab.terminalId}
-                  className={cn(
-                    'absolute inset-0 transition-opacity duration-100',
-                    activeTabId === tab.id
-                      ? 'opacity-100 pointer-events-auto'
-                      : 'opacity-0 pointer-events-none',
-                    wallpaperUrl && 'z-10',
-                  )}
-                >
-                  <XTerminal
-                    projectPath={project?.path ?? '~'}
-                    existingTerminalId={tab.terminalId!}
-                    isActive={activeTabId === tab.id}
-                    onExit={() => handleCloseTab(tab.id)}
-                  />
-                </div>
-              )
-            })}
+            {/* Render plugin tabs */}
+            {tabs
+              .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
+              .map((tab) => {
+                const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
+                if (!tabType) return null
+                const TabComponent = tabType.component
+                return (
+                  <div
+                    key={tab.id}
+                    className={cn(
+                      'absolute inset-0 overflow-auto transition-opacity duration-100',
+                      activeTabId === tab.id
+                        ? 'opacity-100 pointer-events-auto'
+                        : 'opacity-0 pointer-events-none',
+                      wallpaperUrl ? 'z-10' : 'bg-background',
+                    )}
+                    style={
+                      wallpaperUrl
+                        ? ({
+                            background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+                            '--color-background': 'transparent',
+                            '--color-surface': 'color-mix(in srgb, var(--bg2) 50%, transparent)',
+                          } as React.CSSProperties)
+                        : undefined
+                    }
+                  >
+                    <TabComponent
+                      projectId={tab.projectId}
+                      projectPath={activeProject?.path ?? ''}
+                    />
+                  </div>
+                )
+              })}
 
-          {/* Render plugin tabs */}
-          {tabs
-            .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
-            .map((tab) => {
-              const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
-              if (!tabType) return null
-              const TabComponent = tabType.component
-              return (
-                <div
-                  key={tab.id}
-                  className={cn(
-                    'absolute inset-0 overflow-auto transition-opacity duration-100',
-                    activeTabId === tab.id
-                      ? 'opacity-100 pointer-events-auto'
-                      : 'opacity-0 pointer-events-none',
-                    wallpaperUrl ? 'z-10' : 'bg-background',
-                  )}
-                  style={
-                    wallpaperUrl
-                      ? ({
-                          background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
-                          '--color-background': 'transparent',
-                          '--color-surface': 'color-mix(in srgb, var(--bg2) 50%, transparent)',
-                        } as React.CSSProperties)
-                      : undefined
-                  }
-                >
-                  <TabComponent projectId={tab.projectId} projectPath={activeProject?.path ?? ''} />
-                </div>
-              )
-            })}
-
-          {/* Start screen */}
-          {!activeProjectId && (
-            <StartScreen
-              onAddProject={() => setDiscoverOpen(true)}
-              onSwitchProject={() => setSwitcherOpen(true)}
-              wallpaperActive={!!wallpaperUrl}
-              backgroundOpacity={backgroundOpacity}
-            />
-          )}
+            {/* Start screen */}
+            {!activeProjectId && (
+              <StartScreen
+                onAddProject={() => setDiscoverOpen(true)}
+                onSwitchProject={() => setSwitcherOpen(true)}
+                wallpaperActive={!!wallpaperUrl}
+                backgroundOpacity={backgroundOpacity}
+              />
+            )}
+          </div>
         </div>
+
+        {/* Settings overlay */}
+        {activeView === 'settings' && (
+          <SettingsPage onClose={() => useAppStore.getState().setActiveView('projects')} />
+        )}
+
+        {/* Modals */}
+        <DiscoverDialog isOpen={discoverOpen} onClose={() => setDiscoverOpen(false)} />
+        <ProjectSwitcher isOpen={switcherOpen} onClose={() => setSwitcherOpen(false)} />
+        <WallpaperSwitcher
+          isOpen={wallpaperSwitcherOpen}
+          onClose={() => setWallpaperSwitcherOpen(false)}
+        />
+
+        {/* Keyboard mode overlays */}
+        <WhichKey />
+        <Notifications />
       </div>
 
-      {/* Settings overlay */}
-      {activeView === 'settings' && (
-        <SettingsPage onClose={() => useAppStore.getState().setActiveView('projects')} />
-      )}
-
-      {/* Modals */}
-      <DiscoverDialog isOpen={discoverOpen} onClose={() => setDiscoverOpen(false)} />
-      <ProjectSwitcher isOpen={switcherOpen} onClose={() => setSwitcherOpen(false)} />
-      <WallpaperSwitcher
-        isOpen={wallpaperSwitcherOpen}
-        onClose={() => setWallpaperSwitcherOpen(false)}
-      />
-      </div>
+      {/* Status line at very bottom */}
+      <StatusLine />
     </div>
   )
 }

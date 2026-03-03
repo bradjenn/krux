@@ -132,3 +132,62 @@
     opacity: 0.4;
   }
 }
+
+/* ── TUI Panel ── */
+.tui-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
+}
+
+.tui-panel-header {
+  border-bottom: 1px solid var(--border);
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+.tui-panel-footer {
+  border-top: 1px solid var(--border);
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── Notifications ── */
+.tui-notification {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  border-left-width: 3px;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.2s ease-out forwards;
+}
+
+/* ── Sidebar vim selection ── */
+.sidebar-vim-selected {
+  background: rgba(255, 255, 255, 0.06);
+  outline: 1px solid var(--accent2);
+  outline-offset: -1px;
+}

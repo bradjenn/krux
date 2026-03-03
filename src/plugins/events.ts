@@ -4,6 +4,7 @@ export type AppEvents = {
   'project:switched': { projectId: string | null }
   'file:changed': { projectId: string; path: string }
   'execution:started': { sessionId: string; phaseId: string }
+  notification: { message: string; severity?: 'info' | 'warn' | 'error' | 'success' }
 }
 
 export const appEvents = mitt<AppEvents>()

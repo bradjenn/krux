@@ -1,7 +1,7 @@
 import { Delete01Icon, NoteAddIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { invoke } from '@tauri-apps/api/core'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { type Project, useAppStore } from '@/stores/appStore'
 
@@ -12,13 +12,28 @@ interface SidebarProps {
   backgroundOpacity?: number
 }
 
-export default function Sidebar({ visible, onAddProject, wallpaperActive, backgroundOpacity = 0.8 }: SidebarProps) {
+export default function Sidebar({
+  visible,
+  onAddProject,
+  wallpaperActive,
+  backgroundOpacity = 0.8,
+}: SidebarProps) {
   const { projects, activeProjectId, setProjects, setActiveProject, tabs, hideTitlebar } =
     useAppStore()
+  const keyboardMode = useAppStore((s) => s.keyboardMode)
+  const sidebarSelectedIndex = useAppStore((s) => s.sidebarSelectedIndex)
+  const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     invoke<Project[]>('list_projects').then(setProjects)
   }, [setProjects])
+
+  // Scroll selected item into view when in sidebar mode
+  useEffect(() => {
+    if (keyboardMode !== 'sidebar' || !listRef.current) return
+    const item = listRef.current.children[sidebarSelectedIndex] as HTMLElement | undefined
+    item?.scrollIntoView({ block: 'nearest' })
+  }, [keyboardMode, sidebarSelectedIndex])
 
   const handleRemove = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
@@ -66,10 +81,11 @@ export default function Sidebar({ visible, onAddProject, wallpaperActive, backgr
       </div>
 
       {/* Project list */}
-      <div className="flex-1 overflow-y-auto py-1">
-        {projects.map((project) => {
+      <div ref={listRef} className="flex-1 overflow-y-auto py-1">
+        {projects.map((project, index) => {
           const isActive = activeProjectId === project.id
           const termCount = getTerminalCount(project.id)
+          const isVimSelected = keyboardMode === 'sidebar' && index === sidebarSelectedIndex
 
           return (
             <button
@@ -81,6 +97,7 @@ export default function Sidebar({ visible, onAddProject, wallpaperActive, backgr
                 isActive
                   ? 'border-l-primary bg-primary/[0.04] text-foreground'
                   : 'border-l-transparent bg-transparent text-muted-foreground hover:bg-secondary/[0.04]',
+                isVimSelected && 'sidebar-vim-selected',
               )}
               style={{
                 padding: '8px 12px 8px 10px',
@@ -138,6 +155,24 @@ export default function Sidebar({ visible, onAddProject, wallpaperActive, backgr
           </div>
         )}
       </div>
+
+      {/* Sidebar mode hint */}
+      {keyboardMode === 'sidebar' && (
+        <div
+          className="shrink-0 border-t border-border flex items-center gap-3 text-dim font-mono"
+          style={{ padding: '4px 12px', fontSize: 10 }}
+        >
+          <span>
+            <kbd className="text-secondary">j/k</kbd> nav
+          </span>
+          <span>
+            <kbd className="text-secondary">Enter</kbd> select
+          </span>
+          <span>
+            <kbd className="text-secondary">Esc</kbd> back
+          </span>
+        </div>
+      )}
     </div>
   )
 }

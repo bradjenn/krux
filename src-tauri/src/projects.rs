@@ -200,6 +200,26 @@ pub fn discover_projects(
     discovered
 }
 
+#[tauri::command]
+pub fn get_git_branch(project_path: String) -> Option<String> {
+    let output = std::process::Command::new("git")
+        .args(["rev-parse", "--abbrev-ref", "HEAD"])
+        .current_dir(&project_path)
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let branch = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if branch.is_empty() {
+        None
+    } else {
+        Some(branch)
+    }
+}
+
 fn chrono_now() -> String {
     // Simple ISO 8601 timestamp without pulling in chrono crate
     let duration = std::time::SystemTime::now()
