@@ -36,7 +36,7 @@ export default function BackgroundAdjuster({
 
   const [focusedRow, setFocusedRow] = useState<'opacity' | 'blur'>(initialFocus)
   const containerRef = useRef<HTMLDivElement>(null)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const close = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
