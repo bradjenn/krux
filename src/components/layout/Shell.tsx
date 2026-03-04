@@ -1,13 +1,13 @@
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import AgentTab from '@/components/terminal/AgentTab'
+import ToolTab from '@/components/terminal/ToolTab'
 import XTerminal from '@/components/terminal/XTerminal'
 import ChatTab from '@/features/chat/ChatTab'
 import GsdTab from '@/features/gsd/GsdTab'
 import { useKeyboardMode } from '@/hooks/useKeyboardMode'
 import { closeTerminal, createTerminal } from '@/hooks/useTauri'
-import { getAgentFromTabType } from '@/lib/agents'
+import { getToolFromTabType } from '@/lib/tools'
 import { applyTheme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
@@ -165,6 +165,23 @@ export default function Shell() {
     setChatPanelOpen((v) => !v)
   }, [])
 
+  const openLazygit = useCallback(() => {
+    const { activeProjectId } = stateRef.current
+    if (!activeProjectId) return
+    const { tabs, addTab, setActiveTab } = useAppStore.getState()
+    const existing = tabs.find((t) => t.type === 'tool:lazygit' && t.projectId === activeProjectId)
+    if (existing) {
+      setActiveTab(existing.id)
+    } else {
+      addTab({
+        id: crypto.randomUUID(),
+        type: 'tool:lazygit',
+        label: 'Lazygit',
+        projectId: activeProjectId,
+      })
+    }
+  }, [])
+
   const focusSidebar = useCallback(() => {
     setSidebarVisible(true)
   }, [])
@@ -179,6 +196,7 @@ export default function Shell() {
     openSettings: () => useAppStore.getState().setActiveView('settings'),
     openGsd,
     openChat,
+    openLazygit,
     newTerminal: openNewTerminal,
     closeTab: closeActiveTab,
     nextTab,
@@ -459,6 +477,17 @@ export default function Shell() {
 
           {/* Tab content area — flex-1 so StatusLine stays at the bottom */}
           <div className="flex-1 min-h-0 relative overflow-hidden">
+            {/* Wallpaper tint placeholder — only visible during the brief gap when a
+                project is selected but its first terminal hasn't loaded yet. */}
+            {wallpaperUrl && activeProjectId && projectTabs.length === 0 && (
+              <div
+                className="absolute inset-0 z-[5] pointer-events-none"
+                style={{
+                  background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+                }}
+              />
+            )}
+
             {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
             {tabs
               .filter((t) => t.type === 'shell' && t.terminalId)
@@ -466,7 +495,8 @@ export default function Shell() {
                   <div
                     key={tab.terminalId}
                     className={cn(
-                      'absolute inset-0 transition-opacity duration-100',
+                      'absolute inset-0',
+                      !wallpaperUrl && 'transition-opacity duration-100',
                       activeTabId === tab.id
                         ? 'opacity-100 pointer-events-auto'
                         : 'opacity-0 pointer-events-none',
@@ -481,16 +511,16 @@ export default function Shell() {
                   </div>
               ))}
 
-            {/* Render feature & agent tabs */}
+            {/* Render feature & tool tabs */}
             {tabs
               .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
               .map((tab) => {
-                const agent = getAgentFromTabType(tab.type)
+                const tool = getToolFromTabType(tab.type)
                 let content: React.ReactNode = null
-                if (agent) {
+                if (tool) {
                   content = (
-                    <AgentTab
-                      agentId={agent.id}
+                    <ToolTab
+                      toolId={tool.id}
                       projectId={tab.projectId}
                       projectPath={activeProject?.path ?? ''}
                     />
@@ -502,23 +532,20 @@ export default function Shell() {
                 } else {
                   return null
                 }
-                // Agent tabs contain their own XTerminal which handles wallpaper
-                // transparency — don't add an extra background layer on top.
-                const isAgentTab = !!agent
                 return (
                   <div
                     key={tab.id}
                     className={cn(
-                      'absolute inset-0 overflow-auto transition-opacity duration-100',
+                      'absolute inset-0 overflow-auto',
+                      !wallpaperUrl && 'transition-opacity duration-100',
                       activeTabId === tab.id
                         ? 'opacity-100 pointer-events-auto'
                         : 'opacity-0 pointer-events-none',
                       wallpaperUrl ? 'z-10' : 'bg-background',
                     )}
                     style={
-                      wallpaperUrl && !isAgentTab
+                      wallpaperUrl && !tool
                         ? ({
-                            background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
                             '--color-background': 'transparent',
                             '--color-surface': 'color-mix(in srgb, var(--bg2) 50%, transparent)',
                           } as React.CSSProperties)

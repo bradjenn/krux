@@ -1,21 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { closeTerminal, createTerminal, writeTerminal } from '@/hooks/useTauri'
-import { getAgent } from '@/lib/agents'
+import { getTool } from '@/lib/tools'
+import { useAppStore } from '@/stores/appStore'
 import XTerminal from './XTerminal'
 
-interface AgentTabProps {
-  agentId: string
+interface ToolTabProps {
+  toolId: string
   projectId: string
   projectPath: string
 }
 
-export default function AgentTab({ agentId, projectPath }: AgentTabProps) {
-  const agent = getAgent(agentId)
+export default function ToolTab({ toolId, projectPath }: ToolTabProps) {
+  const tool = getTool(toolId)
   const [terminalId, setTerminalId] = useState<string | null>(null)
   const terminalIdRef = useRef<string | null>(null)
+  const backgroundImage = useAppStore((s) => s.backgroundImage)
+  const backgroundOpacity = useAppStore((s) => s.backgroundOpacity)
 
   useEffect(() => {
-    if (!agent) return
+    if (!tool) return
     let cancelled = false
 
     createTerminal(projectPath, 80, 24).then((id) => {
@@ -26,10 +29,10 @@ export default function AgentTab({ agentId, projectPath }: AgentTabProps) {
       terminalIdRef.current = id
       setTerminalId(id)
 
-      // Auto-launch agent command after shell is ready
+      // Auto-launch tool command after shell is ready
       setTimeout(() => {
         if (!cancelled) {
-          writeTerminal(id, `${agent.command}\n`)
+          writeTerminal(id, `${tool.command}\n`)
         }
       }, 200)
     })
@@ -40,20 +43,27 @@ export default function AgentTab({ agentId, projectPath }: AgentTabProps) {
         closeTerminal(terminalIdRef.current)
       }
     }
-  }, [projectPath, agent])
+  }, [projectPath, tool])
 
-  if (!agent) {
+  if (!tool) {
     return (
       <div className="h-full w-full flex items-center justify-center">
-        <div className="text-dim text-sm">Unknown agent: {agentId}</div>
+        <div className="text-dim text-sm">Unknown tool: {toolId}</div>
       </div>
     )
   }
 
   if (!terminalId) {
     return (
-      <div className="h-full w-full flex items-center justify-center">
-        <div className="text-dim text-sm">Starting {agent.name}...</div>
+      <div
+        className="h-full w-full flex items-center justify-center"
+        style={
+          backgroundImage
+            ? { background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)` }
+            : undefined
+        }
+      >
+        <div className="text-dim text-sm">Starting {tool.name}...</div>
       </div>
     )
   }

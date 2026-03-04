@@ -1,4 +1,4 @@
-import { useGitBranch } from '@/hooks/useGitBranch'
+import { useGitStatus } from '@/hooks/useGitStatus'
 import { useAppStore } from '@/stores/appStore'
 
 const MODE_COLORS: Record<string, string> = {
@@ -23,12 +23,30 @@ export default function StatusLine({
   const projects = useAppStore((s) => s.projects)
   const tabs = useAppStore((s) => s.tabs)
 
+  const addTab = useAppStore((s) => s.addTab)
+  const setActiveTab = useAppStore((s) => s.setActiveTab)
+
   const activeProject = projects.find((p) => p.id === activeProjectId)
   const terminalCount = tabs.filter(
     (t) => t.projectId === activeProjectId && t.type === 'shell',
   ).length
 
-  const gitBranch = useGitBranch(activeProject?.path ?? null)
+  const gitStatus = useGitStatus(activeProject?.path ?? null)
+
+  const openLazygit = () => {
+    if (!activeProjectId) return
+    const existing = tabs.find((t) => t.type === 'tool:lazygit' && t.projectId === activeProjectId)
+    if (existing) {
+      setActiveTab(existing.id)
+    } else {
+      addTab({
+        id: crypto.randomUUID(),
+        type: 'tool:lazygit',
+        label: 'Lazygit',
+        projectId: activeProjectId,
+      })
+    }
+  }
 
   const modeColor = MODE_COLORS[keyboardMode]
   const modeLabel = MODE_LABELS[keyboardMode]
@@ -72,10 +90,15 @@ export default function StatusLine({
         )}
       </div>
 
-      {/* Right: git branch + terminal count */}
+      {/* Right: git status + terminal count */}
       <div className="flex items-center gap-3 text-dim">
-        {gitBranch && (
-          <span className="flex items-center gap-1">
+        {gitStatus && (
+          <button
+            type="button"
+            onClick={openLazygit}
+            className="flex items-center gap-1.5 hover:text-foreground transition-colors duration-100 cursor-pointer"
+            title="Open Lazygit (Ctrl+A, b)"
+          >
             <svg
               aria-hidden="true"
               width="10"
@@ -86,8 +109,17 @@ export default function StatusLine({
             >
               <path d="M9.5 3.25a2.25 2.25 0 1 1 3 2.122V6A2.5 2.5 0 0 1 10 8.5H6a1 1 0 0 0-1 1v1.128a2.251 2.251 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.5 0v1.836A2.493 2.493 0 0 1 6 7h4a1 1 0 0 0 1-1v-.628A2.25 2.25 0 0 1 9.5 3.25Z" />
             </svg>
-            <span className="text-muted-foreground">{gitBranch}</span>
-          </span>
+            <span className="text-muted-foreground">{gitStatus.branch}</span>
+            {gitStatus.added > 0 && (
+              <span style={{ color: 'var(--green)' }}>+{gitStatus.added}</span>
+            )}
+            {gitStatus.modified > 0 && (
+              <span style={{ color: 'var(--yellow)' }}>~{gitStatus.modified}</span>
+            )}
+            {gitStatus.deleted > 0 && (
+              <span style={{ color: 'var(--red)' }}>-{gitStatus.deleted}</span>
+            )}
+          </button>
         )}
         {terminalCount > 0 && (
           <span className="text-muted-foreground">

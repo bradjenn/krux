@@ -14,7 +14,7 @@ import {
 import { getTerminalTheme } from '../../lib/themes'
 import { useAppStore } from '../../stores/appStore'
 
-/** Always return the opaque theme — transparency is handled via CSS blending. */
+/** Always return the opaque theme — xterm WebGL can't do true transparency. */
 function getTheme(themeId: string) {
   return getTerminalTheme(themeId)
 }
@@ -252,7 +252,7 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     <div ref={wrapperRef} className="h-full w-full relative">
       <div
         ref={containerRef}
-        className="h-full w-full"
+        className="h-full w-full terminal-view"
         style={{
           padding: '8px',
           background: getTheme(theme).background,

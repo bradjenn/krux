@@ -148,6 +148,13 @@ export const CHORD_BINDINGS: ChordBinding[] = [
     action: 'open-gsd',
   },
   { key: 'i', label: 'Chat', description: 'Open Chat', category: 'panels', action: 'open-chat' },
+  {
+    key: 'b',
+    label: 'Lazygit',
+    description: 'Open Lazygit',
+    category: 'panels',
+    action: 'open-lazygit',
+  },
 
   // Special
   {

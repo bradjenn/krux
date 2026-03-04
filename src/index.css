@@ -182,3 +182,13 @@
   outline: 1px solid var(--accent2);
   outline-offset: -1px;
 }
+
+/* Hide scrollbars in xterm terminal panes while preserving scroll behavior. */
+.terminal-view .xterm-viewport {
+  scrollbar-width: none;
+}
+
+.terminal-view .xterm-viewport::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

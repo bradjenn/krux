@@ -200,10 +200,18 @@ pub fn discover_projects(
     discovered
 }
 
+#[derive(serde::Serialize)]
+pub struct GitStatus {
+    pub branch: String,
+    pub added: u32,
+    pub modified: u32,
+    pub deleted: u32,
+}
+
 #[tauri::command]
-pub fn get_git_branch(project_path: String) -> Option<String> {
+pub fn get_git_status(project_path: String) -> Option<GitStatus> {
     let output = std::process::Command::new("git")
-        .args(["rev-parse", "--abbrev-ref", "HEAD"])
+        .args(["status", "--porcelain=v2", "--branch"])
         .current_dir(&project_path)
         .output()
         .ok()?;
@@ -212,12 +220,46 @@ pub fn get_git_branch(project_path: String) -> Option<String> {
         return None;
     }
 
-    let branch = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if branch.is_empty() {
-        None
-    } else {
-        Some(branch)
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut branch = String::new();
+    let mut added: u32 = 0;
+    let mut modified: u32 = 0;
+    let mut deleted: u32 = 0;
+
+    for line in stdout.lines() {
+        if line.starts_with("# branch.head ") {
+            branch = line.strip_prefix("# branch.head ").unwrap_or("").to_string();
+        } else if line.starts_with('?') {
+            // Untracked file
+            added += 1;
+        } else if line.starts_with('1') || line.starts_with('2') {
+            // Changed entry — field 2 is the XY status pair
+            let parts: Vec<&str> = line.splitn(3, ' ').collect();
+            if parts.len() >= 2 {
+                let xy = parts[1].as_bytes();
+                // X = index status, Y = worktree status
+                for &ch in xy {
+                    match ch {
+                        b'A' => added += 1,
+                        b'M' => modified += 1,
+                        b'D' => deleted += 1,
+                        _ => {}
+                    }
+                }
+            }
+        }
     }
+
+    if branch.is_empty() {
+        return None;
+    }
+
+    Some(GitStatus {
+        branch,
+        added,
+        modified,
+        deleted,
+    })
 }
 
 fn chrono_now() -> String {

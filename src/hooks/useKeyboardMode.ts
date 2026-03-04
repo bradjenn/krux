@@ -9,6 +9,7 @@ export interface KeyboardModeActions {
   openSettings: () => void
   openGsd: () => void
   openChat: () => void
+  openLazygit: () => void
   newTerminal: () => void
   closeTab: () => void
   nextTab: () => void
@@ -104,6 +105,10 @@ export function useKeyboardMode(actions: KeyboardModeActions) {
           case 'open-chat':
             state.setKeyboardMode('terminal')
             actionsRef.current.openChat()
+            return
+          case 'open-lazygit':
+            state.setKeyboardMode('terminal')
+            actionsRef.current.openLazygit()
             return
           case 'send-ctrl-a': {
             state.setKeyboardMode('terminal')

@@ -1,4 +1,4 @@
-import { Cancel01Icon, CommandLineIcon, PlusSignIcon } from '@hugeicons/core-free-icons'
+import { Cancel01Icon, CommandLineIcon, GitBranchIcon, PlusSignIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -66,7 +66,7 @@ export default function TabBar({
     setMenuOpen(false)
   }
 
-  const handleOpenAgent = (type: string, label: string) => {
+  const handleOpenTool = (type: string, label: string) => {
     if (!activeProject) return
     const existing = tabs.find((t) => t.type === type && t.projectId === activeProject.id)
     if (existing) {
@@ -214,10 +214,11 @@ export default function TabBar({
             </button>
 
             <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
+            <div className="px-3 py-1 text-[10px] text-dim uppercase tracking-wider">AI Tools</div>
 
             <button
               type="button"
-              onClick={() => handleOpenAgent('agent:claude-code', 'Claude Code')}
+              onClick={() => handleOpenTool('tool:claude-code', 'Claude Code')}
               className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
             >
               <ClaudeLogo size={14} />
@@ -225,7 +226,7 @@ export default function TabBar({
             </button>
             <button
               type="button"
-              onClick={() => handleOpenAgent('agent:codex', 'Codex')}
+              onClick={() => handleOpenTool('tool:codex', 'Codex')}
               className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
             >
               <OpenAILogo size={14} />
@@ -233,11 +234,23 @@ export default function TabBar({
             </button>
             <button
               type="button"
-              onClick={() => handleOpenAgent('agent:opencode', 'OpenCode')}
+              onClick={() => handleOpenTool('tool:opencode', 'OpenCode')}
               className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
             >
               <OpenCodeLogo size={14} />
               OpenCode
+            </button>
+
+            <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
+            <div className="px-3 py-1 text-[10px] text-dim uppercase tracking-wider">Dev Tools</div>
+
+            <button
+              type="button"
+              onClick={() => handleOpenTool('tool:lazygit', 'Lazygit')}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+            >
+              <HugeiconsIcon icon={GitBranchIcon} size={14} strokeWidth={1.5} />
+              Lazygit
             </button>
           </div>,
           document.body,
