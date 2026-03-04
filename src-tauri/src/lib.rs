@@ -110,6 +110,13 @@ pub fn run() {
                 true,
                 Some("CmdOrCtrl+Shift+B"),
             )?;
+            let change_theme = MenuItem::with_id(
+                app,
+                "change-theme",
+                "Change Theme",
+                true,
+                Some("CmdOrCtrl+Shift+T"),
+            )?;
             let opacity_increase = MenuItem::with_id(
                 app,
                 "opacity-increase",
@@ -157,6 +164,7 @@ pub fn run() {
                 .item(&font_reset)
                 .separator()
                 .item(&change_wallpaper)
+                .item(&change_theme)
                 .item(&opacity_increase)
                 .item(&opacity_decrease)
                 .item(&blur_increase)
@@ -261,7 +269,7 @@ pub fn run() {
             match id {
                 "settings" | "new-terminal" | "close-tab" | "add-project" | "toggle-sidebar"
                 | "open-gsd" | "open-chat" | "font-increase" | "font-decrease" | "font-reset"
-                | "change-wallpaper" | "opacity-increase" | "opacity-decrease"
+                | "change-wallpaper" | "change-theme" | "opacity-increase" | "opacity-decrease"
                 | "blur-increase" | "blur-decrease" | "prev-tab" | "next-tab"
                 | "project-switcher" => {
                     let _ = app.emit("menu-action", id);

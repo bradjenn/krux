@@ -21,6 +21,8 @@ import Sidebar from './Sidebar'
 import StartScreen from './StartScreen'
 import StatusLine from './StatusLine'
 import TabBar from './TabBar'
+import BackgroundAdjuster from './BackgroundAdjuster'
+import ThemeSwitcher from './ThemeSwitcher'
 import WallpaperSwitcher from './WallpaperSwitcher'
 import WhichKey from './WhichKey'
 
@@ -60,6 +62,9 @@ export default function Shell() {
   const [discoverOpen, setDiscoverOpen] = useState(false)
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [wallpaperSwitcherOpen, setWallpaperSwitcherOpen] = useState(false)
+  const [themeSwitcherOpen, setThemeSwitcherOpen] = useState(false)
+  const [bgAdjusterOpen, setBgAdjusterOpen] = useState(false)
+  const [bgAdjusterFocus, setBgAdjusterFocus] = useState<'opacity' | 'blur'>('opacity')
 
   const activeProject = projects.find((p) => p.id === activeProjectId)
 
@@ -259,6 +264,10 @@ export default function Shell() {
           setWallpaperSwitcherOpen(true)
           break
 
+        case 'change-theme':
+          setThemeSwitcherOpen(true)
+          break
+
         case 'new-terminal':
           if (activeProject) {
             const count = getProjectTabs(activeProject.id).filter((t) => t.type === 'shell').length
@@ -327,6 +336,8 @@ export default function Shell() {
           invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, background_opacity: newOpacity } })
           })
+          setBgAdjusterFocus('opacity')
+          setBgAdjusterOpen(true)
           break
         }
 
@@ -338,6 +349,8 @@ export default function Shell() {
           invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, background_opacity: newOpacity } })
           })
+          setBgAdjusterFocus('opacity')
+          setBgAdjusterOpen(true)
           break
         }
 
@@ -349,6 +362,8 @@ export default function Shell() {
           invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, background_blur: newBlur } })
           })
+          setBgAdjusterFocus('blur')
+          setBgAdjusterOpen(true)
           break
         }
 
@@ -360,6 +375,8 @@ export default function Shell() {
           invoke<Settings>('load_settings').then((s) => {
             invoke('save_settings', { settings: { ...s, background_blur: newBlur } })
           })
+          setBgAdjusterFocus('blur')
+          setBgAdjusterOpen(true)
           break
         }
 
@@ -444,11 +461,10 @@ export default function Shell() {
             src={wallpaperUrl}
             alt=""
             className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
-            style={
-              backgroundBlur > 0
-                ? { filter: `blur(${backgroundBlur}px)`, transform: 'scale(1.1)' }
-                : undefined
-            }
+            style={{
+              filter: backgroundBlur > 0 ? `blur(${backgroundBlur}px)` : undefined,
+              transform: 'scale(1.1)',
+            }}
           />
         )}
         {hideTitlebar && (
@@ -611,6 +627,15 @@ export default function Shell() {
         <WallpaperSwitcher
           isOpen={wallpaperSwitcherOpen}
           onClose={() => setWallpaperSwitcherOpen(false)}
+        />
+        <ThemeSwitcher
+          isOpen={themeSwitcherOpen}
+          onClose={() => setThemeSwitcherOpen(false)}
+        />
+        <BackgroundAdjuster
+          isOpen={bgAdjusterOpen}
+          onClose={() => setBgAdjusterOpen(false)}
+          initialFocus={bgAdjusterFocus}
         />
 
         {/* Keyboard mode overlays */}
