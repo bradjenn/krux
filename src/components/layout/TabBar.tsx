@@ -2,58 +2,38 @@ import { Cancel01Icon, CommandLineIcon, PlusSignIcon } from '@hugeicons/core-fre
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { createTerminal, writeTerminal } from '@/hooks/useTauri'
+import ClaudeLogo from '@/components/icons/ClaudeLogo'
+import OpenAILogo from '@/components/icons/OpenAILogo'
+import OpenCodeLogo from '@/components/icons/OpenCodeLogo'
+import { createTerminal } from '@/hooks/useTauri'
 import { cn } from '@/lib/utils'
-import { PLUGINS } from '@/plugins'
-import type { PluginDefinition } from '@/plugins/types'
 import { useAppStore } from '@/stores/appStore'
 
 interface TabBarProps {
   onCloseTab: (id: string) => void
   wallpaperActive?: boolean
   backgroundOpacity?: number
+  chatOpen?: boolean
+  onToggleChat?: () => void
 }
 
-export default function TabBar({ onCloseTab, wallpaperActive, backgroundOpacity = 0.8 }: TabBarProps) {
+export default function TabBar({
+  onCloseTab,
+  wallpaperActive,
+  backgroundOpacity = 0.8,
+  chatOpen,
+  onToggleChat,
+}: TabBarProps) {
   const { tabs, activeTabId, activeProjectId, projects, addTab, setActiveTab, hideTitlebar } =
     useAppStore()
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
-  const [pluginAvailability, setPluginAvailability] = useState<Record<string, boolean>>({})
   const menuRef = useRef<HTMLDivElement>(null)
   const plusBtnRef = useRef<HTMLButtonElement>(null)
 
   const projectTabs = tabs.filter((t) => t.projectId === activeProjectId)
   const activeProject = projects.find((p) => p.id === activeProjectId)
-
-  // Check plugin availability whenever the active project changes
-  const activeProjectId_ = activeProject?.id
-  const activeProjectPath = activeProject?.path
-  useEffect(() => {
-    if (!activeProjectId_ || !activeProjectPath) {
-      setPluginAvailability({})
-      return
-    }
-
-    const checkAvailability = async () => {
-      const results: Record<string, boolean> = {}
-      for (const plugin of PLUGINS) {
-        if (plugin.isAvailable) {
-          try {
-            results[plugin.id] = await plugin.isAvailable(activeProjectPath)
-          } catch {
-            results[plugin.id] = false
-          }
-        } else {
-          results[plugin.id] = true
-        }
-      }
-      setPluginAvailability(results)
-    }
-
-    checkAvailability()
-  }, [activeProjectId_, activeProjectPath])
 
   // Close menu on click outside
   useEffect(() => {
@@ -86,53 +66,28 @@ export default function TabBar({ onCloseTab, wallpaperActive, backgroundOpacity 
     setMenuOpen(false)
   }
 
-  // Generic handler to open or focus a plugin tab from the dropdown
-  const handleOpenPlugin = (plugin: PluginDefinition) => {
+  const handleOpenAgent = (type: string, label: string) => {
     if (!activeProject) return
-    const tabType = plugin.defaultTabType || plugin.tabTypes[0]?.id
-    if (!tabType) return
-
-    const existing = tabs.find((t) => t.type === tabType && t.projectId === activeProject.id)
+    const existing = tabs.find((t) => t.type === type && t.projectId === activeProject.id)
     if (existing) {
       setActiveTab(existing.id)
     } else {
       addTab({
         id: crypto.randomUUID(),
-        type: tabType,
-        label: plugin.name,
+        type,
+        label,
         projectId: activeProject.id,
       })
     }
     setMenuOpen(false)
   }
 
-  // Legacy GSD init handler — runs claude "/gsd:new-project" in a terminal
-  const handleGsdInit = async () => {
-    if (!activeProject) return
-    const terminalId = await createTerminal(activeProject.path, 80, 24)
-    addTab({
-      id: crypto.randomUUID(),
-      type: 'shell',
-      label: 'GSD Init',
-      projectId: activeProject.id,
-      terminalId,
-    })
-    setMenuOpen(false)
-    setTimeout(() => {
-      writeTerminal(terminalId, 'claude "/gsd:new-project"\r')
-    }, 500)
-  }
-
   const handlePlusClick = () => {
-    if (PLUGINS.length === 0) {
-      handleNewShellTab()
-    } else {
-      if (plusBtnRef.current) {
-        const rect = plusBtnRef.current.getBoundingClientRect()
-        setMenuPos({ top: rect.bottom, left: rect.left })
-      }
-      setMenuOpen(!menuOpen)
+    if (plusBtnRef.current) {
+      const rect = plusBtnRef.current.getBoundingClientRect()
+      setMenuPos({ top: rect.bottom, left: rect.left })
     }
+    setMenuOpen(!menuOpen)
   }
 
   if (!activeProjectId) return null
@@ -141,7 +96,6 @@ export default function TabBar({ onCloseTab, wallpaperActive, backgroundOpacity 
     <div
       className={cn(
         'flex items-stretch shrink-0 select-none overflow-x-auto border-b border-border relative z-[1]',
-        !wallpaperActive && 'bg-surface',
       )}
       style={{
         height: 36,
@@ -158,10 +112,17 @@ export default function TabBar({ onCloseTab, wallpaperActive, backgroundOpacity 
         const isActive = activeTabId === tab.id
         const shortcutNum = index < 9 ? index + 1 : null
         return (
-          <button
-            type="button"
+          <div
             key={tab.id}
+            role="button"
+            tabIndex={0}
             onClick={() => setActiveTab(tab.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setActiveTab(tab.id)
+              }
+            }}
             className={cn(
               'tab group flex items-center gap-1.5 shrink-0 transition-colors duration-100 cursor-pointer text-xs hover:text-foreground hover:bg-white/[0.02]',
               isActive
@@ -187,7 +148,7 @@ export default function TabBar({ onCloseTab, wallpaperActive, backgroundOpacity 
             >
               <HugeiconsIcon icon={Cancel01Icon} size={11} strokeWidth={2} />
             </button>
-          </button>
+          </div>
         )
       })}
 
@@ -205,6 +166,30 @@ export default function TabBar({ onCloseTab, wallpaperActive, backgroundOpacity 
       >
         <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
       </button>
+
+      {/* Spacer pushes chat toggle to far right */}
+      <div className="flex-1" />
+
+      {/* Chat panel toggle */}
+      {onToggleChat && (
+        <button
+          type="button"
+          onClick={onToggleChat}
+          className={cn(
+            'flex items-center justify-center shrink-0 transition-colors duration-150 cursor-pointer',
+            chatOpen
+              ? 'text-primary border-b-2 border-primary'
+              : 'text-dim hover:text-primary border-b-2 border-transparent',
+          )}
+          style={{
+            width: 36,
+            height: '100%',
+          }}
+          title="Toggle chat (Ctrl+A, I)"
+        >
+          <ClaudeLogo size={16} />
+        </button>
+      )}
 
       {/* Dropdown via portal to escape overflow clipping */}
       {menuOpen &&
@@ -228,61 +213,32 @@ export default function TabBar({ onCloseTab, wallpaperActive, backgroundOpacity 
               Terminal
             </button>
 
-            {PLUGINS.length > 0 && (
-              <>
-                <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
-                {PLUGINS.map((plugin) => {
-                  const available = pluginAvailability[plugin.id] ?? true
-                  const isGsd = plugin.id === 'gsd'
+            <div className="mx-2 my-1 bg-border" style={{ height: 1 }} />
 
-                  if (!available) {
-                    // Show disabled state with tooltip when plugin is unavailable
-                    return (
-                      <button
-                        type="button"
-                        key={plugin.id}
-                        disabled
-                        title={
-                          isGsd
-                            ? 'No .planning/ directory found — run GSD Init to set up'
-                            : `${plugin.name} is not available for this project`
-                        }
-                        className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-foreground opacity-40 cursor-not-allowed"
-                      >
-                        <plugin.icon size={14} />
-                        {plugin.name}
-                      </button>
-                    )
-                  }
-
-                  // Available plugin — open or focus its tab
-                  return (
-                    <button
-                      type="button"
-                      key={plugin.id}
-                      onClick={() => handleOpenPlugin(plugin)}
-                      className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
-                    >
-                      <plugin.icon size={14} />
-                      {plugin.name}
-                    </button>
-                  )
-                })}
-
-                {/* GSD Init option — shows when GSD is unavailable (no .planning/) */}
-                {PLUGINS.some((p) => p.id === 'gsd' && !(pluginAvailability.gsd ?? true)) && (
-                  <button
-                    type="button"
-                    onClick={handleGsdInit}
-                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
-                    title="Initialize GSD in this project"
-                  >
-                    <HugeiconsIcon icon={CommandLineIcon} size={14} strokeWidth={1.5} />
-                    GSD Init
-                  </button>
-                )}
-              </>
-            )}
+            <button
+              type="button"
+              onClick={() => handleOpenAgent('agent:claude-code', 'Claude Code')}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+            >
+              <ClaudeLogo size={14} />
+              Claude Code
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOpenAgent('agent:codex', 'Codex')}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+            >
+              <OpenAILogo size={14} />
+              Codex
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOpenAgent('agent:opencode', 'OpenCode')}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors duration-100 text-foreground hover:bg-white/[0.05]"
+            >
+              <OpenCodeLogo size={14} />
+              OpenCode
+            </button>
           </div>,
           document.body,
         )}

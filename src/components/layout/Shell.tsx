@@ -1,13 +1,16 @@
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import AgentTab from '@/components/terminal/AgentTab'
 import XTerminal from '@/components/terminal/XTerminal'
+import ChatTab from '@/features/chat/ChatTab'
+import GsdTab from '@/features/gsd/GsdTab'
 import { useKeyboardMode } from '@/hooks/useKeyboardMode'
 import { closeTerminal, createTerminal } from '@/hooks/useTauri'
+import { getAgentFromTabType } from '@/lib/agents'
 import { applyTheme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
-import { getAllPluginTabTypes } from '@/plugins'
 import { useAppStore } from '@/stores/appStore'
 import UpdateChecker from '../UpdateChecker'
 import DiscoverDialog from './DiscoverDialog'
@@ -53,6 +56,7 @@ export default function Shell() {
   } = useAppStore()
 
   const [sidebarVisible, setSidebarVisible] = useState(true)
+  const [chatPanelOpen, setChatPanelOpen] = useState(false)
   const [discoverOpen, setDiscoverOpen] = useState(false)
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [wallpaperSwitcherOpen, setWallpaperSwitcherOpen] = useState(false)
@@ -142,13 +146,13 @@ export default function Shell() {
     const { activeProjectId } = stateRef.current
     if (!activeProjectId) return
     const { tabs, addTab, setActiveTab } = useAppStore.getState()
-    const existing = tabs.find((t) => t.type === 'gsd:main' && t.projectId === activeProjectId)
+    const existing = tabs.find((t) => t.type === 'gsd' && t.projectId === activeProjectId)
     if (existing) {
       setActiveTab(existing.id)
     } else {
       addTab({
         id: crypto.randomUUID(),
-        type: 'gsd:main',
+        type: 'gsd',
         label: 'GSD',
         projectId: activeProjectId,
       })
@@ -158,18 +162,7 @@ export default function Shell() {
   const openChat = useCallback(() => {
     const { activeProjectId } = stateRef.current
     if (!activeProjectId) return
-    const { tabs, addTab, setActiveTab } = useAppStore.getState()
-    const existing = tabs.find((t) => t.type === 'chat:main' && t.projectId === activeProjectId)
-    if (existing) {
-      setActiveTab(existing.id)
-    } else {
-      addTab({
-        id: crypto.randomUUID(),
-        type: 'chat:main',
-        label: 'Chat',
-        projectId: activeProjectId,
-      })
-    }
+    setChatPanelOpen((v) => !v)
   }, [])
 
   const focusSidebar = useCallback(() => {
@@ -354,15 +347,13 @@ export default function Shell() {
 
         case 'open-gsd':
           if (activeProjectId) {
-            const existing = tabs.find(
-              (t) => t.type === 'gsd:main' && t.projectId === activeProjectId,
-            )
+            const existing = tabs.find((t) => t.type === 'gsd' && t.projectId === activeProjectId)
             if (existing) {
               setActiveTab(existing.id)
             } else {
               addTab({
                 id: crypto.randomUUID(),
-                type: 'gsd:main',
+                type: 'gsd',
                 label: 'GSD',
                 projectId: activeProjectId,
               })
@@ -372,19 +363,7 @@ export default function Shell() {
 
         case 'open-chat':
           if (activeProjectId) {
-            const existing = tabs.find(
-              (t) => t.type === 'chat:main' && t.projectId === activeProjectId,
-            )
-            if (existing) {
-              setActiveTab(existing.id)
-            } else {
-              addTab({
-                id: crypto.randomUUID(),
-                type: 'chat:main',
-                label: 'Chat',
-                projectId: activeProjectId,
-              })
-            }
+            setChatPanelOpen((v) => !v)
           }
           break
 
@@ -436,7 +415,9 @@ export default function Shell() {
   }, [])
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div
+      className="flex flex-col h-full w-full"
+    >
       <UpdateChecker />
       <div className="flex flex-1 min-h-0 relative">
         {/* Wallpaper covers entire shell including sidebar and tab bar */}
@@ -472,16 +453,16 @@ export default function Shell() {
             onCloseTab={handleCloseTab}
             wallpaperActive={!!wallpaperUrl}
             backgroundOpacity={backgroundOpacity}
+            chatOpen={chatPanelOpen}
+            onToggleChat={() => setChatPanelOpen((v) => !v)}
           />
 
-          {/* Tab content area */}
+          {/* Tab content area — flex-1 so StatusLine stays at the bottom */}
           <div className="flex-1 min-h-0 relative overflow-hidden">
             {/* Render ALL shell tabs across all projects — keep mounted to preserve state */}
             {tabs
               .filter((t) => t.type === 'shell' && t.terminalId)
-              .map((tab) => {
-                const project = projects.find((p) => p.id === tab.projectId)
-                return (
+              .map((tab) => (
                   <div
                     key={tab.terminalId}
                     className={cn(
@@ -493,22 +474,37 @@ export default function Shell() {
                     )}
                   >
                     <XTerminal
-                      projectPath={project?.path ?? '~'}
                       existingTerminalId={tab.terminalId!}
                       isActive={activeTabId === tab.id}
                       onExit={() => handleCloseTab(tab.id)}
                     />
                   </div>
-                )
-              })}
+              ))}
 
-            {/* Render plugin tabs */}
+            {/* Render feature & agent tabs */}
             {tabs
               .filter((t) => t.type !== 'shell' && t.projectId === activeProjectId)
               .map((tab) => {
-                const tabType = getAllPluginTabTypes().find((tt) => tt.id === tab.type)
-                if (!tabType) return null
-                const TabComponent = tabType.component
+                const agent = getAgentFromTabType(tab.type)
+                let content: React.ReactNode = null
+                if (agent) {
+                  content = (
+                    <AgentTab
+                      agentId={agent.id}
+                      projectId={tab.projectId}
+                      projectPath={activeProject?.path ?? ''}
+                    />
+                  )
+                } else if (tab.type === 'gsd') {
+                  content = (
+                    <GsdTab projectId={tab.projectId} projectPath={activeProject?.path ?? ''} />
+                  )
+                } else {
+                  return null
+                }
+                // Agent tabs contain their own XTerminal which handles wallpaper
+                // transparency — don't add an extra background layer on top.
+                const isAgentTab = !!agent
                 return (
                   <div
                     key={tab.id}
@@ -520,7 +516,7 @@ export default function Shell() {
                       wallpaperUrl ? 'z-10' : 'bg-background',
                     )}
                     style={
-                      wallpaperUrl
+                      wallpaperUrl && !isAgentTab
                         ? ({
                             background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
                             '--color-background': 'transparent',
@@ -529,10 +525,7 @@ export default function Shell() {
                         : undefined
                     }
                   >
-                    <TabComponent
-                      projectId={tab.projectId}
-                      projectPath={activeProject?.path ?? ''}
-                    />
+                    {content}
                   </div>
                 )
               })}
@@ -547,7 +540,38 @@ export default function Shell() {
               />
             )}
           </div>
+
+          <StatusLine
+            wallpaperActive={!!wallpaperUrl}
+            backgroundOpacity={backgroundOpacity}
+          />
         </div>
+
+        {/* Chat side panel */}
+        {activeProjectId && (
+          <div
+            className={cn(
+              'flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out relative z-[1]',
+              !wallpaperUrl && 'bg-surface',
+              chatPanelOpen && 'border-l border-border',
+            )}
+            style={{
+              width: chatPanelOpen ? 380 : 0,
+              ...(wallpaperUrl
+                ? {
+                    background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+                  }
+                : {}),
+            }}
+          >
+            <div className="h-full" style={{ width: 380 }}>
+              <ChatTab
+                projectId={activeProjectId}
+                projectPath={activeProject?.path ?? ''}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Settings overlay */}
         {activeView === 'settings' && (
@@ -567,8 +591,6 @@ export default function Shell() {
         <Notifications />
       </div>
 
-      {/* Status line at very bottom */}
-      <StatusLine />
     </div>
   )
 }

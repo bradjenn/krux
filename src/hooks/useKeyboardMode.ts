@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { writeTerminal } from '@/hooks/useTauri'
-import { CHORD_MAP, PREFIX_TIMEOUT_MS } from '@/lib/keybindings'
+import { CHORD_MAP } from '@/lib/keybindings'
 import { useAppStore } from '@/stores/appStore'
 
 export interface KeyboardModeActions {
@@ -37,15 +37,6 @@ export function useKeyboardMode(actions: KeyboardModeActions) {
           e.preventDefault()
           e.stopPropagation()
           state.setKeyboardMode('prefix')
-          // Start timeout to auto-cancel prefix mode
-          const timeoutId = setTimeout(() => {
-            const s = useAppStore.getState()
-            if (s.keyboardMode === 'prefix') {
-              s.setKeyboardMode('terminal')
-            }
-            s.setPrefixTimeoutId(null)
-          }, PREFIX_TIMEOUT_MS)
-          state.setPrefixTimeoutId(timeoutId)
         }
         return
       }
@@ -54,12 +45,6 @@ export function useKeyboardMode(actions: KeyboardModeActions) {
       if (mode === 'prefix') {
         e.preventDefault()
         e.stopPropagation()
-
-        // Clear prefix timeout
-        if (state.prefixTimeoutId) {
-          clearTimeout(state.prefixTimeoutId)
-          state.setPrefixTimeoutId(null)
-        }
 
         // Escape cancels prefix mode
         if (e.key === 'Escape') {

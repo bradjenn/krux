@@ -110,6 +110,7 @@ export default function MessageList({
                 <MessageBubble
                   message={{
                     projectId: '',
+                    conversationId: 0,
                     role: 'assistant',
                     content: streamingContent,
                     timestamp: Date.now(),

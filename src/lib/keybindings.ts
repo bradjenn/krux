@@ -161,5 +161,3 @@ export const CHORD_BINDINGS: ChordBinding[] = [
 ]
 
 export const CHORD_MAP = new Map<string, ChordBinding>(CHORD_BINDINGS.map((b) => [b.key, b]))
-
-export const PREFIX_TIMEOUT_MS = 1500

@@ -20,8 +20,8 @@ export default function WhichKey() {
   if (keyboardMode !== 'prefix') return null
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-      <div className="tui-panel" style={{ minWidth: 380, maxWidth: 480 }}>
+    <div className="fixed bottom-10 right-4 z-50">
+      <div className="tui-panel" style={{ minWidth: 340, maxWidth: 420 }}>
         {/* Header */}
         <div className="tui-panel-header">
           <span className="text-muted-foreground text-[11px] font-mono">Ctrl+A</span>

@@ -8,8 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { appEvents } from '@/lib/events'
 import { cn } from '@/lib/utils'
-import { appEvents } from '@/plugins/events'
 import { type Phase, parseRoadmap } from './parser'
 
 type ExecStatus = 'idle' | 'starting' | 'running' | 'done' | 'error' | 'cancelled'

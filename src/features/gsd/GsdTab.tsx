@@ -1,7 +1,7 @@
 import { FileText, LayoutDashboard, Play } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { onAppEvent } from '@/lib/events'
 import { cn } from '@/lib/utils'
-import { onAppEvent } from '@/plugins/events'
 import DocumentsTab from './DocumentsTab'
 import ExecutionTab from './ExecutionTab'
 import OverviewTab from './OverviewTab'

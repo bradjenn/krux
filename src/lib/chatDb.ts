@@ -65,12 +65,13 @@ export const chatDb = new ChatDatabase()
  */
 export async function createConversation(projectId: string): Promise<number> {
   const now = Date.now()
-  return chatDb.conversations.add({
+  const id = await chatDb.conversations.add({
     projectId,
     title: 'New chat',
     createdAt: now,
     updatedAt: now,
   })
+  return id as number
 }
 
 /**

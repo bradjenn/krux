@@ -19,7 +19,7 @@ export default function ChatTab({ projectId, projectPath }: ChatTabProps) {
 
   if (available === null) {
     return (
-      <div className="h-full w-full flex flex-col bg-background items-center justify-center">
+      <div className="h-full w-full flex flex-col items-center justify-center">
         <div className="text-dim text-sm">Loading...</div>
       </div>
     )
@@ -27,7 +27,7 @@ export default function ChatTab({ projectId, projectPath }: ChatTabProps) {
 
   if (!available) {
     return (
-      <div className="h-full w-full flex flex-col bg-background items-center justify-center gap-3 text-muted-foreground">
+      <div className="h-full w-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
         <Terminal size={32} className="text-dim" />
         <p className="text-sm text-center max-w-xs">
           Claude CLI not found. Install it from{' '}
@@ -38,7 +38,7 @@ export default function ChatTab({ projectId, projectPath }: ChatTabProps) {
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-background">
+    <div className="h-full w-full flex flex-col">
       <ChatPanel projectId={projectId} projectPath={projectPath} />
     </div>
   )

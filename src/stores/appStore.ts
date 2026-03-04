@@ -1,6 +1,6 @@
 import { create } from 'zustand'
+import { appEvents } from '@/lib/events'
 import type { KeyboardMode } from '@/lib/keybindings'
-import { appEvents } from '@/plugins/events'
 
 export type NotificationSeverity = 'info' | 'warn' | 'error' | 'success'
 
@@ -74,9 +74,6 @@ interface AppState {
   // Keyboard mode (vim-style navigation)
   keyboardMode: KeyboardMode
   setKeyboardMode: (mode: KeyboardMode) => void
-  prefixTimeoutId: ReturnType<typeof setTimeout> | null
-  setPrefixTimeoutId: (id: ReturnType<typeof setTimeout> | null) => void
-
   // Sidebar vim navigation
   sidebarSelectedIndex: number
   setSidebarSelectedIndex: (index: number) => void
@@ -147,9 +144,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Theme & terminal settings
   theme: 'ghostty',
   setTheme: (theme) => set({ theme }),
-  fontSize: 14,
+  fontSize: 19,
   setFontSize: (fontSize) => set({ fontSize }),
-  lineHeight: 1.2,
+  lineHeight: 1.0,
   setLineHeight: (lineHeight) => set({ lineHeight }),
   cursorStyle: 'block',
   setCursorStyle: (cursorStyle) => set({ cursorStyle }),
@@ -157,7 +154,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setCursorBlink: (cursorBlink) => set({ cursorBlink }),
   scrollback: 10000,
   setScrollback: (scrollback) => set({ scrollback }),
-  fontFamily: 'MesloLGS Nerd Font',
+  fontFamily: 'MesloLGS Nerd Font Mono',
   setFontFamily: (fontFamily) => set({ fontFamily }),
   backgroundImage: null,
   setBackgroundImage: (backgroundImage) => set({ backgroundImage }),
@@ -171,9 +168,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Keyboard mode
   keyboardMode: 'terminal',
   setKeyboardMode: (keyboardMode) => set({ keyboardMode }),
-  prefixTimeoutId: null,
-  setPrefixTimeoutId: (prefixTimeoutId) => set({ prefixTimeoutId }),
-
   // Sidebar vim navigation
   sidebarSelectedIndex: 0,
   setSidebarSelectedIndex: (sidebarSelectedIndex) => set({ sidebarSelectedIndex }),

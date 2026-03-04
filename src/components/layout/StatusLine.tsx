@@ -2,18 +2,22 @@ import { useGitBranch } from '@/hooks/useGitBranch'
 import { useAppStore } from '@/stores/appStore'
 
 const MODE_COLORS: Record<string, string> = {
-  terminal: 'var(--green)',
   prefix: 'var(--yellow)',
-  sidebar: 'var(--accent2)',
 }
 
 const MODE_LABELS: Record<string, string> = {
-  terminal: 'TERMINAL',
   prefix: 'PREFIX',
-  sidebar: 'SIDEBAR',
 }
 
-export default function StatusLine() {
+interface StatusLineProps {
+  wallpaperActive?: boolean
+  backgroundOpacity?: number
+}
+
+export default function StatusLine({
+  wallpaperActive,
+  backgroundOpacity = 0.8,
+}: StatusLineProps) {
   const keyboardMode = useAppStore((s) => s.keyboardMode)
   const activeProjectId = useAppStore((s) => s.activeProjectId)
   const projects = useAppStore((s) => s.projects)
@@ -26,31 +30,41 @@ export default function StatusLine() {
 
   const gitBranch = useGitBranch(activeProject?.path ?? null)
 
-  const modeColor = MODE_COLORS[keyboardMode] ?? 'var(--text-dim)'
-  const modeLabel = MODE_LABELS[keyboardMode] ?? keyboardMode.toUpperCase()
+  const modeColor = MODE_COLORS[keyboardMode]
+  const modeLabel = MODE_LABELS[keyboardMode]
+
+  if (!activeProjectId) return null
 
   return (
     <div
-      className="flex items-center shrink-0 border-t border-border text-[11px] font-mono select-none z-20 relative"
-      style={{ height: 24, padding: '0 10px', background: 'var(--bg)' }}
+      className="flex items-center shrink-0 border-t border-border text-xs font-mono select-none z-20 relative"
+      style={{
+        height: 32,
+        padding: '0 14px',
+        ...(wallpaperActive
+          ? { background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)` }
+          : { background: 'var(--bg)' }),
+      }}
     >
-      {/* Left: mode indicator */}
+      {/* Left: mode indicator (only shown for prefix mode) */}
       <div className="flex items-center gap-2">
-        <span
-          className="font-bold px-1.5 rounded-sm"
-          style={{
-            color: 'var(--bg)',
-            background: modeColor,
-            fontSize: 10,
-            lineHeight: '16px',
-          }}
-        >
-          {modeLabel}
-        </span>
+        {modeLabel && (
+          <span
+            className="font-bold px-1.5 rounded-sm"
+            style={{
+              color: 'var(--bg)',
+              background: modeColor,
+              fontSize: 11,
+              lineHeight: '18px',
+            }}
+          >
+            {modeLabel}
+          </span>
+        )}
       </div>
 
-      {/* Center: project name */}
-      <div className="flex-1 text-center text-dim truncate px-4">
+      {/* Project name */}
+      <div className="flex-1 text-dim truncate px-4">
         {activeProject ? (
           <span className="text-muted-foreground">{activeProject.name}</span>
         ) : (

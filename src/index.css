@@ -114,15 +114,6 @@
   }
 }
 
-/* Force all xterm background layers transparent when wallpaper is behind terminal.
-   The container div provides the single uniform rgba overlay — xterm must not
-   paint its own background, or the two layers double-composite into a darker area.
-   Doubled parent selector boosts specificity to override the library styles. */
-.terminal-transparent.terminal-transparent .xterm,
-.terminal-transparent.terminal-transparent .xterm-viewport {
-  background-color: transparent;
-}
-
 @keyframes pulse {
   0%,
   100% {

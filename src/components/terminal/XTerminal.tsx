@@ -1,47 +1,44 @@
 import { FitAddon } from '@xterm/addon-fit'
-// WebGL addon removed — canvas renderer handles Unicode glyphs (braille, spinners) better
 import { Unicode11Addon } from '@xterm/addon-unicode11'
+import { WebglAddon } from '@xterm/addon-webgl'
 import { Terminal } from '@xterm/xterm'
 import { useEffect, useRef, useState } from 'react'
 import '@xterm/xterm/css/xterm.css'
+import { listen } from '@tauri-apps/api/event'
 import {
   resizeTerminal,
   useTerminalExit,
   useTerminalOutput,
   writeTerminal,
 } from '../../hooks/useTauri'
-import { getTerminalTheme, hexToRgba } from '../../lib/themes'
+import { getTerminalTheme } from '../../lib/themes'
 import { useAppStore } from '../../stores/appStore'
 
-/**
- * When wallpaper is active, make xterm's own background fully transparent
- * so only the container div's overlay is visible. This prevents double-compositing
- * where the container rgba + canvas rgba stack to produce a darker terminal area.
- */
-function getTranslucentTheme(themeId: string, hasWallpaper: boolean) {
-  const base = getTerminalTheme(themeId)
-  if (!hasWallpaper) return base
-  return { ...base, background: '#00000000' }
-}
-
-/** The single uniform overlay color for the container div when wallpaper is active. */
-function getOverlayBg(themeId: string, alpha: number): string {
-  const base = getTerminalTheme(themeId)
-  return hexToRgba(base.background ?? '#000000', alpha)
+/** Always return the opaque theme — transparency is handled via CSS blending. */
+function getTheme(themeId: string) {
+  return getTerminalTheme(themeId)
 }
 
 interface XTerminalProps {
-  projectPath: string
   existingTerminalId: string
   isActive?: boolean
   onExit?: () => void
 }
 
+/** Shell-escape a file path for safe pasting into a terminal. */
+function shellEscape(path: string): string {
+  if (/[^a-zA-Z0-9_./:@~=-]/.test(path)) return `'${path.replace(/'/g, "'\\''")}'`
+  return path
+}
+
 export default function XTerminal({ existingTerminalId, isActive, onExit }: XTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
+  const webglAddonRef = useRef<WebglAddon | null>(null)
   const [terminalId] = useState<string>(existingTerminalId)
+  const [dragOver, setDragOver] = useState(false)
   const theme = useAppStore((s) => s.theme)
   const fontSize = useAppStore((s) => s.fontSize)
   const lineHeight = useAppStore((s) => s.lineHeight)
@@ -51,8 +48,6 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   const backgroundImage = useAppStore((s) => s.backgroundImage)
   const backgroundOpacity = useAppStore((s) => s.backgroundOpacity)
   const hasWallpaper = !!backgroundImage
-  const termTheme = getTranslucentTheme(theme, hasWallpaper)
-  const containerBg = hasWallpaper ? getOverlayBg(theme, backgroundOpacity) : termTheme.background
 
   // Subscribe to PTY output → write to xterm
   useTerminalOutput(terminalId, (data) => {
@@ -64,11 +59,51 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     onExit?.()
   })
 
+  // File drag-and-drop: listen for Tauri's native drag events and paste paths into PTY
+  useEffect(() => {
+    if (!isActive) {
+      setDragOver(false)
+      return
+    }
+
+    const listeners = [
+      listen<{ paths: string[]; position: { x: number; y: number } }>(
+        'tauri://drag-drop',
+        (event) => {
+          setDragOver(false)
+          const { paths } = event.payload
+          if (!paths.length) return
+          // Check the drop landed within our wrapper bounds
+          if (wrapperRef.current) {
+            const rect = wrapperRef.current.getBoundingClientRect()
+            const scale = window.devicePixelRatio || 1
+            const x = event.payload.position.x / scale
+            const y = event.payload.position.y / scale
+            if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return
+          }
+          const escaped = paths.map(shellEscape).join(' ')
+          writeTerminal(terminalId, escaped)
+          // Re-focus the terminal after drop
+          requestAnimationFrame(() => terminalRef.current?.focus())
+        },
+      ),
+      listen('tauri://drag-enter', () => {
+        if (isActive) setDragOver(true)
+      }),
+      listen('tauri://drag-leave', () => setDragOver(false)),
+    ]
+
+    return () => {
+      for (const l of listeners) l.then((fn) => fn())
+    }
+  }, [isActive, terminalId])
+
   // Re-fit and focus when becoming visible
   useEffect(() => {
     if (isActive && terminalRef.current && fitAddonRef.current) {
       requestAnimationFrame(() => {
         fitAddonRef.current?.fit()
+        terminalRef.current?.refresh(0, terminalRef.current.rows - 1)
         terminalRef.current?.focus()
       })
     }
@@ -78,13 +113,16 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   useEffect(() => {
     const term = terminalRef.current
     if (!term) return
-    term.options.theme = getTranslucentTheme(theme, hasWallpaper)
+    term.options.theme = getTheme(theme)
     term.options.fontSize = fontSize
     term.options.lineHeight = lineHeight
     term.options.cursorStyle = cursorStyle
     term.options.cursorBlink = cursorBlink
     term.options.fontFamily = `"${fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`
+    // Clear stale glyph cache when display metrics change (Tabby workaround)
+    webglAddonRef.current?.clearTextureAtlas()
     fitAddonRef.current?.fit()
+    term.refresh(0, term.rows - 1)
   }, [theme, fontSize, lineHeight, cursorStyle, cursorBlink, fontFamily, hasWallpaper])
 
   useEffect(() => {
@@ -93,8 +131,8 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     const s = useAppStore.getState()
 
     const term = new Terminal({
-      allowTransparency: true,
-      theme: getTranslucentTheme(s.theme, !!s.backgroundImage),
+      allowTransparency: false,
+      theme: getTheme(s.theme),
       fontFamily: `"${s.fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`,
       fontSize: s.fontSize,
       lineHeight: s.lineHeight,
@@ -113,6 +151,20 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     term.unicode.activeVersion = '11'
 
     term.open(containerRef.current)
+
+    // WebGL renderer for customGlyphs — draws box-drawing chars (─│┌┐└┘)
+    // pixel-perfectly to fill cells. DOM renderer can't do this.
+    try {
+      const webglAddon = new WebglAddon()
+      webglAddon.onContextLoss(() => {
+        webglAddon.dispose()
+        webglAddonRef.current = null
+      })
+      term.loadAddon(webglAddon)
+      webglAddonRef.current = webglAddon
+    } catch {
+      // WebGL unavailable — falls back to DOM renderer
+    }
 
     // Intercept keys based on keyboard mode — synchronous, reads store directly
     term.attachCustomKeyEventHandler((e) => {
@@ -139,11 +191,13 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     // Fit immediately after open and send correct size to PTY
     // This minimizes the time the PTY runs at the wrong 80x24 default
     fitAddon.fit()
+    term.refresh(0, term.rows - 1)
     resizeTerminal(terminalId, term.cols, term.rows)
 
     // Second fit on next frame to catch any layout shifts
     requestAnimationFrame(() => {
       fitAddon.fit()
+      term.refresh(0, term.rows - 1)
     })
 
     // Keystroke → PTY stdin
@@ -156,12 +210,12 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
       resizeTerminal(terminalId, cols, rows)
     })
 
-    // Container resize → fit
+    // Container resize → fit + full repaint to prevent rendering artifacts
     const resizeObserver = new ResizeObserver(() => {
-      // Debounce resize to avoid excessive calls
       requestAnimationFrame(() => {
-        if (fitAddonRef.current) {
+        if (fitAddonRef.current && terminalRef.current) {
           fitAddonRef.current.fit()
+          terminalRef.current.refresh(0, terminalRef.current.rows - 1)
         }
       })
     })
@@ -187,6 +241,7 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
       resizeObserver.disconnect()
       dataDisposable.dispose()
       resizeDisposable.dispose()
+      webglAddonRef.current = null
       term.dispose()
       // Don't close the PTY here — the tab system manages PTY lifecycle.
       // closeTerminal is called from the store's closeTab action via Shell.
@@ -194,13 +249,21 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   }, [terminalId])
 
   return (
-    <div
-      ref={containerRef}
-      className={`h-full w-full${hasWallpaper ? ' terminal-transparent' : ''}`}
-      style={{
-        padding: '8px 8px 4px 8px',
-        background: containerBg,
-      }}
-    />
+    <div ref={wrapperRef} className="h-full w-full relative">
+      <div
+        ref={containerRef}
+        className="h-full w-full"
+        style={{
+          padding: '8px',
+          background: getTheme(theme).background,
+          ...(hasWallpaper && { opacity: backgroundOpacity }),
+        }}
+      />
+      {dragOver && (
+        <div className="absolute inset-2 z-50 flex items-center justify-center rounded border-2 border-dashed border-primary/50 bg-primary/[0.08] pointer-events-none">
+          <span className="text-primary text-sm font-medium">Drop files here</span>
+        </div>
+      )}
+    </div>
   )
 }

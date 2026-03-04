@@ -88,10 +88,17 @@ export default function Sidebar({
           const isVimSelected = keyboardMode === 'sidebar' && index === sidebarSelectedIndex
 
           return (
-            <button
-              type="button"
+            <div
               key={project.id}
+              role="button"
+              tabIndex={0}
               onClick={() => setActiveProject(project.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setActiveProject(project.id)
+                }
+              }}
               className={cn(
                 'project-item group flex items-center gap-2.5 w-full text-left transition-all duration-100 cursor-pointer border-l-[3px]',
                 isActive
@@ -130,7 +137,7 @@ export default function Sidebar({
               >
                 <HugeiconsIcon icon={Delete01Icon} size={13} strokeWidth={1.5} />
               </button>
-            </button>
+            </div>
           )
         })}
 
