@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { writeTerminal } from '@/hooks/useTauri'
 import { CHORD_MAP } from '@/lib/keybindings'
 import { useAppStore } from '@/stores/appStore'
@@ -109,6 +110,10 @@ export function useKeyboardMode(actions: KeyboardModeActions) {
           case 'open-lazygit':
             state.setKeyboardMode('terminal')
             actionsRef.current.openLazygit()
+            return
+          case 'toggle-maximize':
+            state.setKeyboardMode('terminal')
+            getCurrentWindow().toggleMaximize()
             return
           case 'send-ctrl-a': {
             state.setKeyboardMode('terminal')

@@ -156,6 +156,15 @@ export const CHORD_BINDINGS: ChordBinding[] = [
     action: 'open-lazygit',
   },
 
+  // Window
+  {
+    key: 'm',
+    label: 'Maximize',
+    description: 'Toggle maximize window',
+    category: 'panels',
+    action: 'toggle-maximize',
+  },
+
   // Special
   {
     key: 'a',

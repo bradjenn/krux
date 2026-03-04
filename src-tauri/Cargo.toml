@@ -1,6 +1,6 @@
 [package]
 name = "krux"
-version = "0.1.0"
+version = "0.1.1"
 description = "A native terminal multiplexer with project management"
 authors = ["bradley"]
 edition = "2021"
