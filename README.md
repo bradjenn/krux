@@ -18,7 +18,7 @@
   </p>
 </div>
 
-<!-- Add a screenshot here: ![Krux](screenshot.png) -->
+<img src="screenshot.png" alt="Krux start screen" width="100%">
 
 ## Features
 
