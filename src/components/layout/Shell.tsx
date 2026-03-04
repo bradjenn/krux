@@ -12,7 +12,7 @@ import { applyTheme } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
 import { useAppStore } from '@/stores/appStore'
-import UpdateChecker from '../UpdateChecker'
+
 import DiscoverDialog from './DiscoverDialog'
 import Notifications from './Notifications'
 import ProjectSwitcher from './ProjectSwitcher'
@@ -453,7 +453,6 @@ export default function Shell() {
     <div
       className="flex flex-col h-full w-full"
     >
-      <UpdateChecker />
       <div className="flex flex-1 min-h-0 relative">
         {/* Wallpaper covers entire shell including sidebar and tab bar */}
         {wallpaperUrl && (
@@ -584,10 +583,6 @@ export default function Shell() {
             )}
           </div>
 
-          <StatusLine
-            wallpaperActive={!!wallpaperUrl}
-            backgroundOpacity={backgroundOpacity}
-          />
         </div>
 
         {/* Chat side panel */}
@@ -643,6 +638,10 @@ export default function Shell() {
         <Notifications />
       </div>
 
+      <StatusLine
+        wallpaperActive={!!wallpaperUrl}
+        backgroundOpacity={backgroundOpacity}
+      />
     </div>
   )
 }
