@@ -1,18 +1,58 @@
-# Krux
+<div align="center">
+  <img src="src-tauri/icons/icon.png" alt="Krux" width="120" height="120">
 
-A native terminal multiplexer and project manager built with Tauri, React, and xterm.js. Keyboard-driven with vim-style navigation and a tmux-like prefix key system.
+  <h1>Krux</h1>
+
+  <p>
+    <strong>A native terminal multiplexer and project manager</strong>
+  </p>
+  <p>
+    Keyboard-driven with vim-style navigation, a tmux-like prefix system, and integrated AI coding tools.
+  </p>
+
+  <p>
+    <a href="#features"><img src="https://img.shields.io/badge/Features-blue?style=for-the-badge" alt="Features"></a>
+    <a href="#download"><img src="https://img.shields.io/badge/Download-green?style=for-the-badge" alt="Download"></a>
+    <a href="#keybindings"><img src="https://img.shields.io/badge/Keybindings-purple?style=for-the-badge" alt="Keybindings"></a>
+    <a href="#development"><img src="https://img.shields.io/badge/Development-orange?style=for-the-badge" alt="Development"></a>
+  </p>
+</div>
+
+<!-- Add a screenshot here: ![Krux](screenshot.png) -->
 
 ## Features
 
-- **Native terminal** — GPU-accelerated rendering via xterm.js WebGL, powered by `portable-pty` on the backend
-- **Project management** — Auto-discovers projects from `~/Code`, tracks git branches, quick-switch between workspaces
-- **Vim keybindings** — `Ctrl+A` prefix mode (tmux-style), vim navigation in sidebar (`j`/`k`/`gg`/`G`), tab jumping (`1`-`9`)
-- **Integrated tools** — Launch Claude Code, Codex, OpenCode, or Lazygit directly in tabs
-- **AI chat panel** — Built-in chat interface with streaming responses and conversation history
-- **11 theme presets** — Cyberpunk, Tokyo Night, Catppuccin Mocha, Dracula, Gruvbox, Nord, One Dark, Solarized, Rosé Pine, Kanagawa, Josean
-- **Wallpapers** — Background images with adjustable opacity and blur
-- **WhichKey overlay** — Displays available keybindings when in prefix mode
-- **Auto-updates** — Built-in update checker via Tauri updater plugin
+### Terminal
+
+- **GPU-accelerated rendering** via xterm.js WebGL, powered by `portable-pty`
+- **Multiple tabs** with quick switching (`Ctrl+A` + `1`-`9`)
+- **Prefix key system** inspired by tmux — `Ctrl+A` enters command mode
+- **WhichKey overlay** shows available bindings when in prefix mode
+
+### Project Management
+
+- **Auto-discovers projects** from `~/Code` with git branch tracking
+- **Quick-switch** between workspaces with fuzzy search
+- **Sidebar navigation** with full vim motions (`j`/`k`/`gg`/`G`)
+
+### Integrated Tools
+
+- **Claude Code**, **Codex**, **OpenCode** — launch AI coding agents directly in tabs
+- **Lazygit** — built-in git UI
+- **AI chat panel** with streaming responses and conversation history
+
+### Appearance
+
+- **11 theme presets** — Cyberpunk, Tokyo Night, Catppuccin Mocha, Dracula, Gruvbox, Nord, One Dark, Solarized, Rose Pine, Kanagawa, Josean
+- **Background wallpapers** with adjustable opacity and blur
+- **Auto-updates** — in-app update notifications and one-click install
+
+## Download
+
+**[Download the latest release](https://github.com/bradjenn/krux/releases/latest)** — available for macOS (Apple Silicon + Intel), Windows, and Linux (.deb, .AppImage, .rpm).
+
+> [!NOTE]
+> macOS and Windows builds are currently unsigned. On macOS, right-click the app and select "Open" on first launch. On Windows, click "More info" then "Run anyway" in the SmartScreen prompt.
 
 ## Keybindings
 
@@ -35,9 +75,11 @@ A native terminal multiplexer and project manager built with Tauri, React, and x
 | `a` | Send literal Ctrl+A |
 | `?` | Show help |
 
-In sidebar mode: `j`/`k` to navigate, `Enter` to select, `gg`/`G` to jump, `Escape` or `l` to return.
+**Sidebar mode:** `j`/`k` to navigate, `Enter` to select, `gg`/`G` to jump top/bottom, `Escape` or `l` to return.
 
-## Tech Stack
+## Development
+
+### Tech Stack
 
 | Layer | Technology |
 |-------|------------|
@@ -50,7 +92,7 @@ In sidebar mode: `j`/`k` to navigate, `Enter` to select, `gg`/`G` to jump, `Esca
 | Linting | Biome |
 | Build | Vite |
 
-## Development
+### Getting Started
 
 ```sh
 # Install dependencies
@@ -67,16 +109,16 @@ npm run lint:fix
 npm run format
 ```
 
-## Project Structure
+### Project Structure
 
 ```
 src/                          # React frontend
   components/
-    layout/                   # Shell, Sidebar, TabBar, StatusLine, Settings, etc.
+    layout/                   # Shell, Sidebar, TabBar, StatusLine, Settings
     terminal/                 # XTerminal (xterm.js wrapper), ToolTab
-    ui/                       # Shared primitives (button, input, dialog, select)
+    ui/                       # Shared primitives (button, input, dialog)
   features/
-    chat/                     # AI chat panel with streaming + conversation history
+    chat/                     # AI chat panel with streaming + history
     gsd/                      # GSD workflow viewer
   hooks/                      # useKeyboardMode, useTauri (IPC wrappers)
   lib/                        # themes, keybindings, tools config, wallpapers
@@ -84,9 +126,23 @@ src/                          # React frontend
 
 src-tauri/src/                # Rust backend
   lib.rs                      # Tauri setup, IPC command registration
-  pty.rs                      # PTY spawning, reader thread, terminal:output events
+  pty.rs                      # PTY spawning, reader thread, output events
   projects.rs                 # Project discovery, CRUD, git branch detection
   settings.rs                 # Settings persistence (~/.krux/settings.json)
   chat.rs                     # Claude CLI subprocess handler
   fs.rs                       # File system operations
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+  <p>
+    <a href="https://github.com/bradjenn/krux/issues">Report Bug</a>
+    &middot;
+    <a href="https://github.com/bradjenn/krux/issues">Request Feature</a>
+  </p>
+</div>
