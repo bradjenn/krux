@@ -22,3 +22,8 @@ src-tauri/target/
 
 # Worktrees
 .worktrees/
+
+# Secrets / signing keys
+.env*
+*.pem
+*.key

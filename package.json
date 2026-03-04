@@ -1,7 +1,13 @@
 {
   "name": "krux",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "A native terminal multiplexer with project management",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bradjenn/krux"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

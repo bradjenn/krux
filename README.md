@@ -1,73 +1,92 @@
-# React + TypeScript + Vite
+# Krux
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A native terminal multiplexer and project manager built with Tauri, React, and xterm.js. Keyboard-driven with vim-style navigation and a tmux-like prefix key system.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Native terminal** — GPU-accelerated rendering via xterm.js WebGL, powered by `portable-pty` on the backend
+- **Project management** — Auto-discovers projects from `~/Code`, tracks git branches, quick-switch between workspaces
+- **Vim keybindings** — `Ctrl+A` prefix mode (tmux-style), vim navigation in sidebar (`j`/`k`/`gg`/`G`), tab jumping (`1`-`9`)
+- **Integrated tools** — Launch Claude Code, Codex, OpenCode, or Lazygit directly in tabs
+- **AI chat panel** — Built-in chat interface with streaming responses and conversation history
+- **11 theme presets** — Cyberpunk, Tokyo Night, Catppuccin Mocha, Dracula, Gruvbox, Nord, One Dark, Solarized, Rosé Pine, Kanagawa, Josean
+- **Wallpapers** — Background images with adjustable opacity and blur
+- **WhichKey overlay** — Displays available keybindings when in prefix mode
+- **Auto-updates** — Built-in update checker via Tauri updater plugin
 
-## React Compiler
+## Keybindings
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+`Ctrl+A` enters prefix mode, then:
 
-## Expanding the ESLint configuration
+| Key | Action |
+|-----|--------|
+| `h` | Focus sidebar |
+| `l` | Focus terminal |
+| `j` / `k` | Next / previous tab |
+| `c` | New terminal |
+| `x` | Close tab |
+| `1`-`9` | Jump to tab N |
+| `p` | Project switcher |
+| `w` | Wallpaper switcher |
+| `s` | Settings |
+| `g` | GSD workflow |
+| `i` | Chat panel |
+| `b` | Lazygit |
+| `a` | Send literal Ctrl+A |
+| `?` | Show help |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+In sidebar mode: `j`/`k` to navigate, `Enter` to select, `gg`/`G` to jump, `Escape` or `l` to return.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| Layer | Technology |
+|-------|------------|
+| Shell | Tauri v2 (Rust) |
+| Frontend | React 19, TypeScript, Tailwind CSS v4 |
+| Terminal | xterm.js 6 (WebGL addon) |
+| PTY | portable-pty |
+| State | Zustand |
+| UI | Radix UI primitives |
+| Linting | Biome |
+| Build | Vite |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Development
+
+```sh
+# Install dependencies
+npm install
+
+# Run in development mode (starts Vite + Tauri)
+npm run tauri dev
+
+# Build for production
+npm run tauri build
+
+# Lint & format
+npm run lint:fix
+npm run format
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project Structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```
+src/                          # React frontend
+  components/
+    layout/                   # Shell, Sidebar, TabBar, StatusLine, Settings, etc.
+    terminal/                 # XTerminal (xterm.js wrapper), ToolTab
+    ui/                       # Shared primitives (button, input, dialog, select)
+  features/
+    chat/                     # AI chat panel with streaming + conversation history
+    gsd/                      # GSD workflow viewer
+  hooks/                      # useKeyboardMode, useTauri (IPC wrappers)
+  lib/                        # themes, keybindings, tools config, wallpapers
+  stores/                     # Zustand app store
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+src-tauri/src/                # Rust backend
+  lib.rs                      # Tauri setup, IPC command registration
+  pty.rs                      # PTY spawning, reader thread, terminal:output events
+  projects.rs                 # Project discovery, CRUD, git branch detection
+  settings.rs                 # Settings persistence (~/.krux/settings.json)
+  chat.rs                     # Claude CLI subprocess handler
+  fs.rs                       # File system operations
 ```
