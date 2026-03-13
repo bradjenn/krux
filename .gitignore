@@ -5,8 +5,8 @@ node_modules/
 dist/
 dist-ssr/
 
-# Rust
-src-tauri/target/
+# Electron
+out/
 
 # Logs
 *.log
