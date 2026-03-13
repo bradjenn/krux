@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import ProjectFavicon from '@/components/ProjectFavicon'
 import { useAppStore } from '@/stores/appStore'
 
 interface ProjectSwitcherProps {
@@ -25,8 +26,9 @@ export default function ProjectSwitcher({ isOpen, onClose }: ProjectSwitcherProp
     if (isOpen) {
       setSearch('')
       setSelectedIndex(0)
-      // Focus after the modal renders
-      requestAnimationFrame(() => inputRef.current?.focus())
+      // Focus after the modal renders (preventScroll avoids WebKit
+      // scrolling the viewport behind the fixed overlay)
+      requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }))
     }
   }, [isOpen])
 
@@ -145,10 +147,7 @@ export default function ProjectSwitcher({ isOpen, onClose }: ProjectSwitcherProp
                   color: 'inherit',
                 }}
               >
-                <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ background: project.color }}
-                />
+                <ProjectFavicon projectPath={project.path} />
 
                 <div className="flex-1 min-w-0">
                   <div className="truncate text-sm font-medium text-foreground">{project.name}</div>

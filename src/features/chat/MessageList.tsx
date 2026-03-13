@@ -79,7 +79,7 @@ export default function MessageList({
             /* Empty state */
             <div className="flex flex-col items-center justify-center h-full min-h-[200px] gap-4 text-center py-16">
               <MessageCircle size={32} className="text-dim" />
-              <p className="text-sm font-medium text-muted-foreground">Start a conversation</p>
+              <p className="text-sm font-medium text-muted-foreground">Start this session</p>
               <div className="flex flex-wrap gap-2 justify-center mt-2">
                 {SUGGESTED_PROMPTS.map((prompt) => (
                   <button

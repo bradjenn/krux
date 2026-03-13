@@ -61,7 +61,7 @@ export default function WallpaperSwitcher({ isOpen, onClose }: WallpaperSwitcher
       setOriginalWallpaper(backgroundImage)
       setSearch('')
       setSelectedIndex(findCurrentIndex())
-      requestAnimationFrame(() => inputRef.current?.focus())
+      requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }))
     }
   }, [isOpen])
 

@@ -15,8 +15,19 @@ import { getTerminalTheme } from '../../lib/themes'
 import { useAppStore } from '../../stores/appStore'
 
 /** Always return the opaque theme — xterm WebGL can't do true transparency. */
-function getTheme(themeId: string) {
-  return getTerminalTheme(themeId)
+function getTheme(themeId: string, vibrancy: 'normal' | 'vivid' | 'high') {
+  return getTerminalTheme(themeId, vibrancy)
+}
+
+function getMinimumContrastRatio(vibrancy: 'normal' | 'vivid' | 'high') {
+  switch (vibrancy) {
+    case 'vivid':
+      return 4.5
+    case 'high':
+      return 7
+    default:
+      return 1
+  }
 }
 
 interface XTerminalProps {
@@ -45,6 +56,7 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   const cursorStyle = useAppStore((s) => s.cursorStyle)
   const cursorBlink = useAppStore((s) => s.cursorBlink)
   const fontFamily = useAppStore((s) => s.fontFamily)
+  const terminalVibrancy = useAppStore((s) => s.terminalVibrancy)
   const backgroundImage = useAppStore((s) => s.backgroundImage)
   const backgroundOpacity = useAppStore((s) => s.backgroundOpacity)
   const hasWallpaper = !!backgroundImage
@@ -113,7 +125,8 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
   useEffect(() => {
     const term = terminalRef.current
     if (!term) return
-    term.options.theme = getTheme(theme)
+    term.options.theme = getTheme(theme, terminalVibrancy)
+    term.options.minimumContrastRatio = getMinimumContrastRatio(terminalVibrancy)
     term.options.fontSize = fontSize
     term.options.lineHeight = lineHeight
     term.options.cursorStyle = cursorStyle
@@ -123,7 +136,16 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     webglAddonRef.current?.clearTextureAtlas()
     fitAddonRef.current?.fit()
     term.refresh(0, term.rows - 1)
-  }, [theme, fontSize, lineHeight, cursorStyle, cursorBlink, fontFamily, hasWallpaper])
+  }, [
+    theme,
+    terminalVibrancy,
+    fontSize,
+    lineHeight,
+    cursorStyle,
+    cursorBlink,
+    fontFamily,
+    hasWallpaper,
+  ])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -132,7 +154,8 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
 
     const term = new Terminal({
       allowTransparency: false,
-      theme: getTheme(s.theme),
+      theme: getTheme(s.theme, s.terminalVibrancy),
+      minimumContrastRatio: getMinimumContrastRatio(s.terminalVibrancy),
       fontFamily: `"${s.fontFamily}", "JetBrains Mono", "SF Mono", "Fira Code", monospace`,
       fontSize: s.fontSize,
       lineHeight: s.lineHeight,
@@ -210,14 +233,18 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
       resizeTerminal(terminalId, cols, rows)
     })
 
-    // Container resize → fit + full repaint to prevent rendering artifacts
+    // Container resize → debounced fit to avoid flicker during sidebar transitions
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null
     const resizeObserver = new ResizeObserver(() => {
-      requestAnimationFrame(() => {
-        if (fitAddonRef.current && terminalRef.current) {
-          fitAddonRef.current.fit()
-          terminalRef.current.refresh(0, terminalRef.current.rows - 1)
-        }
-      })
+      if (resizeTimer) clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        requestAnimationFrame(() => {
+          if (fitAddonRef.current && terminalRef.current) {
+            fitAddonRef.current.fit()
+            terminalRef.current.refresh(0, terminalRef.current.rows - 1)
+          }
+        })
+      }, 80)
     })
     resizeObserver.observe(containerRef.current)
 
@@ -237,6 +264,7 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
     })
 
     return () => {
+      if (resizeTimer) clearTimeout(resizeTimer)
       unsubMode()
       resizeObserver.disconnect()
       dataDisposable.dispose()
@@ -255,7 +283,7 @@ export default function XTerminal({ existingTerminalId, isActive, onExit }: XTer
         className="h-full w-full terminal-view"
         style={{
           padding: '8px',
-          background: getTheme(theme).background,
+          background: getTheme(theme, terminalVibrancy).background,
           ...(hasWallpaper && { opacity: backgroundOpacity }),
         }}
       />

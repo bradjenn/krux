@@ -1,5 +1,7 @@
 import type { ITheme } from '@xterm/xterm'
 
+export type TerminalVibrancy = 'normal' | 'vivid' | 'high'
+
 export interface ThemePreset {
   name: string
   ui: {
@@ -490,6 +492,172 @@ function hexToGlow(hex: string, alpha: number): string {
   return hexToRgba(hex, alpha)
 }
 
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value))
+}
+
+function hexToRgb(hex: string) {
+  return {
+    r: parseInt(hex.slice(1, 3), 16) / 255,
+    g: parseInt(hex.slice(3, 5), 16) / 255,
+    b: parseInt(hex.slice(5, 7), 16) / 255,
+  }
+}
+
+function rgbToHex(r: number, g: number, b: number) {
+  return `#${[r, g, b]
+    .map((value) =>
+      Math.round(clamp01(value) * 255)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`
+}
+
+function rgbToHsl(r: number, g: number, b: number) {
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  const d = max - min
+
+  if (d === 0) {
+    return { h: 0, s: 0, l }
+  }
+
+  const s = d / (1 - Math.abs(2 * l - 1))
+  let h = 0
+
+  switch (max) {
+    case r:
+      h = ((g - b) / d) % 6
+      break
+    case g:
+      h = (b - r) / d + 2
+      break
+    default:
+      h = (r - g) / d + 4
+      break
+  }
+
+  h *= 60
+  if (h < 0) h += 360
+
+  return { h, s, l }
+}
+
+function hueToRgb(p: number, q: number, t: number) {
+  let value = t
+  if (value < 0) value += 1
+  if (value > 1) value -= 1
+  if (value < 1 / 6) return p + (q - p) * 6 * value
+  if (value < 1 / 2) return q
+  if (value < 2 / 3) return p + (q - p) * (2 / 3 - value) * 6
+  return p
+}
+
+function hslToRgb(h: number, s: number, l: number) {
+  if (s === 0) {
+    return { r: l, g: l, b: l }
+  }
+
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+  const p = 2 * l - q
+  const hk = h / 360
+
+  return {
+    r: hueToRgb(p, q, hk + 1 / 3),
+    g: hueToRgb(p, q, hk),
+    b: hueToRgb(p, q, hk - 1 / 3),
+  }
+}
+
+function adjustHexColor(hex: string, saturationDelta: number, lightnessDelta: number) {
+  const { r, g, b } = hexToRgb(hex)
+  const { h, s, l } = rgbToHsl(r, g, b)
+  const adjusted = hslToRgb(h, clamp01(s + saturationDelta), clamp01(l + lightnessDelta))
+  return rgbToHex(adjusted.r, adjusted.g, adjusted.b)
+}
+
+function withTerminalVibrancy(theme: ITheme, vibrancy: TerminalVibrancy): ITheme {
+  if (vibrancy === 'normal') return theme
+
+  const profile =
+    vibrancy === 'high'
+      ? {
+          foregroundLightness: 0.1,
+          colorSaturation: 0.24,
+          colorLightness: 0.05,
+          brightSaturation: 0.28,
+          brightLightness: 0.07,
+        }
+      : {
+          foregroundLightness: 0.06,
+          colorSaturation: 0.16,
+          colorLightness: 0.03,
+          brightSaturation: 0.18,
+          brightLightness: 0.04,
+        }
+
+  return {
+    ...theme,
+    foreground: theme.foreground
+      ? adjustHexColor(theme.foreground, 0, profile.foregroundLightness)
+      : theme.foreground,
+    cursor: theme.cursor
+      ? adjustHexColor(theme.cursor, profile.colorSaturation, profile.colorLightness)
+      : theme.cursor,
+    red: theme.red
+      ? adjustHexColor(theme.red, profile.colorSaturation, profile.colorLightness)
+      : theme.red,
+    green: theme.green
+      ? adjustHexColor(theme.green, profile.colorSaturation, profile.colorLightness)
+      : theme.green,
+    yellow: theme.yellow
+      ? adjustHexColor(theme.yellow, profile.colorSaturation, profile.colorLightness)
+      : theme.yellow,
+    blue: theme.blue
+      ? adjustHexColor(theme.blue, profile.colorSaturation, profile.colorLightness)
+      : theme.blue,
+    magenta: theme.magenta
+      ? adjustHexColor(theme.magenta, profile.colorSaturation, profile.colorLightness)
+      : theme.magenta,
+    cyan: theme.cyan
+      ? adjustHexColor(theme.cyan, profile.colorSaturation, profile.colorLightness)
+      : theme.cyan,
+    white: theme.white
+      ? adjustHexColor(theme.white, profile.colorSaturation * 0.15, profile.foregroundLightness)
+      : theme.white,
+    brightBlack: theme.brightBlack
+      ? adjustHexColor(theme.brightBlack, profile.colorSaturation * 0.4, profile.colorLightness)
+      : theme.brightBlack,
+    brightRed: theme.brightRed
+      ? adjustHexColor(theme.brightRed, profile.brightSaturation, profile.brightLightness)
+      : theme.brightRed,
+    brightGreen: theme.brightGreen
+      ? adjustHexColor(theme.brightGreen, profile.brightSaturation, profile.brightLightness)
+      : theme.brightGreen,
+    brightYellow: theme.brightYellow
+      ? adjustHexColor(theme.brightYellow, profile.brightSaturation, profile.brightLightness)
+      : theme.brightYellow,
+    brightBlue: theme.brightBlue
+      ? adjustHexColor(theme.brightBlue, profile.brightSaturation, profile.brightLightness)
+      : theme.brightBlue,
+    brightMagenta: theme.brightMagenta
+      ? adjustHexColor(theme.brightMagenta, profile.brightSaturation, profile.brightLightness)
+      : theme.brightMagenta,
+    brightCyan: theme.brightCyan
+      ? adjustHexColor(theme.brightCyan, profile.brightSaturation, profile.brightLightness)
+      : theme.brightCyan,
+    brightWhite: theme.brightWhite
+      ? adjustHexColor(
+          theme.brightWhite,
+          profile.colorSaturation * 0.15,
+          profile.foregroundLightness + 0.02,
+        )
+      : theme.brightWhite,
+  }
+}
+
 /**
  * Apply a theme's UI colors as CSS custom properties on document root.
  */
@@ -520,6 +688,7 @@ export function applyTheme(themeId: string) {
 /**
  * Get the xterm.js terminal theme for a given theme ID.
  */
-export function getTerminalTheme(themeId: string): ITheme {
-  return THEME_PRESETS[themeId]?.terminal ?? THEME_PRESETS.ghostty.terminal
+export function getTerminalTheme(themeId: string, vibrancy: TerminalVibrancy = 'normal'): ITheme {
+  const baseTheme = THEME_PRESETS[themeId]?.terminal ?? THEME_PRESETS.ghostty.terminal
+  return withTerminalVibrancy(baseTheme, vibrancy)
 }

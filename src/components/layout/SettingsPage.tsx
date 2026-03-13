@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { applyTheme, THEME_PRESETS } from '@/lib/themes'
 import { cn } from '@/lib/utils'
 import { WALLPAPER_PRESETS } from '@/lib/wallpapers'
-import { useAppStore } from '@/stores/appStore'
+import { useAppStore, type TerminalVibrancy } from '@/stores/appStore'
 
 interface Settings {
   theme: string
@@ -16,6 +16,7 @@ interface Settings {
   cursor_blink: boolean
   scrollback: number
   font_family: string
+  terminal_vibrancy: TerminalVibrancy
   background_image: string | null
   background_opacity: number
   background_blur: number
@@ -90,6 +91,8 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
     setCursorBlink,
     setScrollback,
     setFontFamily,
+    terminalVibrancy,
+    setTerminalVibrancy,
     backgroundImage,
     setBackgroundImage,
     backgroundOpacity,
@@ -350,6 +353,38 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
                       }}
                       className="w-64"
                     />
+                  </SettingRow>
+
+                  <SettingRow
+                    label="Text vibrancy"
+                    description="Boost terminal color intensity without changing text rendering"
+                  >
+                    <div className="flex gap-1.5">
+                      {(
+                        [
+                          { id: 'normal', label: 'Normal' },
+                          { id: 'vivid', label: 'Vivid' },
+                          { id: 'high', label: 'High Contrast' },
+                        ] as const
+                      ).map((option) => (
+                        <button
+                          type="button"
+                          key={option.id}
+                          onClick={() => {
+                            updateSetting('terminal_vibrancy', option.id)
+                            setTerminalVibrancy(option.id)
+                          }}
+                          className={cn(
+                            'px-3 py-1.5 rounded-md text-xs border transition-colors duration-100 cursor-pointer',
+                            (settings?.terminal_vibrancy ?? terminalVibrancy) === option.id
+                              ? 'border-primary bg-primary/[0.06] text-foreground'
+                              : 'border-border text-muted-foreground hover:border-dim',
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                   </SettingRow>
 
                   <SettingRow label="Font size" description="Terminal text size in pixels">

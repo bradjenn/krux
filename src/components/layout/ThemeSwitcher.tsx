@@ -56,7 +56,7 @@ export default function ThemeSwitcher({ isOpen, onClose }: ThemeSwitcherProps) {
       setOriginalTheme(theme)
       setSearch('')
       setSelectedIndex(findCurrentIndex())
-      requestAnimationFrame(() => inputRef.current?.focus())
+      requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }))
     }
   }, [isOpen])
 
@@ -238,9 +238,7 @@ export default function ThemeSwitcher({ isOpen, onClose }: ThemeSwitcherProps) {
           })}
 
           {filtered.length === 0 && (
-            <div className="col-span-3 py-8 text-center text-sm text-dim">
-              No matching themes
-            </div>
+            <div className="col-span-3 py-8 text-center text-sm text-dim">No matching themes</div>
           )}
         </div>
 

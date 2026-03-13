@@ -1,4 +1,9 @@
-import { Cancel01Icon, CommandLineIcon, GitBranchIcon, PlusSignIcon } from '@hugeicons/core-free-icons'
+import {
+  Cancel01Icon,
+  CommandLineIcon,
+  GitBranchIcon,
+  PlusSignIcon,
+} from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -110,7 +115,6 @@ export default function TabBar({
     >
       {projectTabs.map((tab, index) => {
         const isActive = activeTabId === tab.id
-        const shortcutNum = index < 9 ? index + 1 : null
         return (
           <div
             key={tab.id}
@@ -135,9 +139,6 @@ export default function TabBar({
             }}
           >
             <span>{tab.label}</span>
-            {shortcutNum && (
-              <span className={cn('text-[10px] text-muted-foreground/50')}>⌘{shortcutNum}</span>
-            )}
             <button
               type="button"
               onClick={(e) => {

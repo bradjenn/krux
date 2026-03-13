@@ -1,12 +1,7 @@
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { MessageCircle, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  clearConversationHistory,
-  createConversation,
-  deleteConversation,
-  persistMessage,
-} from '@/lib/chatDb'
-import ConversationList from './ConversationList'
+import { clearConversationHistory, createConversation, persistMessage } from '@/lib/chatDb'
+import { useAppStore } from '@/stores/appStore'
 import { useChatHistory, useConversationList } from './chatStore'
 import InputBar from './InputBar'
 import MessageList from './MessageList'
@@ -18,9 +13,11 @@ interface ChatPanelProps {
 }
 
 export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
-  const [view, setView] = useState<'list' | 'chat'>('chat')
-  const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
-  const initializedRef = useRef(false)
+  const activeConversationId = useAppStore(
+    (s) => s.activeConversationIdByProject[projectId] ?? null,
+  )
+  const setActiveConversation = useAppStore((s) => s.setActiveConversation)
+  const previousConversationIdRef = useRef<number | null>(null)
 
   const conversations = useConversationList(projectId)
   const messages = useChatHistory(activeConversationId)
@@ -36,57 +33,78 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
   } = useChatStream(projectPath)
   const [error, setError] = useState<string | null>(null)
   const [scrollTrigger, setScrollTrigger] = useState(0)
+  const [streamConversationId, setStreamConversationId] = useState<number | null>(null)
   const isStreaming = status === 'streaming'
 
-  // On mount: auto-create a conversation if none exist, or select the most recent
   useEffect(() => {
-    if (initializedRef.current || conversations === undefined) return
-    initializedRef.current = true
+    if (conversations === undefined) return
 
-    if (conversations.length > 0) {
-      setActiveConversationId(conversations[0].id!)
-      setView('chat')
-    } else {
-      createConversation(projectId).then((id) => {
-        setActiveConversationId(id)
-        setView('chat')
-      })
+    const hasActiveConversation =
+      activeConversationId != null &&
+      conversations.some((conversation) => conversation.id === activeConversationId)
+
+    if (hasActiveConversation) return
+
+    if (conversations.length === 0) {
+      if (activeConversationId !== null) {
+        setActiveConversation(projectId, null)
+      }
+      return
     }
-  }, [conversations, projectId])
+
+    setActiveConversation(projectId, conversations[0].id ?? null)
+  }, [conversations, activeConversationId, projectId, setActiveConversation])
+
+  useEffect(() => {
+    if (previousConversationIdRef.current === activeConversationId) return
+    const previousConversationId = previousConversationIdRef.current
+    previousConversationIdRef.current = activeConversationId
+    if (status === 'streaming' && streamConversationId === previousConversationId) {
+      stop()
+    }
+    resetSession()
+    setError(null)
+  }, [activeConversationId, resetSession, status, stop, streamConversationId])
 
   // When stream completes (done), persist assistant message
   // biome-ignore lint/correctness/useExhaustiveDependencies: streamingContent is intentionally read only on status change to avoid persisting on every streaming chunk
   useEffect(() => {
-    if (status === 'done' && streamingContent && activeConversationId) {
+    if (status === 'done' && streamingContent && streamConversationId) {
       persistMessage({
         projectId,
-        conversationId: activeConversationId,
+        conversationId: streamConversationId,
         role: 'assistant',
         content: streamingContent,
         timestamp: Date.now(),
       }).then(() => {
+        setStreamConversationId(null)
         resetStream()
       })
+    } else if (status === 'done') {
+      setStreamConversationId(null)
+      resetStream()
     }
-  }, [status, projectId, activeConversationId, resetStream])
+  }, [status, projectId, streamConversationId, resetStream])
 
   // When stream is aborted, persist any partial content
   // biome-ignore lint/correctness/useExhaustiveDependencies: streamingContent is intentionally read only on status change to avoid persisting on every streaming chunk
   useEffect(() => {
-    if (status === 'aborted' && streamingContent && activeConversationId) {
+    if (status === 'aborted' && streamingContent && streamConversationId) {
       persistMessage({
         projectId,
-        conversationId: activeConversationId,
+        conversationId: streamConversationId,
         role: 'assistant',
         content: streamingContent,
         timestamp: Date.now(),
       }).then(() => {
+        setStreamConversationId(null)
         resetStream()
       })
     } else if (status === 'aborted') {
+      setStreamConversationId(null)
       resetStream()
     }
-  }, [status, projectId, activeConversationId, resetStream])
+  }, [status, projectId, streamConversationId, resetStream])
 
   // When stream errors, show inline error with details from stderr
   useEffect(() => {
@@ -94,6 +112,7 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
       setError(
         lastError || 'Failed to get a response. Check that Claude CLI is working and try again.',
       )
+      setStreamConversationId(null)
       resetStream()
     }
   }, [status, lastError, resetStream])
@@ -118,6 +137,7 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
       const history = currentMessages.map((m) => ({ role: m.role, content: m.content }))
 
       // Start streaming
+      setStreamConversationId(activeConversationId)
       await sendMessage(history, userMessage)
     },
     [projectId, activeConversationId, messages, sendMessage],
@@ -165,104 +185,88 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
   )
 
   const handleNewConversation = useCallback(async () => {
+    if (isStreaming) stop()
     const id = await createConversation(projectId)
-    setActiveConversationId(id)
-    setView('chat')
+    setActiveConversation(projectId, id)
     resetSession()
     setStreamingContent('')
     resetStream()
     setError(null)
-  }, [projectId, resetSession, setStreamingContent, resetStream])
-
-  const handleSelectConversation = useCallback(
-    (id: number) => {
-      setActiveConversationId(id)
-      setView('chat')
-      resetSession()
-      setStreamingContent('')
-      resetStream()
-      setError(null)
-    },
-    [resetSession, setStreamingContent, resetStream],
-  )
-
-  const handleDeleteConversation = useCallback(
-    async (id: number) => {
-      await deleteConversation(id)
-      // If we deleted the active conversation, go back to list
-      if (id === activeConversationId) {
-        setActiveConversationId(null)
-        setView('list')
-      }
-    },
-    [activeConversationId],
-  )
+  }, [
+    isStreaming,
+    projectId,
+    resetSession,
+    setActiveConversation,
+    setStreamingContent,
+    resetStream,
+    stop,
+  ])
 
   const activeConversation = conversations?.find((c) => c.id === activeConversationId)
+  const hasNoSessions = conversations !== undefined && conversations.length === 0
+  const hasSelectionGap =
+    conversations !== undefined && conversations.length > 0 && !activeConversation
+  const showEmptyState = hasNoSessions || hasSelectionGap
+  const showStreamingContent = isStreaming && streamConversationId === activeConversationId
 
-  // --- List view ---
-  if (view === 'list') {
-    return (
-      <div className="flex flex-col h-full">
-        <div
-          className="flex items-center justify-between px-4 border-b border-border flex-shrink-0"
-          style={{ height: 36 }}
-        >
-          <span className="text-sm font-medium text-foreground">Conversations</span>
+  return (
+    <div className="flex flex-col h-full">
+      <div
+        className="flex items-center justify-between px-4 border-b border-border flex-shrink-0"
+        style={{ height: 52 }}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-medium text-foreground truncate">
+            {activeConversation?.title ?? 'Sessions'}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleNewConversation}
             className="flex items-center gap-1.5 text-dim hover:text-primary text-xs transition-colors"
-            title="New conversation"
+            title="New session"
           >
             <Plus size={13} />
             New
           </button>
+          {activeConversation && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="flex items-center gap-1.5 text-dim hover:text-destructive text-xs transition-colors flex-shrink-0"
+              title="Clear session"
+            >
+              <Trash2 size={13} />
+              Clear
+            </button>
+          )}
         </div>
-        <ConversationList
-          conversations={conversations ?? []}
-          onSelect={handleSelectConversation}
-          onDelete={handleDeleteConversation}
-          onCreate={handleNewConversation}
-        />
       </div>
-    )
-  }
 
-  // --- Chat view ---
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-4 border-b border-border flex-shrink-0"
-        style={{ height: 36 }}
-      >
-        <div className="flex items-center gap-2 min-w-0">
+      {showEmptyState ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+          <MessageCircle size={32} className="text-dim" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">
+              {hasNoSessions ? 'No sessions yet' : 'Select a session'}
+            </p>
+            <p className="text-xs text-dim">
+              {hasNoSessions
+                ? 'Create one from the sidebar or start a new session here.'
+                : 'Choose a session from the sidebar or start a new one here.'}
+            </p>
+          </div>
           <button
             type="button"
-            onClick={() => setView('list')}
-            className="text-dim hover:text-foreground transition-colors flex-shrink-0"
-            title="Back to conversations"
+            onClick={handleNewConversation}
+            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
           >
-            <ArrowLeft size={15} />
+            <Plus size={13} />
+            New session
           </button>
-          <span className="text-sm font-medium text-foreground truncate">
-            {activeConversation?.title ?? 'Chat'}
-          </span>
         </div>
-        <button
-          type="button"
-          onClick={handleClear}
-          className="flex items-center gap-1.5 text-dim hover:text-destructive text-xs transition-colors flex-shrink-0"
-          title="Clear conversation"
-        >
-          <Trash2 size={13} />
-          Clear
-        </button>
-      </div>
-
-      {/* Loading skeleton while Dexie query in-flight */}
-      {messages === undefined ? (
+      ) : messages === undefined ? (
         <div className="flex-1 flex flex-col gap-4 p-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse flex flex-col gap-2">
@@ -275,8 +279,8 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
       ) : (
         <MessageList
           messages={messages}
-          streamingContent={streamingContent}
-          isStreaming={isStreaming}
+          streamingContent={showStreamingContent ? streamingContent : ''}
+          isStreaming={showStreamingContent}
           scrollTrigger={scrollTrigger}
           onCopy={handleCopy}
           onRetry={handleRetry}
@@ -295,8 +299,8 @@ export default function ChatPanel({ projectId, projectPath }: ChatPanelProps) {
       <InputBar
         onSend={handleSend}
         onStop={stop}
-        isStreaming={isStreaming}
-        disabled={messages === undefined}
+        isStreaming={showStreamingContent}
+        disabled={messages === undefined || activeConversation == null}
       />
     </div>
   )

@@ -78,6 +78,60 @@ pub fn path_exists(path: String) -> bool {
     Path::new(&path).exists()
 }
 
+const FAVICON_CANDIDATES: &[&str] = &[
+    "favicon.svg",
+    "favicon.ico",
+    "favicon.png",
+    "public/favicon.svg",
+    "public/favicon.ico",
+    "public/favicon.png",
+    "app/favicon.ico",
+    "app/favicon.png",
+    "app/icon.svg",
+    "app/icon.png",
+    "app/icon.ico",
+    "src/favicon.ico",
+    "src/favicon.svg",
+    "src/app/favicon.ico",
+    "src/app/icon.svg",
+    "src/app/icon.png",
+    "assets/icon.svg",
+    "assets/icon.png",
+    "assets/logo.svg",
+    "assets/logo.png",
+];
+
+fn mime_for_ext(ext: &str) -> &'static str {
+    match ext {
+        "svg" => "image/svg+xml",
+        "png" => "image/png",
+        "ico" => "image/x-icon",
+        "jpg" | "jpeg" => "image/jpeg",
+        _ => "application/octet-stream",
+    }
+}
+
+#[tauri::command]
+pub fn find_project_favicon(project_path: String) -> Option<String> {
+    use base64::Engine;
+    let base = Path::new(&project_path);
+    for candidate in FAVICON_CANDIDATES {
+        let p = base.join(candidate);
+        if p.is_file() {
+            if let Ok(bytes) = fs::read(&p) {
+                let ext = p
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("png");
+                let mime = mime_for_ext(ext);
+                let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+                return Some(format!("data:{};base64,{}", mime, b64));
+            }
+        }
+    }
+    None
+}
+
 #[tauri::command]
 pub fn list_dir(path: String) -> Result<Vec<String>, String> {
     let p = Path::new(&path);

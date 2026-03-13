@@ -19,10 +19,7 @@ interface StatusLineProps {
   backgroundOpacity?: number
 }
 
-export default function StatusLine({
-  wallpaperActive,
-  backgroundOpacity = 0.8,
-}: StatusLineProps) {
+export default function StatusLine({ wallpaperActive, backgroundOpacity = 0.8 }: StatusLineProps) {
   const keyboardMode = useAppStore((s) => s.keyboardMode)
   const activeProjectId = useAppStore((s) => s.activeProjectId)
   const projects = useAppStore((s) => s.projects)
@@ -120,7 +117,9 @@ export default function StatusLine({
         height: 32,
         padding: '0 14px',
         ...(wallpaperActive
-          ? { background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)` }
+          ? {
+              background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+            }
           : { background: 'var(--bg)' }),
       }}
     >
@@ -175,7 +174,9 @@ export default function StatusLine({
         )}
         {showUpdate && updateStatus === 'error' && (
           <>
-            <span style={{ color: 'var(--red)' }}>Update failed{updateError ? `: ${updateError}` : ''}</span>
+            <span style={{ color: 'var(--red)' }}>
+              Update failed{updateError ? `: ${updateError}` : ''}
+            </span>
             <button
               type="button"
               onClick={handleUpdate}
@@ -196,9 +197,7 @@ export default function StatusLine({
 
       {/* Project name */}
       <div className="flex-1 text-dim truncate px-4">
-        {activeProject ? (
-          <span className="text-muted-foreground">{activeProject.name}</span>
-        ) : null}
+        {activeProject ? <span className="text-muted-foreground">{activeProject.name}</span> : null}
       </div>
 
       {/* Right: git status + terminal count */}

@@ -59,6 +59,7 @@ class ChatDatabase extends Dexie {
 }
 
 export const chatDb = new ChatDatabase()
+export const DEFAULT_CONVERSATION_TITLE = 'New session'
 
 /**
  * Create a new conversation for a project.
@@ -67,7 +68,7 @@ export async function createConversation(projectId: string): Promise<number> {
   const now = Date.now()
   const id = await chatDb.conversations.add({
     projectId,
-    title: 'New chat',
+    title: DEFAULT_CONVERSATION_TITLE,
     createdAt: now,
     updatedAt: now,
   })
@@ -89,12 +90,19 @@ export async function deleteConversation(id: number): Promise<void> {
   await chatDb.conversations.delete(id)
 }
 
+export async function renameConversation(id: number, title: string): Promise<void> {
+  await chatDb.conversations.update(id, { title })
+}
+
 /**
  * Persist a chat message and enforce the 50-message cap for the conversation.
  * Oldest messages are deleted when count exceeds MAX_MESSAGES.
  * Auto-titles the conversation from the first user message.
  */
 export async function persistMessage(msg: Omit<ChatMessage, 'id'>): Promise<void> {
+  const conversation = await chatDb.conversations.get(msg.conversationId)
+  if (!conversation) return
+
   await chatDb.messages.add(msg)
 
   // Update conversation's updatedAt
@@ -105,7 +113,7 @@ export async function persistMessage(msg: Omit<ChatMessage, 'id'>): Promise<void
   // Auto-title from first user message
   if (msg.role === 'user') {
     const conv = await chatDb.conversations.get(msg.conversationId)
-    if (conv && conv.title === 'New chat') {
+    if (conv && (conv.title === 'New chat' || conv.title === DEFAULT_CONVERSATION_TITLE)) {
       const title = msg.content.length > 60 ? `${msg.content.slice(0, 57)}...` : msg.content
       await chatDb.conversations.update(msg.conversationId, { title })
     }

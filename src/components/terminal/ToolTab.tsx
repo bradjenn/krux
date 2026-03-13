@@ -59,7 +59,9 @@ export default function ToolTab({ toolId, projectPath }: ToolTabProps) {
         className="h-full w-full flex items-center justify-center"
         style={
           backgroundImage
-            ? { background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)` }
+            ? {
+                background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+              }
             : undefined
         }
       >

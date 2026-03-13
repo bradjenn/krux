@@ -27,6 +27,8 @@ export interface Tab {
   terminalId?: string // only for shell tabs
 }
 
+export type TerminalVibrancy = 'normal' | 'vivid' | 'high'
+
 interface AppState {
   // Projects
   projects: Project[]
@@ -45,7 +47,10 @@ interface AppState {
   addTab: (tab: Tab) => void
   closeTab: (id: string) => void
   setActiveTab: (id: string) => void
+  renameTab: (id: string, label: string) => void
   getProjectTabs: (projectId: string) => Tab[]
+  activeConversationIdByProject: Record<string, number | null>
+  setActiveConversation: (projectId: string, conversationId: number | null) => void
 
   // Theme & terminal settings
   theme: string
@@ -62,6 +67,8 @@ interface AppState {
   setScrollback: (lines: number) => void
   fontFamily: string
   setFontFamily: (family: string) => void
+  terminalVibrancy: TerminalVibrancy
+  setTerminalVibrancy: (vibrancy: TerminalVibrancy) => void
   backgroundImage: string | null
   setBackgroundImage: (img: string | null) => void
   backgroundOpacity: number
@@ -108,17 +115,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // View
   activeView: 'projects',
-  setActiveView: (view) => {
-    if (view === 'settings') {
-      set({ activeView: view, activeProjectId: null, activeTabId: null })
-    } else {
-      set({ activeView: view })
-    }
-  },
+  setActiveView: (view) => set({ activeView: view }),
 
   // Tabs
   tabs: [],
   activeTabId: null,
+  activeConversationIdByProject: {},
   addTab: (tab) =>
     set((state) => ({
       tabs: [...state.tabs, tab],
@@ -139,7 +141,18 @@ export const useAppStore = create<AppState>((set, get) => ({
       return { tabs: newTabs, activeTabId: newActiveTabId }
     }),
   setActiveTab: (id) => set({ activeTabId: id }),
+  renameTab: (id, label) =>
+    set((state) => ({
+      tabs: state.tabs.map((t) => (t.id === id ? { ...t, label } : t)),
+    })),
   getProjectTabs: (projectId) => get().tabs.filter((t) => t.projectId === projectId),
+  setActiveConversation: (projectId, conversationId) =>
+    set((state) => ({
+      activeConversationIdByProject: {
+        ...state.activeConversationIdByProject,
+        [projectId]: conversationId,
+      },
+    })),
 
   // Theme & terminal settings
   theme: 'ghostty',
@@ -156,6 +169,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setScrollback: (scrollback) => set({ scrollback }),
   fontFamily: 'MesloLGS Nerd Font Mono',
   setFontFamily: (fontFamily) => set({ fontFamily }),
+  terminalVibrancy: 'normal',
+  setTerminalVibrancy: (terminalVibrancy) => set({ terminalVibrancy }),
   backgroundImage: null,
   setBackgroundImage: (backgroundImage) => set({ backgroundImage }),
   backgroundOpacity: 0.85,

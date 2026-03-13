@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use tauri::State;
@@ -19,6 +20,8 @@ pub struct Settings {
     pub scrollback: u32,
     #[serde(default = "default_font_family")]
     pub font_family: String,
+    #[serde(default = "default_terminal_vibrancy")]
+    pub terminal_vibrancy: String,
     #[serde(default)]
     pub background_image: Option<String>,
     #[serde(default = "default_background_opacity")]
@@ -44,6 +47,9 @@ fn default_scrollback() -> u32 {
 fn default_font_family() -> String {
     "MesloLGS Nerd Font".to_string()
 }
+fn default_terminal_vibrancy() -> String {
+    "normal".to_string()
+}
 fn default_background_opacity() -> f32 {
     0.85
 }
@@ -60,6 +66,7 @@ impl Default for Settings {
             cursor_blink: default_true(),
             scrollback: default_scrollback(),
             font_family: default_font_family(),
+            terminal_vibrancy: default_terminal_vibrancy(),
             background_image: None,
             background_opacity: default_background_opacity(),
             background_blur: 0,
@@ -110,6 +117,50 @@ pub fn save_settings(state: State<'_, SettingsState>, settings: Settings) -> Res
     let tmp = path.with_extension("json.tmp");
     let data =
         serde_json::to_string_pretty(&settings).map_err(|e| format!("Serialize error: {}", e))?;
+    fs::write(&tmp, &data).map_err(|e| format!("Write error: {}", e))?;
+    fs::rename(&tmp, &path).map_err(|e| format!("Rename error: {}", e))?;
+    Ok(())
+}
+
+// ── Session persistence ──
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SavedTab {
+    pub tab_type: String,
+    pub label: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectSession {
+    pub tabs: Vec<SavedTab>,
+    #[serde(default)]
+    pub active_tab_index: Option<usize>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct Sessions {
+    #[serde(default)]
+    pub projects: HashMap<String, ProjectSession>,
+    #[serde(default)]
+    pub last_active_project_id: Option<String>,
+}
+
+#[tauri::command]
+pub fn load_sessions(state: State<'_, SettingsState>) -> Sessions {
+    let path = state.config_dir.join("sessions.json");
+    if !path.exists() {
+        return Sessions::default();
+    }
+    let data = fs::read_to_string(&path).unwrap_or_default();
+    serde_json::from_str(&data).unwrap_or_default()
+}
+
+#[tauri::command]
+pub fn save_sessions(state: State<'_, SettingsState>, sessions: Sessions) -> Result<(), String> {
+    let path = state.config_dir.join("sessions.json");
+    let tmp = path.with_extension("json.tmp");
+    let data =
+        serde_json::to_string_pretty(&sessions).map_err(|e| format!("Serialize error: {}", e))?;
     fs::write(&tmp, &data).map_err(|e| format!("Write error: {}", e))?;
     fs::rename(&tmp, &path).map_err(|e| format!("Rename error: {}", e))?;
     Ok(())

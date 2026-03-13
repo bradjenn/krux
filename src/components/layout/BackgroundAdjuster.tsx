@@ -54,7 +54,7 @@ export default function BackgroundAdjuster({
     if (isOpen && !wasOpenRef.current) {
       // Only set focused row on initial open
       setFocusedRow(initialFocus)
-      containerRef.current?.focus()
+      containerRef.current?.focus({ preventScroll: true })
     }
     if (isOpen) {
       resetTimeout()

@@ -205,60 +205,40 @@ pub fn run() {
 
             app.set_menu(menu)?;
 
-            // Apply hide-titlebar setting
-            let settings_state = app.state::<settings::SettingsState>();
-            let s = settings_state.load();
-            if s.hide_titlebar {
-                if let Some(window) = app.get_webview_window("main") {
-                    #[cfg(target_os = "macos")]
-                    {
-                        window
-                            .with_webview(|webview| {
-                                #[allow(deprecated, unexpected_cfgs)]
-                                unsafe {
-                                    use cocoa::appkit::{
-                                        NSView, NSWindow, NSWindowStyleMask,
-                                        NSWindowTitleVisibility,
-                                    };
-                                    use cocoa::base::{id, YES};
-                                    use objc::{msg_send, sel, sel_impl};
+            // T3-style transparent titlebar: traffic lights visible, title hidden,
+            // content extends behind title bar area (equivalent to Electron hiddenInset)
+            if let Some(window) = app.get_webview_window("main") {
+                #[cfg(target_os = "macos")]
+                {
+                    window
+                        .with_webview(|webview| {
+                            #[allow(deprecated, unexpected_cfgs)]
+                            unsafe {
+                                use cocoa::appkit::{
+                                    NSView, NSWindow, NSWindowStyleMask,
+                                    NSWindowTitleVisibility,
+                                };
+                                use cocoa::base::{id, YES};
 
-                                    let ns_window = webview.ns_window() as id;
+                                let ns_window = webview.ns_window() as id;
 
-                                    // Keep titled (preserves rounded corners + shadow)
-                                    // but make content fill the full window
-                                    let mut style_mask = ns_window.styleMask();
-                                    style_mask |=
-                                        NSWindowStyleMask::NSFullSizeContentViewWindowMask;
-                                    style_mask |= NSWindowStyleMask::NSTitledWindowMask;
-                                    ns_window.setStyleMask_(style_mask);
+                                // Extend content behind the title bar
+                                let mut style_mask = ns_window.styleMask();
+                                style_mask |=
+                                    NSWindowStyleMask::NSFullSizeContentViewWindowMask;
+                                ns_window.setStyleMask_(style_mask);
 
-                                    // Make the titlebar invisible
-                                    ns_window.setTitlebarAppearsTransparent_(YES);
-                                    ns_window.setTitleVisibility_(
-                                        NSWindowTitleVisibility::NSWindowTitleHidden,
-                                    );
+                                // Make title bar transparent and hide title text
+                                ns_window.setTitlebarAppearsTransparent_(YES);
+                                ns_window.setTitleVisibility_(
+                                    NSWindowTitleVisibility::NSWindowTitleHidden,
+                                );
 
-                                    // Enable layer on content view for proper rendering
-                                    let content_view = ns_window.contentView();
-                                    content_view.setWantsLayer(YES);
-
-                                    // Hide traffic light buttons
-                                    for i in 0u64..3u64 {
-                                        let btn: id = msg_send![ns_window, standardWindowButton: i];
-                                        if !btn.is_null() {
-                                            let _: () = msg_send![btn, setHidden: YES];
-                                        }
-                                    }
-                                }
-                            })
-                            .map_err(|e| e.to_string())?;
-                    }
-
-                    #[cfg(not(target_os = "macos"))]
-                    {
-                        window.set_decorations(false)?;
-                    }
+                                let content_view = ns_window.contentView();
+                                content_view.setWantsLayer(YES);
+                            }
+                        })
+                        .map_err(|e| e.to_string())?;
                 }
             }
 
@@ -291,16 +271,46 @@ pub fn run() {
             settings::load_settings,
             settings::save_settings,
             settings::pick_wallpaper,
+            settings::load_sessions,
+            settings::save_sessions,
             fs::read_file,
             fs::read_dir_tree,
             fs::path_exists,
             fs::list_dir,
+            fs::find_project_favicon,
             get_env_var,
             chat::check_claude_cli,
             chat::start_claude_chat,
             chat::abort_claude_chat,
             chat::cleanup_claude_chat,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| {
+            #[cfg(all(dev, target_os = "macos"))]
+            if matches!(event, tauri::RunEvent::Ready) {
+                set_dev_dock_icon();
+            }
+        });
+}
+
+#[cfg(all(dev, target_os = "macos"))]
+fn set_dev_dock_icon() {
+    #[allow(deprecated)]
+    unsafe {
+        use cocoa::appkit::{NSApplication, NSImage};
+        use cocoa::base::nil;
+        use cocoa::foundation::NSData;
+        use std::ffi::c_void;
+
+        let icon_bytes: &[u8] = include_bytes!("../icons/icon-dev.png");
+        let ns_app = NSApplication::sharedApplication(nil);
+        let data = NSData::dataWithBytes_length_(
+            nil,
+            icon_bytes.as_ptr() as *const c_void,
+            icon_bytes.len() as u64,
+        );
+        let image = NSImage::initWithData_(NSImage::alloc(nil), data);
+        ns_app.setApplicationIconImage_(image);
+    }
 }
