@@ -21,6 +21,7 @@ interface Settings {
   background_opacity: number
   background_blur: number
   hide_titlebar: boolean
+  use_webgl: boolean
 }
 
 type Section = 'appearance' | 'terminal' | 'shortcuts'
@@ -346,7 +347,7 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
 
                   <SettingRow label="Font family" description="Primary font for the terminal">
                     <Input
-                      value={settings?.font_family ?? 'MesloLGS Nerd Font'}
+                      value={settings?.font_family ?? 'MesloLGS Nerd Font Mono'}
                       onChange={(e) => {
                         updateSetting('font_family', e.target.value)
                         setFontFamily(e.target.value)
@@ -467,6 +468,19 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
                         setScrollback(val)
                       }}
                       className="w-28"
+                    />
+                  </SettingRow>
+
+                  <SettingRow
+                    label="WebGL renderer"
+                    description="GPU-accelerated rendering. Disable if Nerd Font icons look garbled (requires restart)."
+                  >
+                    <Toggle
+                      checked={settings?.use_webgl ?? true}
+                      onChange={(v) => {
+                        updateSetting('use_webgl', v)
+                        useAppStore.getState().setUseWebGL(v)
+                      }}
                     />
                   </SettingRow>
 

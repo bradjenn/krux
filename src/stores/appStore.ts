@@ -77,6 +77,8 @@ interface AppState {
   setBackgroundBlur: (blur: number) => void
   hideTitlebar: boolean
   setHideTitlebar: (hide: boolean) => void
+  useWebGL: boolean
+  setUseWebGL: (use: boolean) => void
 
   // Keyboard mode (vim-style navigation)
   keyboardMode: KeyboardMode
@@ -179,6 +181,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setBackgroundBlur: (backgroundBlur) => set({ backgroundBlur }),
   hideTitlebar: false,
   setHideTitlebar: (hideTitlebar) => set({ hideTitlebar }),
+  useWebGL: true,
+  setUseWebGL: (useWebGL) => set({ useWebGL }),
 
   // Keyboard mode
   keyboardMode: 'terminal',

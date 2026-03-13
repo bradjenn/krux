@@ -59,6 +59,15 @@ pub fn create_terminal(
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
 
+    // Ensure UTF-8 locale — macOS GUI apps launched via launchd may not
+    // inherit the user's shell locale, breaking Unicode rendering.
+    if std::env::var("LANG").unwrap_or_default().is_empty() {
+        cmd.env("LANG", "en_US.UTF-8");
+    }
+    if std::env::var("LC_CTYPE").unwrap_or_default().is_empty() {
+        cmd.env("LC_CTYPE", "en_US.UTF-8");
+    }
+
     let _child = pair
         .slave
         .spawn_command(cmd)

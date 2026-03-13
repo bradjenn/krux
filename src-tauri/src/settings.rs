@@ -30,10 +30,12 @@ pub struct Settings {
     pub background_blur: u8,
     #[serde(default)]
     pub hide_titlebar: bool,
+    #[serde(default = "default_true")]
+    pub use_webgl: bool,
 }
 
 fn default_line_height() -> f32 {
-    1.2
+    1.0
 }
 fn default_cursor_style() -> String {
     "block".to_string()
@@ -45,7 +47,7 @@ fn default_scrollback() -> u32 {
     10000
 }
 fn default_font_family() -> String {
-    "MesloLGS Nerd Font".to_string()
+    "MesloLGS Nerd Font Mono".to_string()
 }
 fn default_terminal_vibrancy() -> String {
     "normal".to_string()
@@ -71,6 +73,7 @@ impl Default for Settings {
             background_opacity: default_background_opacity(),
             background_blur: 0,
             hide_titlebar: false,
+            use_webgl: default_true(),
         }
     }
 }

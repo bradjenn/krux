@@ -38,6 +38,7 @@ interface Settings {
   background_opacity: number
   background_blur: number
   hide_titlebar: boolean
+  use_webgl: boolean
 }
 
 interface SavedTab {
@@ -254,6 +255,7 @@ export default function Shell() {
       store.setBackgroundOpacity(s.background_opacity)
       store.setBackgroundBlur(s.background_blur)
       store.setHideTitlebar(s.hide_titlebar)
+      store.setUseWebGL(s.use_webgl ?? true)
     })
   }, [setTheme])
 
