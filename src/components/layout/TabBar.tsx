@@ -113,7 +113,7 @@ export default function TabBar({
       }}
       {...(hideTitlebar ? { 'data-tauri-drag-region': '' } : {})}
     >
-      {projectTabs.map((tab, index) => {
+      {projectTabs.map((tab) => {
         const isActive = activeTabId === tab.id
         return (
           <div
