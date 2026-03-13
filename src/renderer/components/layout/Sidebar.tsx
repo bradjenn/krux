@@ -50,13 +50,15 @@ export default function Sidebar({
   return (
     <div
       className={cn(
-        'flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out relative z-[1]',
+        'flex flex-col h-full shrink-0 overflow-hidden relative z-[1]',
         !wallpaperActive && 'bg-surface',
-        visible && 'border-r border-border',
+        'border-r border-border',
       )}
       style={{
-        width: visible ? 340 : 0,
-        minWidth: visible ? 340 : 0,
+        width: 340,
+        minWidth: 340,
+        marginLeft: visible ? 0 : -340,
+        transition: 'margin-left 200ms ease-in-out',
         ...(wallpaperActive
           ? {
               background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
@@ -64,16 +66,8 @@ export default function Sidebar({
           : {}),
       }}
     >
-      {/* Branded header — inline with macOS traffic lights */}
-      <div
-        style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-        className="shrink-0 flex items-start pl-[78px] pr-4 pt-[7px] pb-4"
-      >
-        <span className="text-sm font-medium tracking-tight text-foreground">Krux</span>
-      </div>
-
       {/* PROJECTS section header */}
-      <div className="shrink-0 flex items-center justify-between px-4 pb-2">
+      <div className="shrink-0 flex items-center justify-between px-4 pt-3 pb-2">
         <span className="text-[11px] font-medium uppercase tracking-wider text-dim">
           Projects
         </span>

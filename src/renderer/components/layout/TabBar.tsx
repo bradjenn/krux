@@ -17,6 +17,7 @@ import { useAppStore } from '@/stores/appStore'
 
 interface TabBarProps {
   onCloseTab: (id: string) => void
+  sidebarVisible?: boolean
   wallpaperActive?: boolean
   backgroundOpacity?: number
   chatOpen?: boolean
@@ -25,6 +26,7 @@ interface TabBarProps {
 
 export default function TabBar({
   onCloseTab,
+  sidebarVisible,
   wallpaperActive,
   backgroundOpacity = 0.8,
   chatOpen,
@@ -114,6 +116,24 @@ export default function TabBar({
         ...(hideTitlebar ? { WebkitAppRegion: 'drag' as const } : {}),
       } as React.CSSProperties}
     >
+      {/* Branded logo — always visible, width matches sidebar when open */}
+      <div
+        className="flex items-center shrink-0 select-none border-r border-border"
+        style={{
+          width: sidebarVisible ? 340 : 130,
+          paddingLeft: 78,
+          transition: 'width 200ms ease-in-out',
+          WebkitAppRegion: 'drag' as const,
+        }}
+      >
+        <span
+          className="text-[11px] font-bold tracking-widest text-dim uppercase"
+          style={{ fontFamily: 'var(--font-mono, monospace)', letterSpacing: '0.15em' }}
+        >
+          KRUX
+        </span>
+      </div>
+
       {projectTabs.map((tab) => {
         const isActive = activeTabId === tab.id
         return (

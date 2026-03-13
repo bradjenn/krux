@@ -1,5 +1,6 @@
 import { convertFileSrc, invoke } from '@/lib/bridge'
 import { listen } from '@/lib/bridge'
+import { appEvents } from '@/lib/events'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ToolTab from '@/components/terminal/ToolTab'
 import XTerminal from '@/components/terminal/XTerminal'
@@ -534,6 +535,10 @@ export default function Shell() {
           setActiveTab(projectTabs[nextIndex].id)
           break
         }
+
+        case 'check-for-updates':
+          appEvents.emit('updater:manual-check')
+          break
       }
     })
 
@@ -598,7 +603,7 @@ export default function Shell() {
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="flex flex-1 min-h-0 relative">
+      <div className="flex flex-col flex-1 min-h-0 relative">
         {/* Wallpaper covers entire shell including sidebar and tab bar */}
         {wallpaperUrl && (
           <img
@@ -611,24 +616,29 @@ export default function Shell() {
             }}
           />
         )}
-        <Sidebar
-          visible={sidebarVisible}
-          onAddProject={() => setDiscoverOpen(true)}
+
+        {/* Header: logo + tabs — spans full width */}
+        <TabBar
+          onCloseTab={handleCloseTab}
+          sidebarVisible={sidebarVisible}
           wallpaperActive={!!wallpaperUrl}
           backgroundOpacity={backgroundOpacity}
+          chatOpen={chatPanelOpen}
+          onToggleChat={() => setChatPanelOpen((v) => !v)}
         />
 
-        <div className="flex flex-col flex-1 min-w-0">
-          <TabBar
-            onCloseTab={handleCloseTab}
+        {/* Body: sidebar + content + chat */}
+        <div className="flex flex-1 min-h-0">
+          <Sidebar
+            visible={sidebarVisible}
+            onAddProject={() => setDiscoverOpen(true)}
             wallpaperActive={!!wallpaperUrl}
             backgroundOpacity={backgroundOpacity}
-            chatOpen={chatPanelOpen}
-            onToggleChat={() => setChatPanelOpen((v) => !v)}
           />
 
-          {/* Tab content area — flex-1 so StatusLine stays at the bottom */}
-          <div className="flex-1 min-h-0 relative overflow-hidden">
+          <div className="flex flex-col flex-1 min-w-0">
+            {/* Tab content area — flex-1 so StatusLine stays at the bottom */}
+            <div className="flex-1 min-h-0 relative overflow-hidden">
             {/* Wallpaper tint placeholder — only visible during the brief gap when a
                 project is selected but its first terminal hasn't loaded yet. */}
             {wallpaperUrl && activeProjectId && projectTabs.length === 0 && (
@@ -718,32 +728,33 @@ export default function Shell() {
                 backgroundOpacity={backgroundOpacity}
               />
             )}
-          </div>
-          <StatusLine wallpaperActive={!!wallpaperUrl} backgroundOpacity={backgroundOpacity} />
-        </div>
-
-        {/* Chat side panel */}
-        {activeProjectId && (
-          <div
-            className={cn(
-              'flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out relative z-[1]',
-              !wallpaperUrl && 'bg-surface',
-              chatPanelOpen && 'border-l border-border',
-            )}
-            style={{
-              width: chatPanelOpen ? 380 : 0,
-              ...(wallpaperUrl
-                ? {
-                    background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
-                  }
-                : {}),
-            }}
-          >
-            <div className="h-full" style={{ width: 380 }}>
-              <ChatTab projectId={activeProjectId} projectPath={activeProject?.path ?? ''} />
             </div>
+            <StatusLine wallpaperActive={!!wallpaperUrl} backgroundOpacity={backgroundOpacity} />
           </div>
-        )}
+
+          {/* Chat side panel */}
+          {activeProjectId && (
+            <div
+              className={cn(
+                'flex flex-col h-full shrink-0 overflow-hidden transition-all duration-200 ease-in-out relative z-[1]',
+                !wallpaperUrl && 'bg-surface',
+                chatPanelOpen && 'border-l border-border',
+              )}
+              style={{
+                width: chatPanelOpen ? 380 : 0,
+                ...(wallpaperUrl
+                  ? {
+                      background: `color-mix(in srgb, var(--bg) ${Math.round(backgroundOpacity * 100)}%, transparent)`,
+                    }
+                  : {}),
+              }}
+            >
+              <div className="h-full" style={{ width: 380 }}>
+                <ChatTab projectId={activeProjectId} projectPath={activeProject?.path ?? ''} />
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Settings overlay */}
         {activeView === 'settings' && (
