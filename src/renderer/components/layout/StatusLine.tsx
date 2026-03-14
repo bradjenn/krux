@@ -1,9 +1,10 @@
 import { invoke, listen } from '@/lib/bridge'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useGitStatus } from '@/hooks/useGitStatus'
+import { appEvents } from '@/lib/events'
 import { useAppStore } from '@/stores/appStore'
 
-type UpdateStatus = 'idle' | 'available' | 'downloading' | 'ready' | 'error'
+type UpdateStatus = 'idle' | 'available' | 'downloading' | 'ready'
 
 const MODE_COLORS: Record<string, string> = {
   prefix: 'var(--yellow)',
@@ -23,6 +24,7 @@ export default function StatusLine({ wallpaperActive, backgroundOpacity = 0.8 }:
   const activeProjectId = useAppStore((s) => s.activeProjectId)
   const projects = useAppStore((s) => s.projects)
   const tabs = useAppStore((s) => s.tabs)
+  const addNotification = useAppStore((s) => s.addNotification)
 
   const addTab = useAppStore((s) => s.addTab)
   const setActiveTab = useAppStore((s) => s.setActiveTab)
@@ -34,37 +36,56 @@ export default function StatusLine({ wallpaperActive, backgroundOpacity = 0.8 }:
 
   const gitStatus = useGitStatus(activeProject?.path ?? null)
 
-  // Update checker state
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
-  const [updateVersion, _setUpdateVersion] = useState('')
-  const [updateProgress, _setUpdateProgress] = useState(0)
-  const [updateDismissed, setUpdateDismissed] = useState(false)
-  const [updateError, setUpdateError] = useState('')
+  const [updateVersion, setUpdateVersion] = useState('')
+  const [updateProgress, setUpdateProgress] = useState(0)
+  const manualCheckRef = useRef(false)
 
   useEffect(() => {
     const unlistens = [
       listen<{ version: string }>('updater:available', (data) => {
-        _setUpdateVersion(data.version)
+        setUpdateVersion(data.version)
         setUpdateStatus('available')
+        if (manualCheckRef.current) {
+          addNotification(`Update v${data.version} available`, 'info')
+          manualCheckRef.current = false
+        }
       }),
       listen('updater:not-available', () => {
-        setUpdateStatus('idle')
+        if (manualCheckRef.current) {
+          addNotification('You\'re on the latest version', 'success')
+          manualCheckRef.current = false
+        }
       }),
       listen<{ percent: number }>('updater:progress', (data) => {
-        _setUpdateProgress(data.percent)
+        setUpdateProgress(data.percent)
+        setUpdateStatus('downloading')
       }),
       listen('updater:downloaded', () => {
         setUpdateStatus('ready')
+        addNotification('Update ready — restart to apply', 'success')
       }),
       listen<{ message: string }>('updater:error', (data) => {
-        setUpdateError(data.message)
-        setUpdateStatus('error')
+        addNotification(`Update failed: ${data.message}`, 'error')
+        manualCheckRef.current = false
       }),
     ]
 
+    // Silent check on startup
     invoke('check-for-update')
 
-    return () => { for (const u of unlistens) u() }
+    // Listen for manual checks triggered from the menu
+    const onManualCheck = () => {
+      manualCheckRef.current = true
+      addNotification('Checking for updates...', 'info')
+      invoke('check-for-update')
+    }
+    appEvents.on('updater:manual-check', onManualCheck)
+
+    return () => {
+      for (const u of unlistens) u()
+      appEvents.off('updater:manual-check', onManualCheck)
+    }
   }, [])
 
   const handleUpdate = async () => {
@@ -76,8 +97,7 @@ export default function StatusLine({ wallpaperActive, backgroundOpacity = 0.8 }:
         await invoke('install-update')
       }
     } catch (err) {
-      setUpdateError(err instanceof Error ? err.message : String(err))
-      setUpdateStatus('error')
+      addNotification(`Update failed: ${err instanceof Error ? err.message : String(err)}`, 'error')
     }
   }
 
@@ -99,8 +119,6 @@ export default function StatusLine({ wallpaperActive, backgroundOpacity = 0.8 }:
   const modeColor = MODE_COLORS[keyboardMode]
   const modeLabel = MODE_LABELS[keyboardMode]
 
-  const showUpdate = updateStatus !== 'idle' && !updateDismissed
-
   return (
     <div
       className="flex items-center shrink-0 border-t border-border text-xs font-mono select-none z-20 relative"
@@ -114,7 +132,7 @@ export default function StatusLine({ wallpaperActive, backgroundOpacity = 0.8 }:
           : { background: 'var(--bg)' }),
       }}
     >
-      {/* Left: mode indicator + update notice */}
+      {/* Left: mode indicator + update status */}
       <div className="flex items-center gap-2">
         {modeLabel && (
           <span
@@ -130,74 +148,41 @@ export default function StatusLine({ wallpaperActive, backgroundOpacity = 0.8 }:
           </span>
         )}
 
-        {showUpdate && updateStatus === 'available' && (
-          <>
-            <span className="text-muted-foreground">v{updateVersion} available</span>
-            <button
-              type="button"
-              onClick={handleUpdate}
-              className="px-1.5 rounded-sm font-medium hover:text-foreground transition-colors cursor-pointer"
-              style={{
-                color: 'var(--bg)',
-                background: 'var(--green)',
-                fontSize: 11,
-                lineHeight: '18px',
-              }}
-            >
-              Install
-            </button>
-            <button
-              type="button"
-              onClick={() => setUpdateDismissed(true)}
-              className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              ✕
-            </button>
-          </>
+        {updateStatus === 'available' && (
+          <button
+            type="button"
+            onClick={handleUpdate}
+            className="flex items-center gap-1 px-1.5 rounded-sm font-medium cursor-pointer transition-colors hover:opacity-80"
+            style={{
+              color: 'var(--bg)',
+              background: 'var(--green)',
+              fontSize: 11,
+              lineHeight: '18px',
+            }}
+            title={`Download v${updateVersion}`}
+          >
+            v{updateVersion} available
+          </button>
         )}
-        {showUpdate && updateStatus === 'downloading' && (
-          <span className="text-muted-foreground">
-            Downloading{updateProgress > 0 ? ` ${updateProgress}%` : '…'}
+        {updateStatus === 'downloading' && (
+          <span className="text-muted-foreground" style={{ fontSize: 11 }}>
+            Downloading{updateProgress > 0 ? ` ${updateProgress}%` : '...'}
           </span>
         )}
-        {showUpdate && updateStatus === 'ready' && (
-          <>
-            <span className="text-muted-foreground">Update ready</span>
-            <button
-              type="button"
-              onClick={handleUpdate}
-              className="px-1.5 rounded-sm font-medium hover:text-foreground transition-colors cursor-pointer"
-              style={{
-                color: 'var(--bg)',
-                background: 'var(--green)',
-                fontSize: 11,
-                lineHeight: '18px',
-              }}
-            >
-              Restart
-            </button>
-          </>
-        )}
-        {showUpdate && updateStatus === 'error' && (
-          <>
-            <span style={{ color: 'var(--red)' }}>
-              Update failed{updateError ? `: ${updateError}` : ''}
-            </span>
-            <button
-              type="button"
-              onClick={handleUpdate}
-              className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              Retry
-            </button>
-            <button
-              type="button"
-              onClick={() => setUpdateDismissed(true)}
-              className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              ✕
-            </button>
-          </>
+        {updateStatus === 'ready' && (
+          <button
+            type="button"
+            onClick={handleUpdate}
+            className="flex items-center gap-1 px-1.5 rounded-sm font-medium cursor-pointer transition-colors hover:opacity-80"
+            style={{
+              color: 'var(--bg)',
+              background: 'var(--green)',
+              fontSize: 11,
+              lineHeight: '18px',
+            }}
+          >
+            Restart to update
+          </button>
         )}
       </div>
 

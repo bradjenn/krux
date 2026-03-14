@@ -30,8 +30,8 @@ autoUpdater.on('update-downloaded', () => {
 })
 
 autoUpdater.on('error', (err) => {
-  // Ignore missing app-update.yml (electron-forge doesn't generate it)
-  if (err.message.includes('app-update.yml')) return
+  // Don't surface 404s — they just mean the release has no update manifest yet
+  if (err.message?.includes('404') || err.message?.includes('HttpError')) return
   send('updater:error', { message: err.message })
 })
 

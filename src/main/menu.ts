@@ -14,6 +14,11 @@ export function buildMenu(window: BrowserWindow): void {
         { role: 'about' },
         { type: 'separator' },
         {
+          label: 'Check for Updates...',
+          click: () => send('check-for-updates'),
+        },
+        { type: 'separator' },
+        {
           label: 'Settings...',
           accelerator: 'CmdOrCtrl+,',
           click: () => send('settings'),
